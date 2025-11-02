@@ -21,6 +21,11 @@
 
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+    /* Background variables with defaults */
+    --bg-image: none;
+    --bg-size: auto;
+    --bg-animation: none;
 }
 
 /* Base and Reset */
@@ -39,6 +44,9 @@ body {
     display: flex;
     flex-direction: column;
     transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
+    background-image: var(--bg-image);
+    background-size: var(--bg-size);
+    animation: var(--bg-animation);
 }
 
 /* Typography */
