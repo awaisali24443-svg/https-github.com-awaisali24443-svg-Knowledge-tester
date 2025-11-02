@@ -1,0 +1,36 @@
+
+:root {
+    --font-sans: 'Courier New', Courier, monospace;
+    --color-primary: #00f7ff;
+    --color-secondary: #f800ff;
+    --color-bg: #000000;
+    --color-bg-light: #120c12;
+    --color-text: #e0e0e0;
+    --color-text-muted: #8a8a8a;
+    --color-border: #ff00c8;
+    --color-success: #00ff41;
+    --color-danger: #ff0051;
+    --color-warning: #fff000;
+    
+    --shadow-md: 0 0 10px var(--color-primary);
+    --shadow-lg: 0 0 20px var(--color-secondary);
+}
+
+body {
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+h1, h2, h3, .logo {
+    text-shadow: 0 0 5px var(--color-primary), 0 0 10px var(--color-primary);
+}
+
+.card {
+    border: 1px solid var(--color-border);
+    box-shadow: 0 0 15px var(--color-border);
+}
+
+.btn-primary {
+    text-shadow: 0 0 5px #fff;
+    box-shadow: 0 0 10px var(--color-primary), inset 0 0 5px var(--color-primary);
+}
+    

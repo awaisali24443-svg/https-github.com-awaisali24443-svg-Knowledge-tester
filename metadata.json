@@ -1,0 +1,5 @@
+{
+  "name": "Quiz Master AI",
+  "description": "An interactive quiz application that generates custom quizzes on any topic using the power of the Gemini API. Test your knowledge and get instant results.",
+  "requestFramePermissions": []
+}

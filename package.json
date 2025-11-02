@@ -1,0 +1,14 @@
+{
+  "name": "knowledge-tester",
+  "version": "1.0.0",
+  "description": "A modular quiz application built with vanilla HTML, CSS, and JavaScript, powered by the Gemini API.",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve -s ."
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "serve": "^14.2.3"
+  }
+}
