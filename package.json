@@ -1,14 +1,16 @@
 {
-  "name": "knowledge-tester",
+  "name": "my-node-app",
   "version": "1.0.0",
-  "description": "A modular quiz application built with vanilla HTML, CSS, and JavaScript, powered by the Gemini API.",
-  "main": "index.html",
+  "description": "Node.js backend for Render",
+  "main": "server.js",
   "scripts": {
-    "start": "serve -s ."
+    "build": "echo 'No build step needed'",
+    "start": "node server.js"
   },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "serve": "^14.2.3"
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.x"
   }
 }
