@@ -1,0 +1,41 @@
+
+:root {
+    --font-sans: 'Courier New', monospace;
+
+    --color-primary: #7100ff;
+    --color-secondary: #00c2ff;
+    --color-bg: #0c001f;
+    --color-bg-light: #1c0f2e;
+    --color-text: #e0e0e0;
+    --color-text-muted: #8a8a8a;
+    --color-border: #7100ff;
+    --color-success: #00ff41;
+    --color-danger: #ff0051;
+    --color-warning: #fff000;
+
+    --shadow-md: 0 0 8px color-mix(in srgb, var(--color-primary) 50%, transparent);
+    --shadow-lg: 0 0 16px color-mix(in srgb, var(--color-secondary) 50%, transparent);
+}
+
+body {
+    background-image: 
+        linear-gradient(var(--color-primary) 1px, transparent 1px),
+        linear-gradient(to right, var(--color-primary) 1px, var(--color-bg) 1px);
+    background-size: 20px 20px;
+}
+
+h1, h2, h3, .logo {
+    text-shadow: 0 0 5px var(--color-secondary), 0 0 10px var(--color-secondary);
+}
+
+.card {
+    border: 1px solid var(--color-border);
+}
+
+.btn-primary:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}

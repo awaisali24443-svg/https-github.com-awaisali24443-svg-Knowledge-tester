@@ -1,0 +1,49 @@
+
+:root {
+    --font-sans: 'Inter', sans-serif;
+    
+    --color-primary: #ffffff;
+    --color-secondary: #ffffff;
+    --color-bg: #000000;
+    --color-bg-light: #000000;
+    --color-text: #ffffff;
+    --color-text-muted: #ffffff;
+    --color-border: #ffffff;
+    --color-success: #00ff00;
+    --color-danger: #ff0000;
+    --color-warning: #ffff00;
+
+    --shadow-md: none;
+    --shadow-lg: none;
+}
+
+body {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.card, .btn, .form-control {
+    border: 2px solid var(--color-border);
+    border-radius: 0;
+}
+
+.site-header .logo {
+    -webkit-text-fill-color: white; /* Override gradient */
+    text-shadow: none;
+}
+
+.btn-primary {
+    background: #000;
+    color: #fff;
+    border: 2px solid #fff;
+}
+
+.btn-primary:hover {
+    background: #fff;
+    color: #000;
+}
+
+*:focus-visible {
+    outline: 3px solid var(--color-warning) !important;
+    outline-offset: 2px;
+}

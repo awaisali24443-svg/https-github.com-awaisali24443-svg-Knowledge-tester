@@ -39,6 +39,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
 }
 
 /* Typography */
@@ -54,7 +55,7 @@ h3 { font-size: 1.5rem; }
 a {
     color: var(--color-primary);
     text-decoration: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, color 300ms ease-in-out;
 }
 
 a:hover {
@@ -81,6 +82,7 @@ a:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background-color 300ms ease-in-out;
 }
 
 .site-header .logo {
@@ -95,6 +97,7 @@ a:hover {
     list-style: none;
     display: flex;
     gap: 1.5rem;
+    align-items: center;
 }
 
 .site-header nav a {
@@ -103,13 +106,39 @@ a:hover {
     color: var(--color-text);
     padding-bottom: 0.25rem;
     border-bottom: 2px solid transparent;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, color 300ms ease-in-out;
 }
 
 .site-header nav a:hover {
     border-color: var(--color-primary);
     opacity: 1;
 }
+
+/* Theme Selector */
+#theme-selector {
+    background-color: var(--color-bg-light);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0.35rem 0.75rem;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    transition: all 300ms ease-in-out;
+}
+
+#theme-selector:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 5px var(--color-primary);
+}
+
 
 /* Footer */
 .site-footer {
@@ -118,6 +147,7 @@ a:hover {
     text-align: center;
     color: var(--color-text-muted);
     font-size: 0.9rem;
+    transition: background-color 300ms ease-in-out;
 }
 
 /* Forms & Buttons */
@@ -160,13 +190,13 @@ a:hover {
     border-radius: 8px;
     color: var(--color-text);
     font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s, background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
 }
 
 /* Card */
@@ -176,6 +206,7 @@ a:hover {
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
     width: 100%;
+    transition: background-color 300ms ease-in-out, box-shadow 300ms ease-in-out;
 }
 
 /* Scrollbar */
@@ -192,4 +223,3 @@ a:hover {
 ::-webkit-scrollbar-thumb:hover {
     background: #777;
 }
-    

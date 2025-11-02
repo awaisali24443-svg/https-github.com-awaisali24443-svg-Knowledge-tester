@@ -1,0 +1,66 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+    --font-sans: 'Press Start 2P', cursive;
+
+    --color-primary: #ffffff;
+    --color-secondary: #aaaaaa;
+    --color-bg: #000000;
+    --color-bg-light: #111111;
+    --color-text: #ffffff;
+    --color-text-muted: #aaaaaa;
+    --color-border: #ffffff;
+    --color-success: #00ff00;
+    --color-danger: #ff0000;
+    --color-warning: #ffff00;
+
+    --shadow-md: 4px 4px 0px 0px var(--color-border);
+    --shadow-lg: 6px 6px 0px 0px var(--color-border);
+}
+
+body {
+    image-rendering: pixelated;
+}
+
+h1, h2, h3, p, a, div, span, button, input, label {
+    font-size-adjust: 0.5;
+}
+
+.card, .btn, .form-control {
+    border-radius: 0;
+    border: 3px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.site-header .logo {
+    -webkit-text-fill-color: white; /* Override gradient */
+    text-shadow: 2px 2px 0px var(--color-danger);
+}
+
+.btn {
+    box-shadow: none;
+    border: 3px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text);
+}
+
+.btn-primary {
+    background: transparent;
+    color: var(--color-text);
+}
+
+.btn:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+    transform: none;
+}
+
+.btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px var(--color-border);
+}
+
+#theme-selector {
+    border-radius: 0;
+}
