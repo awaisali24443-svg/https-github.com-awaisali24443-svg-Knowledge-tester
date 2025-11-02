@@ -13,6 +13,7 @@ const routes = {
     '#home': 'home',
     '#login': 'login',
     '#signup': 'signup',
+    '#main-home': 'main-home',
     '#optional-quiz': 'optional-quiz-generator',
     '#main': 'main'
 };
