@@ -73,7 +73,7 @@ function setTheme(themeName) {
 function setupThemeSwitcher() {
     const themeSelector = document.getElementById('theme-selector');
     if (themeSelector) {
-        const savedTheme = localStorage.getItem('theme') || 'ocean-deep';
+        const savedTheme = localStorage.getItem('theme') || 'carbon-mist';
         themeSelector.value = savedTheme;
         setTheme(savedTheme);
 
@@ -98,7 +98,7 @@ async function init() {
         yearSpan.textContent = new Date().getFullYear();
     }
 
-    const savedTheme = localStorage.getItem('theme') || 'ocean-deep';
+    const savedTheme = localStorage.getItem('theme') || 'carbon-mist';
     setTheme(savedTheme);
 
     window.addEventListener('hashchange', handleRouteChange);
