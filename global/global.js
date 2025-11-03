@@ -42,6 +42,16 @@ async function loadModule(moduleName) {
         style.id = 'module-style';
         style.rel = 'stylesheet';
         style.href = `/modules/${moduleName}/${moduleName}.css`;
+        
+        // Wait for styles to load before showing content to prevent FOUC
+        style.onload = () => {
+            rootContainer.style.opacity = '1';
+        };
+        style.onerror = () => {
+            console.error(`Failed to load stylesheet for ${moduleName}.`);
+            rootContainer.style.opacity = '1'; // Show content anyway
+        };
+        
         document.head.appendChild(style);
 
         const script = document.createElement('script');
@@ -49,8 +59,6 @@ async function loadModule(moduleName) {
         script.type = 'module';
         script.src = `/modules/${moduleName}/${moduleName}.js`;
         document.body.appendChild(script);
-
-        rootContainer.style.opacity = '1';
 
     } catch (error) {
         console.error('Error loading module:', error);

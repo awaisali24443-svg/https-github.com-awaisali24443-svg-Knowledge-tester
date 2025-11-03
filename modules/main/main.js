@@ -146,13 +146,8 @@ function handleAnswerSelect(e) {
         else button.classList.add('faded');
     });
 
-    const isLastQuestion = currentQuestionIndex === quizData.length - 1;
-    document.getElementById('quiz-feedback').innerHTML = `
-        <button id="next-btn" class="btn btn-primary" style="margin-top: 1rem; animation: fadeIn 0.3s ease;">
-            ${isLastQuestion ? 'Finish Quiz' : 'Next Question'}
-        </button>
-    `;
-    document.getElementById('next-btn').addEventListener('click', handleNext);
+    // Automatically proceed to the next question after a delay
+    setTimeout(handleNext, 1800);
 }
 
 function handleNext() {
