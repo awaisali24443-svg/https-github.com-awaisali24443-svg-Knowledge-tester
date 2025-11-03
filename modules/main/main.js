@@ -107,29 +107,13 @@ function renderResults() {
 
 // --- Event Handlers ---
 
-async function handleStartQuiz(e) {
+function handleStartQuiz(e) {
     e.preventDefault();
     const topic = topicInput.value.trim();
     if (!topic) return;
 
-    generateQuizBtn.disabled = true;
-    errorMessage.textContent = '';
-    updateView('loading');
-
-    try {
-        const data = await generateQuiz(topic);
-        quizData = data;
-        userAnswers = new Array(data.length).fill(null);
-        currentQuestionIndex = 0;
-        updateView('quiz');
-        renderQuiz();
-    } catch (err) {
-        console.error('Failed to generate quiz:', err);
-        errorMessage.textContent = err.message;
-        updateView('topicSelector');
-    } finally {
-        generateQuizBtn.disabled = false;
-    }
+    sessionStorage.setItem('quizTopic', topic);
+    window.location.hash = '#loading';
 }
 
 function handleAnswerSelect(e) {
@@ -179,6 +163,31 @@ function handleRestart() {
 function init() {
     if (topicForm) {
         topicForm.addEventListener('submit', handleStartQuiz);
+    }
+
+    const quizDataString = sessionStorage.getItem('generatedQuizData');
+    const errorString = sessionStorage.getItem('quizError');
+
+    if (quizDataString) {
+        sessionStorage.removeItem('generatedQuizData');
+        try {
+            const data = JSON.parse(quizDataString);
+            quizData = data;
+            userAnswers = new Array(data.length).fill(null);
+            currentQuestionIndex = 0;
+            updateView('quiz');
+            renderQuiz();
+        } catch (e) {
+            console.error("Failed to parse quiz data:", e);
+            errorMessage.textContent = "There was an error loading the quiz data.";
+            updateView('topicSelector');
+        }
+    } else if (errorString) {
+        sessionStorage.removeItem('quizError');
+        errorMessage.textContent = errorString;
+        updateView('topicSelector');
+    } else {
+        updateView('topicSelector');
     }
 }
 

@@ -12,7 +12,10 @@ const routes = {
     '#welcome': 'welcome',
     '#login': 'login',
     '#home': 'home',
-    '#quiz': 'main' // AI Quiz Generator module
+    '#quiz': 'main', // AI Quiz Generator module
+    '#optional-quiz': 'optional-quiz-generator',
+    '#programming-quiz': 'programming-quiz',
+    '#loading': 'loading'
 };
 
 async function loadModule(moduleName) {

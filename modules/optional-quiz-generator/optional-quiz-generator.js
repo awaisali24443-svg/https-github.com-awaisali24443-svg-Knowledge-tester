@@ -19,10 +19,10 @@ if (topicForm) {
         const topic = topicInput.value.trim();
         if (!topic) return;
 
-        // Store the topic for the main quiz module to access
+        // Store the topic for the loading module to access
         sessionStorage.setItem('quizTopic', topic);
         
-        // Navigate to the main quiz module
-        window.location.hash = '#main';
+        // Navigate to the loading module
+        window.location.hash = '#loading';
     });
 }

@@ -1,0 +1,32 @@
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    text-align: center;
+}
+
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+    50% { opacity: 0.7; }
+}
+
+.spinner {
+    width: 56px;
+    height: 56px;
+    border: 5px solid var(--color-border);
+    border-bottom-color: var(--color-primary);
+    border-radius: 50%;
+    animation: rotation 1.5s linear infinite;
+}
+.loading-text {
+    margin-top: 1rem;
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    animation: pulse 2s ease-in-out infinite;
+    transition: opacity 0.3s ease-in-out;
+}
