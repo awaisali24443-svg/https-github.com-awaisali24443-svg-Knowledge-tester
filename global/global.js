@@ -112,9 +112,10 @@ async function init() {
     // Initial route load
     handleRouteChange();
 
-    // Keep the instance alive with a ping
+    // Keep the instance alive with a regular "weather check" ping to prevent it from sleeping
     setInterval(() => {
-        fetch('/').catch(err => console.error('Ping failed:', err));
+        console.log("Checking server weather... (pinging to keep alive)");
+        fetch('/').catch(err => console.error('Server weather check failed; instance might be stormy:', err));
     }, 4 * 60 * 1000); // 4 minutes
 }
 

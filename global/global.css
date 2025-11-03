@@ -238,9 +238,10 @@ a:hover {
 }
 
 /* Animations */
-@keyframes drift {
-    0% { background-position: 0 0; }
-    100% { background-position: -600px -600px; }
+@keyframes backgroundShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 @keyframes fadeIn {
