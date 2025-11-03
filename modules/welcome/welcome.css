@@ -1,0 +1,41 @@
+.welcome-container {
+    text-align: center;
+    animation: fadeInGlow 1.5s ease-in-out;
+    padding: 3rem 2rem;
+    max-width: 600px;
+}
+
+.welcome-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 15px var(--color-glow);
+}
+
+.welcome-subtitle {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    max-width: 500px;
+    margin: 0 auto 2.5rem;
+}
+
+.continue-btn {
+    padding: 0.8rem 2.5rem;
+    font-size: 1.1rem;
+}
+
+@keyframes fadeInGlow {
+    from { 
+        opacity: 0; 
+        transform: scale(0.95);
+        filter: blur(5px);
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1);
+        filter: blur(0);
+    }
+}

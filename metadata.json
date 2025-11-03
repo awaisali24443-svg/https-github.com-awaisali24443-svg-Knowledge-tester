@@ -1,5 +1,5 @@
 {
-  "name": "Quiz Master AI",
-  "description": "An interactive quiz application that generates custom quizzes on any topic using the power of the Gemini API. Test your knowledge and get instant results.",
+  "name": "Knowledge Tester",
+  "description": "A rebuilt, professional quiz application that generates custom quizzes on any topic using the Gemini API. Features a modular design and dynamic theming.",
   "requestFramePermissions": []
 }

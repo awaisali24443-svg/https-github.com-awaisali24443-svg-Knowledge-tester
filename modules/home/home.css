@@ -1,44 +1,86 @@
-.welcome-container {
-    text-align: center;
+.home-container {
+    width: 100%;
     animation: fadeIn 0.5s ease-in-out;
-    padding: 3rem 2rem;
 }
 
-.logo-container {
-    margin-bottom: 1.5rem;
-    color: var(--color-primary);
-    transition: color 300ms ease-in-out;
+.home-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
 }
 
-.welcome-title {
-    font-size: 2.8rem;
+.home-header h1 {
+    font-size: 2.5rem;
     font-weight: 800;
-    margin-bottom: 1rem;
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
-.welcome-subtitle {
+.home-header p {
     font-size: 1.1rem;
     color: var(--color-text-muted);
     max-width: 500px;
-    margin: 0 auto 2.5rem;
+    margin: 0.5rem auto 0;
 }
 
-.welcome-actions {
+.home-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.feature-card {
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: left;
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 1rem;
+    text-decoration: none;
+    color: var(--color-text);
+    overflow: hidden;
 }
 
-.continue-btn {
-    padding: 0.8rem 2.5rem;
-    font-size: 1.1rem;
+.feature-card:not(.disabled) {
+    cursor: pointer;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+.feature-card:not(.disabled):hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px -5px var(--color-glow);
+    border-color: var(--color-primary);
+}
+
+.feature-card .feature-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+}
+
+.feature-card .feature-icon svg {
+    width: 100%;
+    height: 100%;
+}
+
+.feature-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    flex-grow: 1;
+}
+
+.feature-link {
+    margin-top: 1.5rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.feature-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(50%);
 }

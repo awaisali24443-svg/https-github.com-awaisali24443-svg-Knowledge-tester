@@ -18,14 +18,15 @@
     --color-success: #22c55e;
     --color-danger: #ef4444;
     --color-warning: #f59e0b;
+    --color-glow: color-mix(in srgb, var(--color-primary) 30%, transparent);
 
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 
     /* Background variables with defaults */
-    --bg-image: none;
-    --bg-size: auto;
-    --bg-animation: none;
+    --bg-image: linear-gradient(-45deg, #111827, #1f2937, #374151, #111827);
+    --bg-size: 400% 400%;
+    --bg-animation: backgroundShift 20s ease infinite;
 }
 
 /* Base and Reset */
@@ -43,36 +44,16 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    transition: background-color 300ms ease-in-out, color 300ms ease-in-out;
+    transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out;
     background-image: var(--bg-image);
     background-size: var(--bg-size);
     animation: var(--bg-animation);
 }
 
-/* Typography */
-h1, h2, h3 {
-    line-height: 1.2;
-    font-weight: 700;
-}
-
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.5rem; }
-
-a {
-    color: var(--color-primary);
-    text-decoration: none;
-    transition: opacity 0.2s ease, color 300ms ease-in-out;
-}
-
-a:hover {
-    opacity: 0.8;
-}
-
 /* Layout */
-.container {
+#root-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 2rem 1rem;
     flex-grow: 1;
@@ -81,48 +62,23 @@ a:hover {
     justify-content: center;
 }
 
-.container.fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
 /* Header */
 .site-header {
-    background-color: var(--color-bg-light);
-    box-shadow: var(--shadow-md);
+    background-color: rgba(0,0,0,0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: background-color 300ms ease-in-out;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .site-header .logo {
     font-size: 1.75rem;
     font-weight: 800;
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.site-header nav ul {
-    list-style: none;
-    display: flex;
-    gap: 1.5rem;
-    align-items: center;
-}
-
-.site-header nav a {
-    font-weight: 500;
-    font-size: 1rem;
     color: var(--color-text);
-    padding-bottom: 0.25rem;
-    border-bottom: 2px solid transparent;
-    transition: border-color 0.2s ease, color 300ms ease-in-out;
-}
-
-.site-header nav a:hover {
-    border-color: var(--color-primary);
-    opacity: 1;
+    text-decoration: none;
 }
 
 /* Theme Selector */
@@ -142,23 +98,22 @@ a:hover {
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
     padding-right: 2.5rem;
-    transition: all 300ms ease-in-out;
+    transition: all 0.2s ease-in-out;
 }
 
 #theme-selector:hover {
     border-color: var(--color-primary);
-    box-shadow: 0 0 5px var(--color-primary);
+    box-shadow: 0 0 5px var(--color-glow);
 }
 
 
 /* Footer */
 .site-footer {
-    background-color: var(--color-bg-light);
     padding: 1.5rem;
     text-align: center;
     color: var(--color-text-muted);
     font-size: 0.9rem;
-    transition: background-color 300ms ease-in-out;
+    border-top: 1px solid var(--color-border);
 }
 
 /* Forms & Buttons */
@@ -173,6 +128,7 @@ a:hover {
     text-align: center;
     transition: all 0.2s ease;
     transform: translateY(0);
+    text-decoration: none;
 }
 
 .btn-primary {
@@ -201,13 +157,13 @@ a:hover {
     border-radius: 8px;
     color: var(--color-text);
     font-size: 1rem;
-    transition: all 0.2s, background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out;
+    transition: all 0.2s ease;
 }
 
 .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
+    box-shadow: 0 0 0 3px var(--color-glow);
 }
 
 /* Card */
@@ -218,7 +174,15 @@ a:hover {
     box-shadow: var(--shadow-lg);
     width: 100%;
     border: 1px solid var(--color-border);
-    transition: background-color 300ms ease-in-out, box-shadow 300ms ease-in-out, border-color 300ms ease-in-out;
+    transition: all 0.4s ease-in-out;
+}
+
+/* Glassmorphic Card Style */
+.glass-card {
+    background: color-mix(in srgb, var(--color-bg-light) 50%, transparent);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
 }
 
 
@@ -247,4 +211,8 @@ a:hover {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+.hidden {
+    display: none !important;
 }

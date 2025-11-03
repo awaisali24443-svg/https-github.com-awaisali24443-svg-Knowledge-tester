@@ -7,60 +7,57 @@ const rootContainer = document.getElementById('root-container');
 const headerContainer = document.getElementById('header-container');
 const yearSpan = document.getElementById('year');
 
-// --- Router ---
 const routes = {
-    '': 'home', // Default route
-    '#home': 'home',
+    '': 'welcome', // Default route
+    '#welcome': 'welcome',
     '#login': 'login',
-    '#signup': 'signup',
-    '#optional-quiz': 'optional-quiz-generator',
-    '#main': 'main'
+    '#home': 'home',
+    '#quiz': 'main' // AI Quiz Generator module
 };
 
 async function loadModule(moduleName) {
     if (!rootContainer) return;
-    rootContainer.classList.remove('fade-in');
+    rootContainer.style.opacity = '0';
+    
+    // Wait for fade out
+    await new Promise(resolve => setTimeout(resolve, 200));
 
     try {
-        // Fetch HTML content of the module
         const response = await fetch(`/modules/${moduleName}/${moduleName}.html`);
-        if (!response.ok) throw new Error(`Module ${moduleName} not found.`);
+        if (!response.ok) throw new Error(`Module ${moduleName}.html not found.`);
+        
         const html = await response.text();
         rootContainer.innerHTML = html;
-        rootContainer.classList.add('fade-in');
 
+        // Clean up old module-specific assets
+        document.getElementById('module-style')?.remove();
+        document.getElementById('module-script')?.remove();
 
-        // Remove old module script if it exists
-        const oldScript = document.getElementById('module-script');
-        if (oldScript) oldScript.remove();
-        
-        // Remove old module style if it exists
-        const oldStyle = document.getElementById('module-style');
-        if (oldStyle) oldStyle.remove();
-
-        // Add new module style
+        // Add new module assets
         const style = document.createElement('link');
         style.id = 'module-style';
         style.rel = 'stylesheet';
         style.href = `/modules/${moduleName}/${moduleName}.css`;
         document.head.appendChild(style);
 
-        // Add new module script
         const script = document.createElement('script');
         script.id = 'module-script';
         script.type = 'module';
         script.src = `/modules/${moduleName}/${moduleName}.js`;
         document.body.appendChild(script);
 
+        rootContainer.style.opacity = '1';
+
     } catch (error) {
         console.error('Error loading module:', error);
-        rootContainer.innerHTML = `<div class="card"><h2 style="color:var(--color-danger);">Error: Could not load page.</h2><p>Please check the console for details.</p></div>`;
+        rootContainer.innerHTML = `<div class="card" style="text-align:center;"><h2 style="color:var(--color-danger);">Error: Could not load page.</h2><p>${error.message}</p></div>`;
+        rootContainer.style.opacity = '1';
     }
 }
 
 function handleRouteChange() {
-    const hash = window.location.hash || '#home';
-    const moduleName = routes[hash] || 'home'; // Fallback to home
+    const hash = window.location.hash || '#welcome';
+    const moduleName = routes[hash] || 'welcome'; // Fallback
     loadModule(moduleName);
 }
 
@@ -76,12 +73,13 @@ function setTheme(themeName) {
 function setupThemeSwitcher() {
     const themeSelector = document.getElementById('theme-selector');
     if (themeSelector) {
+        const savedTheme = localStorage.getItem('theme') || 'ocean-deep';
+        themeSelector.value = savedTheme;
+        setTheme(savedTheme);
+
         themeSelector.addEventListener('change', (e) => {
             setTheme(e.target.value);
         });
-        // Set initial value from localStorage
-        const savedTheme = localStorage.getItem('theme') || 'dark';
-        themeSelector.value = savedTheme;
     }
 }
 
@@ -96,27 +94,15 @@ async function init() {
         console.error("Failed to load header:", error);
     }
     
-    // Set current year in footer
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
     }
 
-    // Load initial theme
-    const savedTheme = localStorage.getItem('theme') || 'dark';
+    const savedTheme = localStorage.getItem('theme') || 'ocean-deep';
     setTheme(savedTheme);
 
-    // Listen for hash changes
     window.addEventListener('hashchange', handleRouteChange);
-    
-    // Initial route load
     handleRouteChange();
-
-    // Keep the instance alive with a regular "weather check" ping to prevent it from sleeping
-    setInterval(() => {
-        console.log("Checking server weather... (pinging to keep alive)");
-        fetch('/').catch(err => console.error('Server weather check failed; instance might be stormy:', err));
-    }, 4 * 60 * 1000); // 4 minutes
 }
 
-// Start the application
 init();

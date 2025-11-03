@@ -1,7 +1,19 @@
-
 <div id="quiz-container" class="card">
+    <!-- Topic Selection View -->
+    <div id="topic-selector-view">
+        <h2>AI Quiz Generator</h2>
+        <p class="subtitle">What would you like to be quizzed on today?</p>
+        <form id="topic-form">
+            <input id="topic-input" type="text" class="form-control" placeholder="e.g., The History of Python" required />
+            <p id="error-message" class="error-text"></p>
+            <button id="generate-quiz-btn" type="submit" class="btn btn-primary">
+                Generate Quiz
+            </button>
+        </form>
+    </div>
+
     <!-- Loading View -->
-    <div id="loading-view">
+    <div id="loading-view" class="hidden">
         <div class="spinner"></div>
         <p class="loading-text">Generating your quiz...</p>
     </div>
@@ -16,4 +28,3 @@
         <!-- Results content will be injected here -->
     </div>
 </div>
-    

@@ -1,15 +1,24 @@
-<div class="welcome-container card">
-    <div class="logo-container">
-        <!-- Inline SVG logo for simplicity and theme color inheritance -->
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+<div class="home-container">
+    <div class="home-header">
+        <h1>Dashboard</h1>
+        <p>Ready to test your knowledge? Create a new quiz or review your past performance.</p>
     </div>
-    <h1 class="welcome-title">Knowledge Tester</h1>
-    <p class="welcome-subtitle">Your journey to mastery begins here. Challenge yourself with AI-powered quizzes on any topic.</p>
-    <div class="welcome-actions">
-        <a href="#login" class="btn btn-primary continue-btn">Continue</a>
+    <div class="home-features">
+        <a href="#quiz" class="feature-card">
+            <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 14 4-4"/><path d="m18 16-4-4"/><path d="m6 8 4 4"/><path d="m12 14-4 4"/><path d="M12 3a9 9 0 0 0 0 18 9 9 0 0 0 0-18Z"/></svg>
+            </div>
+            <h3>AI Knowledge Quiz</h3>
+            <p>Challenge your mind — give any topic, and let AI instantly create a personalized quiz just for you.</p>
+            <span class="feature-link">Start Now &rarr;</span>
+        </a>
+        <div class="feature-card disabled">
+             <div class="feature-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            </div>
+            <h3>My Quizzes</h3>
+            <p>Track your scores and review past quizzes to see your progress over time.</p>
+            <span class="feature-link">Coming Soon</span>
+        </div>
     </div>
 </div>

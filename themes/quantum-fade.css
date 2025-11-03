@@ -1,0 +1,17 @@
+:root {
+    --color-primary: #818cf8;
+    --color-secondary: #f472b6;
+    --color-bg: #f5f3ff;
+    --color-bg-light: #ffffff;
+    --color-text: #4c1d95;
+    --color-text-muted: #be185d;
+    --color-border: #e0e7ff;
+    --color-success: #34d399;
+    --color-danger: #f87171;
+    --color-warning: #fbbf24;
+    --color-glow: rgba(129, 140, 248, 0.2);
+
+    --bg-image: linear-gradient(160deg, #e0e7ff, #fbcfe8, #dcfce7);
+    --bg-size: 400% 400%;
+    --bg-animation: backgroundShift 15s ease infinite;
+}

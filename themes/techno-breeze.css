@@ -1,0 +1,17 @@
+:root {
+    --color-primary: #1d4ed8;
+    --color-secondary: #047857;
+    --color-bg: #f0f4f9;
+    --color-bg-light: #ffffff;
+    --color-text: #1e3a8a;
+    --color-text-muted: #64748b;
+    --color-border: #dbeafe;
+    --color-success: #16a34a;
+    --color-danger: #dc2626;
+    --color-warning: #d97706;
+    --color-glow: rgba(29, 78, 216, 0.2);
+
+    --bg-image: none;
+    --bg-size: auto;
+    --bg-animation: none;
+}

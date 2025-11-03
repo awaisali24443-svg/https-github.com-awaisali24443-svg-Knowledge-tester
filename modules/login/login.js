@@ -1,13 +1,12 @@
+// All navigation is handled by <a> tags with href attributes.
+// This script is included for consistency and future logic implementation, such as form validation.
+console.log("Login module loaded.");
 
-// login.js - Logic for the login module
-
-const loginForm = document.getElementById('login-form');
-
-if (loginForm) {
-    loginForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        alert('Login functionality is not yet implemented.');
-        // Future logic: validate inputs, send to server, handle response
+const loginBtn = document.getElementById('login-btn');
+if (loginBtn) {
+    loginBtn.addEventListener('click', (e) => {
+        // In a real app, you'd prevent default and validate here.
+        // For this demo, we just let the href handle navigation.
+        console.log("Simulating login...");
     });
 }
-    
