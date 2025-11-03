@@ -61,7 +61,7 @@ function renderQuiz() {
         </div>
         <div class="question-header">
             <span>Question ${currentQuestionIndex + 1} / ${quizData.length}</span>
-            <span>${quizContext.topicName || ''} - Level ${quizContext.level || ''}</span>
+            <span>${quizContext.topicName || ''} ${quizContext.isLeveled === false ? '' : `- Level ${quizContext.level || ''}`}</span>
         </div>
         <h2 class="question-text">${question.question}</h2>
         <div class="options-grid">${optionsHtml}</div>
@@ -82,33 +82,46 @@ function renderResults() {
 
     const scorePercentage = Math.round((score / quizData.length) * 100);
     
-    // Level Progression Logic
-    const didPass = score >= UNLOCK_SCORE;
-    const isMaxLevel = quizContext.level >= MAX_LEVEL;
     let feedbackHtml = '';
     let actionsHtml = '';
 
-    if (didPass) {
-        if (!isMaxLevel) {
-            const newLevel = quizContext.level + 1;
-            feedbackHtml = `
-                <div class="results-feedback success">
-                    <strong>Level ${quizContext.level} Passed!</strong> You've unlocked Level ${newLevel}.
-                </div>`;
-            actionsHtml = `<button id="next-level-btn" class="btn btn-primary">Play Next Level</button>`;
-            progressService.unlockNextLevel(quizContext.topicName, MAX_LEVEL);
+    if (quizContext.isLeveled === false) {
+        // Logic for non-leveled (optional) quizzes
+        if (scorePercentage >= 80) {
+            feedbackHtml = `<div class="results-feedback success"><strong>Great job!</strong> A fantastic score.</div>`;
+        } else if (scorePercentage >= 50) {
+            feedbackHtml = `<div class="results-feedback"><strong>Good effort!</strong> Keep practicing.</div>`;
+        } else {
+            feedbackHtml = `<div class="results-feedback failure"><strong>Keep trying!</strong> Every quiz is a learning opportunity.</div>`;
+        }
+        actionsHtml = `<button id="retry-level-btn" class="btn btn-primary">Try This Topic Again</button>`;
+    } else {
+        // Existing Level Progression Logic
+        const didPass = score >= UNLOCK_SCORE;
+        const isMaxLevel = quizContext.level >= MAX_LEVEL;
+
+        if (didPass) {
+            if (!isMaxLevel) {
+                const newLevel = quizContext.level + 1;
+                feedbackHtml = `
+                    <div class="results-feedback success">
+                        <strong>Level ${quizContext.level} Passed!</strong> You've unlocked Level ${newLevel}.
+                    </div>`;
+                actionsHtml = `<button id="next-level-btn" class="btn btn-primary">Play Next Level</button>`;
+                progressService.unlockNextLevel(quizContext.topicName, MAX_LEVEL);
+            } else {
+                feedbackHtml = `
+                    <div class="results-feedback success">
+                        <strong>Congratulations!</strong> You've mastered ${quizContext.topicName} by completing the final level!
+                    </div>`;
+            }
         } else {
             feedbackHtml = `
-                <div class="results-feedback success">
-                    <strong>Congratulations!</strong> You've mastered ${quizContext.topicName} by completing the final level!
+                <div class="results-feedback failure">
+                    <strong>Nice try!</strong> You need a score of at least ${UNLOCK_SCORE} to unlock the next level.
                 </div>`;
+            actionsHtml = `<button id="retry-level-btn" class="btn btn-primary">Retry Level ${quizContext.level}</button>`;
         }
-    } else {
-        feedbackHtml = `
-            <div class="results-feedback failure">
-                <strong>Nice try!</strong> You need a score of at least ${UNLOCK_SCORE} to unlock the next level.
-            </div>`;
-        actionsHtml = `<button id="retry-level-btn" class="btn btn-primary">Retry Level ${quizContext.level}</button>`;
     }
 
     const reviewHtml = quizData.map((q, index) => {
@@ -214,7 +227,16 @@ function handleBackToTopics() {
 }
 
 function handleRetryLevel() {
-    startQuiz(quizContext.topicName, quizContext.level);
+    if (quizContext.isLeveled === false) {
+        // For non-leveled quizzes, re-use the original prompt
+        sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
+        sessionStorage.setItem('quizTopicPrompt', quizContext.prompt);
+        sessionStorage.setItem('quizTopicName', quizContext.topicName);
+        window.location.hash = '#loading';
+    } else {
+        // For leveled quizzes, start the same level again
+        startQuiz(quizContext.topicName, quizContext.level);
+    }
 }
 
 function handleNextLevel() {
