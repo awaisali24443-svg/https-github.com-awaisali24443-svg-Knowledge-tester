@@ -1,4 +1,3 @@
-
 .auth-card {
     max-width: 400px;
     animation: slideInUp 0.5s ease-out;
@@ -31,8 +30,11 @@
     color: var(--color-text-muted);
 }
 
+.guest-option {
+    margin-top: 0.75rem;
+}
+
 @keyframes slideInUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-    

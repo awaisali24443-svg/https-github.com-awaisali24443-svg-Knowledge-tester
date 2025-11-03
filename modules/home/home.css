@@ -1,4 +1,3 @@
-
 .welcome-container {
     text-align: center;
     animation: fadeIn 0.5s ease-in-out;
@@ -21,11 +20,17 @@
     margin: 0 auto 2.5rem;
 }
 
+.welcome-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
 .start-journey-btn {
     padding: 0.8rem 2rem;
     font-size: 1.1rem;
 }
-
 
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
