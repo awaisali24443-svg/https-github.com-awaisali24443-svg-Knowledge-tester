@@ -83,38 +83,76 @@ function setTheme(themeName) {
 }
 
 function setupThemeSwitcher() {
-    const themeSelector = document.getElementById('theme-selector');
-    if (themeSelector) {
-        const savedTheme = localStorage.getItem('theme') || 'google-ai-studio';
-        themeSelector.value = savedTheme;
-        setTheme(savedTheme);
+    const changerBtn = document.getElementById('theme-changer-btn');
+    const optionsContainer = document.getElementById('theme-options');
+    
+    if (!changerBtn || !optionsContainer) return;
 
-        themeSelector.addEventListener('change', (e) => {
-            setTheme(e.target.value);
-        });
+    const themes = [
+        { value: 'google-ai-studio', text: 'AI Studio' },
+        { value: 'carbon-mist', text: 'Carbon Mist' },
+        { value: 'neon-pulse', text: 'Neon Pulse' },
+        { value: 'aurora-dawn', text: 'Aurora Dawn' },
+        { value: 'space-alloy', text: 'Space Alloy' },
+        { value: 'techno-breeze', text: 'Techno Breeze' },
+        { value: 'midnight-glass', text: 'Midnight Glass' },
+        { value: 'quantum-fade', text: 'Quantum Fade' },
+        { value: 'ocean-core', text: 'Ocean Core' },
+        { value: 'cyber-royale', text: 'Cyber Royale' },
+        { value: 'digital-ice', text: 'Digital Ice' },
+        { value: 'royal-ember', text: 'Royal Ember' },
+        { value: 'quantum-edge', text: 'Quantum Edge' },
+    ];
+
+    optionsContainer.innerHTML = themes.map(theme => 
+        `<div class="theme-option" data-theme="${theme.value}">${theme.text}</div>`
+    ).join('');
+
+    changerBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        optionsContainer.classList.toggle('hidden');
+    });
+    
+    optionsContainer.addEventListener('click', (e) => {
+        const target = e.target.closest('.theme-option');
+        if (target) {
+            const theme = target.dataset.theme;
+            setTheme(theme);
+            optionsContainer.classList.add('hidden');
+        }
+    });
+
+    // Close dropdown if clicking outside
+    document.addEventListener('click', (e) => {
+        if (!optionsContainer.contains(e.target) && !changerBtn.contains(e.target)) {
+            optionsContainer.classList.add('hidden');
+        }
+    });
+}
+
+async function loadHeader() {
+    try {
+        const response = await fetch('/global/header.html');
+        if (!response.ok) throw new Error('Header template not found.');
+        headerContainer.innerHTML = await response.text();
+        
+        const savedTheme = localStorage.getItem('theme') || 'carbon-mist';
+        setTheme(savedTheme);
+        setupThemeSwitcher();
+
+    } catch (error) {
+        console.error('Error loading header:', error);
+        headerContainer.innerHTML = '<p style="color:red; text-align:center;">Error loading header</p>';
     }
 }
 
-// --- Initializer ---
-async function init() {
-    // Load Header
-    try {
-        const response = await fetch('/global/header.html');
-        headerContainer.innerHTML = await response.text();
-        setupThemeSwitcher();
-    } catch (error) {
-        console.error("Failed to load header:", error);
-    }
-    
+function init() {
+    loadHeader();
+    window.addEventListener('hashchange', handleRouteChange);
+    handleRouteChange(); // Initial load
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
     }
-
-    const savedTheme = localStorage.getItem('theme') || 'google-ai-studio';
-    setTheme(savedTheme);
-
-    window.addEventListener('hashchange', handleRouteChange);
-    handleRouteChange();
 }
 
 init();

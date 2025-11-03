@@ -81,29 +81,60 @@ body {
     text-decoration: none;
 }
 
-/* Theme Selector */
-#theme-selector {
+/* Theme Changer */
+.theme-changer {
+    position: relative;
+}
+
+#theme-changer-btn {
     background-color: var(--color-bg-light);
-    color: var(--color-text);
+    color: var(--color-text-muted);
     border: 1px solid var(--color-border);
     border-radius: 6px;
-    padding: 0.35rem 0.75rem;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
+    padding: 0.5rem;
     cursor: pointer;
-    -webkit-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s ease-in-out;
 }
 
-#theme-selector:hover {
+#theme-changer-btn:hover {
     border-color: var(--color-primary);
     box-shadow: 0 0 5px var(--color-glow);
+    color: var(--color-primary);
+}
+
+#theme-changer-btn svg {
+    width: 22px;
+    height: 22px;
+}
+
+.theme-options {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 200px;
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.theme-option {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-size: 0.9rem;
+}
+
+.theme-option:hover {
+    background-color: var(--color-glow);
+    color: var(--color-primary);
+    padding-left: 1.25rem;
 }
 
 
@@ -175,7 +206,36 @@ body {
     width: 100%;
     border: 1px solid var(--color-border);
     transition: all 0.4s ease-in-out;
+    position: relative;
 }
+
+.card.has-back-button {
+    padding-top: 5rem;
+}
+
+/* Back Button */
+.back-button {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.back-button:hover {
+    color: var(--color-primary);
+}
+
+.back-button svg {
+    width: 20px;
+    height: 20px;
+}
+
 
 /* Glassmorphic Card Style */
 .glass-card {

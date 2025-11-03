@@ -1,4 +1,8 @@
-<div class="programming-quiz-container card glass-card">
+<div class="programming-quiz-container card glass-card has-back-button">
+    <a href="#home" class="back-button">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Back to Dashboard
+    </a>
     <h1 class="programming-quiz-title">Programming Quizzes</h1>
     <p class="programming-quiz-subtitle">Select a language to test your expertise.</p>
     <div class="topic-grid">
@@ -8,12 +12,22 @@
                 <h3>Python</h3>
                 <p>Data science, web dev, scripting</p>
             </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
+            </div>
         </div>
         <div class="topic-card" data-topic="JavaScript">
             <canvas class="topic-canvas"></canvas>
             <div class="topic-card-content">
                 <h3>JavaScript</h3>
                 <p>The language of the web</p>
+            </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
             </div>
         </div>
         <div class="topic-card" data-topic="Java">
@@ -22,12 +36,22 @@
                 <h3>Java</h3>
                 <p>Enterprise-level applications</p>
             </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
+            </div>
         </div>
         <div class="topic-card" data-topic="SQL">
             <canvas class="topic-canvas"></canvas>
             <div class="topic-card-content">
                 <h3>SQL</h3>
                 <p>Database management</p>
+            </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
             </div>
         </div>
         <div class="topic-card" data-topic="TypeScript">
@@ -36,12 +60,22 @@
                 <h3>TypeScript</h3>
                 <p>JavaScript with static types</p>
             </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
+            </div>
         </div>
         <div class="topic-card" data-topic="C++">
             <canvas class="topic-canvas"></canvas>
             <div class="topic-card-content">
                 <h3>C++</h3>
                 <p>Performance-critical systems</p>
+            </div>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn" data-difficulty="Easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="Medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="Hard">Hard</button>
             </div>
         </div>
     </div>

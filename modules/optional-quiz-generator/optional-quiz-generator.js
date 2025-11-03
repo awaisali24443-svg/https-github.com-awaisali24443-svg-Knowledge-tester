@@ -3,26 +3,39 @@
 const topicForm = document.getElementById('topic-form');
 const topicInput = document.getElementById('topic-input');
 const generateQuizBtn = document.getElementById('generate-quiz-btn');
-const errorMessage = document.getElementById('error-message');
+const difficultyButtonsContainer = document.querySelector('.difficulty-buttons');
 
 if (topicForm) {
-    // Disable button initially
     generateQuizBtn.disabled = true;
 
     topicInput.addEventListener('input', () => {
-        // Enable button only if there is text
         generateQuizBtn.disabled = !topicInput.value.trim();
     });
+
+    // Handle difficulty selection
+    let selectedDifficulty = 'Medium'; // Default
+    if (difficultyButtonsContainer) {
+        difficultyButtonsContainer.addEventListener('click', (e) => {
+            const target = e.target.closest('.difficulty-btn');
+            if (!target) return;
+
+            difficultyButtonsContainer.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            target.classList.add('active');
+
+            selectedDifficulty = target.dataset.difficulty;
+        });
+    }
+
 
     topicForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const topic = topicInput.value.trim();
         if (!topic) return;
 
-        // Store the topic for the loading module to access
-        sessionStorage.setItem('quizTopic', topic);
+        // Construct prompt with difficulty
+        const fullTopic = `Generate an ${selectedDifficulty.toLowerCase()} quiz about "${topic}"`;
+        sessionStorage.setItem('quizTopic', fullTopic);
         
-        // Navigate to the loading module
         window.location.hash = '#loading';
     });
 }

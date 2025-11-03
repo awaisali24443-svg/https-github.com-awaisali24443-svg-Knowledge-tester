@@ -1,20 +1,21 @@
 <div class="site-header">
-    <a href="#welcome" class="logo">Knowledge Tester</a>
-    <nav>
-        <select id="theme-selector" title="Select a theme">
-            <option value="google-ai-studio">AI Studio</option>
-            <option value="carbon-mist">Carbon Mist</option>
-            <option value="neon-pulse">Neon Pulse</option>
-            <option value="aurora-dawn">Aurora Dawn</option>
-            <option value="space-alloy">Space Alloy</option>
-            <option value="techno-breeze">Techno Breeze</option>
-            <option value="midnight-glass">Midnight Glass</option>
-            <option value="quantum-fade">Quantum Fade</option>
-            <option value="ocean-core">Ocean Core</option>
-            <option value="cyber-royale">Cyber Royale</option>
-            <option value="digital-ice">Digital Ice</option>
-            <option value="royal-ember">Royal Ember</option>
-            <option value="quantum-edge">Quantum Edge</option>
-        </select>
-    </nav>
+    <a href="#home" class="logo">Knowledge Tester</a>
+    <div class="theme-changer">
+        <button id="theme-changer-btn" title="Change theme">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"></circle>
+                <line x1="12" y1="1" y2="3"></line>
+                <line x1="12" y1="21" y2="23"></line>
+                <line x1="4.22" y1="4.22" y2="5.64" y2="5.64"></line>
+                <line x1="18.36" y1="18.36" y2="19.78" y2="19.78"></line>
+                <line x1="1" y1="12" y2="3" y2="12"></line>
+                <line x1="21" y1="12" y2="23" y2="12"></line>
+                <line x1="4.22" y1="19.78" y2="5.64" y2="18.36"></line>
+                <line x1="18.36" y1="5.64" y2="19.78" y2="4.22"></line>
+            </svg>
+        </button>
+        <div id="theme-options" class="theme-options hidden">
+            <!-- Theme options are populated by global.js -->
+        </div>
+    </div>
 </div>

@@ -2,21 +2,51 @@ import { initCard, cleanup } from '../../services/threeManager.js';
 
 console.log("Programming Quiz module loaded.");
 
-// Clean up any existing 3D scenes from other pages to prevent memory leaks
 cleanup();
 
-document.querySelectorAll('.topic-card').forEach(card => {
-    // Initialize the 3D visual for the card
-    initCard(card);
+const topicGrid = document.querySelector('.topic-grid');
+const topicCards = document.querySelectorAll('.topic-card');
 
-    // Keep the existing click functionality
-    card.addEventListener('click', () => {
-        const language = card.dataset.topic;
-        if (language) {
-            // Create a more specific prompt for the AI to generate a better quiz
-            const fullTopic = `A quiz on intermediate concepts in the ${language} programming language`;
-            sessionStorage.setItem('quizTopic', fullTopic);
-            window.location.hash = '#loading';
+topicCards.forEach(card => {
+    try {
+        initCard(card);
+    } catch (error) {
+        console.error("Failed to initialize 3D card for topic:", card.dataset.topic, error);
+        const canvas = card.querySelector('.topic-canvas');
+        if (canvas) canvas.style.display = 'none';
+    }
+});
+
+topicGrid.addEventListener('click', (e) => {
+    const card = e.target.closest('.topic-card');
+    const difficultyBtn = e.target.closest('.difficulty-btn');
+
+    if (difficultyBtn) {
+        // A difficulty button was clicked, so we generate the quiz
+        const topic = card.dataset.topic;
+        const difficulty = difficultyBtn.dataset.difficulty;
+        
+        const fullTopic = `Generate an ${difficulty.toLowerCase()} quiz on intermediate concepts in the ${topic} programming language`;
+        sessionStorage.setItem('quizTopic', fullTopic);
+        window.location.hash = '#loading';
+        return; // Stop further processing
+    }
+    
+    // If a card itself was clicked, handle the selection UI
+    if (card) {
+        if (card.classList.contains('selected')) {
+            // If it's already selected, deselect it
+            card.classList.remove('selected');
+            topicGrid.classList.remove('selection-active');
+        } else {
+            // Otherwise, select it and deselect others
+            topicCards.forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            topicGrid.classList.add('selection-active');
         }
-    });
+    } else {
+        // If the click was on the grid but not on a card, deselect all
+        topicCards.forEach(c => c.classList.remove('selected'));
+        topicGrid.classList.remove('selection-active');
+    }
 });
