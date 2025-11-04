@@ -38,9 +38,7 @@ const quizSchema = {
 };
 
 
-export const generateQuiz = async (topic: string): Promise<QuizData> => {
-    const prompt = `Generate a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topic}". Each question should have 4 options. Provide a brief explanation for each correct answer.`;
-    
+export const generateQuiz = async (prompt: string, systemInstruction?: string): Promise<QuizData> => {
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
@@ -48,6 +46,7 @@ export const generateQuiz = async (topic: string): Promise<QuizData> => {
             config: {
               responseMimeType: "application/json",
               responseSchema: quizSchema,
+              systemInstruction: systemInstruction || "You are a helpful and engaging quiz creator."
             },
         });
 

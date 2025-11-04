@@ -1,7 +1,7 @@
 import * as progressService from '../../services/progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
 
-console.log("Programming Quiz module loaded.");
+console.log("Science Quiz module loaded.");
 
 const levelDescriptors = {
     1: "Noob", 10: "Beginner", 20: "Intermediate", 
@@ -30,15 +30,20 @@ function handleTopicSelect(event) {
     const quizContext = {
         topicName: topic,
         level: level,
-        returnHash: '#programming-quiz'
+        returnHash: '#science-quiz'
     };
     sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
 
-    // Create a more detailed prompt for the AI
+    // Create a more detailed, conversational prompt for the AI
     const prompt = `
-        Please create a quiz with ${NUM_QUESTIONS} multiple-choice questions about the programming language "${topic}".
-        The difficulty should be for an expert at Level ${level} out of ${MAX_LEVEL} (${descriptor} level). The questions should be highly specific and technical, suitable for someone with deep experience.
+        You are an AI quiz maker for "Knowledge Tester".
+        Your goal is to make learning fun and engaging, so use a natural, human-like, conversational tone as if you're a friendly teacher or quiz host.
+        Avoid robotic, academic language.
+        
+        Please create a quiz with ${NUM_QUESTIONS} multiple-choice questions for the topic "${topic}".
+        The difficulty should be tailored for a user at Level ${level} out of ${MAX_LEVEL} (${descriptor} level).
         For each question, provide 4 clear options and ensure one is correct.
+        Before finalizing, please re-read your questions to ensure they sound natural and conversational.
     `;
     sessionStorage.setItem('quizTopicPrompt', prompt);
     sessionStorage.setItem('quizTopicName', topic); // For loading messages

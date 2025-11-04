@@ -1,14 +1,14 @@
 export const themes = [
-    { id: 'quantum-blue', name: 'Quantum Blue', colors: ['#00d2ff', '#3a7bd5'] },
-    { id: 'cyber-aurora', name: 'Cyber Aurora', colors: ['#7B2FF7', '#00F5D4'] },
-    { id: 'solar-flare', name: 'Solar Flare', colors: ['#FFD700', '#FF4500'] },
-    { id: 'neural-frost', name: 'Neural Frost', colors: ['#E0EFFF', '#B2FEFA'] },
-    { id: 'emerald-circuit', name: 'Emerald Circuit', colors: ['#00FF7F', '#373B44'] },
-    { id: 'obsidian-matrix', name: 'Obsidian Matrix', colors: ['#000000', '#39FF14'] },
-    { id: 'prism-halo', name: 'Prism Halo', colors: ['#FF00FF', '#00FFFF'] },
-    { id: 'crimson-core', name: 'Crimson Core', colors: ['#DC143C', '#4F4F4F'] },
-    { id: 'eclipse-void', name: 'Eclipse Void', colors: ['#FFD700', '#2C3E50'] },
-    { id: 'celestial-white', name: 'Celestial White', colors: ['#F0F2F5', '#C9D6FF'] },
+    { id: 'dark-cyber', name: 'Dark Cyber', colors: ['#00d2ff', '#3a7bd5'] },
+    { id: 'neon-pulse', name: 'Neon Pulse', colors: ['#f472b6', '#818cf8'] },
+    { id: 'aurora-flow', name: 'Aurora Flow', colors: ['#7B2FF7', '#00F5D4'] },
+    { id: 'matrix-stream', name: 'Matrix Stream', colors: ['#39FF14', '#0D0D0D'] },
+    { id: 'carbon-mist', name: 'Carbon Mist', colors: ['#e5e7eb', '#374151'] },
+    { id: 'galactic-blue', name: 'Galactic Blue', colors: ['#7dd3fc', '#1e293b'] },
+    { id: 'quantum-flame', name: 'Quantum Flame', colors: ['#FFD700', '#FF8C00'] },
+    { id: 'chrome-noir', name: 'Chrome Noir', colors: ['#d1d5db', '#111111'] },
+    { id: 'luminous-slate', name: 'Luminous Slate', colors: ['#0ea5e9', '#0d1a2e'] },
+    { id: 'code-horizon', name: 'Code Horizon', colors: ['#FF00FF', '#00FFFF'] },
 ];
 
 const themeLink = document.getElementById('theme-link');
@@ -22,7 +22,7 @@ function applyTheme(themeId, fromAI = false) {
     const selectedTheme = themes.find(t => t.id === themeId);
     if (!selectedTheme) {
         console.warn(`Theme "${themeId}" not found. Applying default.`);
-        themeId = 'quantum-blue'; // Fallback to a default
+        themeId = 'dark-cyber'; // Fallback to a default
     }
 
     body.classList.add('theme-transitioning');
@@ -48,12 +48,12 @@ function applyTheme(themeId, fromAI = false) {
 
 function aiSuggestTheme() {
     const hour = new Date().getHours();
-    let themeId = 'cyber-aurora'; // Default (evening)
+    let themeId = 'aurora-flow'; // Default (evening)
 
     if (hour >= 5 && hour < 12) { // Morning
-        themeId = 'celestial-white';
+        themeId = 'luminous-slate';
     } else if (hour >= 18 || hour < 5) { // Night
-        themeId = 'obsidian-matrix';
+        themeId = 'neon-pulse';
     }
     
     applyTheme(themeId, true);
@@ -64,6 +64,8 @@ function initTheme() {
     const savedTheme = localStorage.getItem('selected-theme');
     if (savedTheme) {
         applyTheme(savedTheme);
+    } else {
+        applyTheme('dark-cyber'); // Set default theme
     }
 }
 

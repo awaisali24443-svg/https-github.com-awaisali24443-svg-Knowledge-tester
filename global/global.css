@@ -5,7 +5,7 @@
 
 /* CSS Variables for Theming */
 :root {
-    --font-sans: 'Inter', sans-serif;
+    --font-sans: 'Exo 2', sans-serif;
     
     /* Will be overridden by theme files */
     --color-primary: #3b82f6;
@@ -366,6 +366,18 @@ body.theme-transitioning * {
     box-shadow: var(--shadow-lg);
     animation: popIn 0.3s ease-out;
 }
+
+/* Motivational Hint */
+.motivational-hint {
+    text-align: center;
+    font-style: italic;
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeIn 0.5s 0.2s ease-out forwards;
+    min-height: 24px;
+}
+
 
 /* Animations */
 @keyframes backgroundShift {

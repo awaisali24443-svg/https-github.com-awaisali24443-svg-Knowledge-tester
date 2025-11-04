@@ -10,6 +10,9 @@ const profilePictureImg = document.getElementById('profile-picture');
 const editPictureBtn = document.getElementById('edit-picture-btn');
 const resetProgressBtn = document.getElementById('reset-progress-btn');
 
+// General Toggles
+const soundToggle = document.getElementById('sound-toggle');
+
 // Accessibility Toggles
 const largeTextToggle = document.getElementById('large-text-toggle');
 const highContrastToggle = document.getElementById('high-contrast-toggle');
@@ -40,6 +43,24 @@ function editProfilePicture() {
         profilePictureImg.src = newUrl;
     }
 }
+
+// --- General Settings ---
+function loadGeneralSettings() {
+    const settings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
+    soundToggle.checked = settings.soundEnabled ?? true; // Default to true if not set
+}
+
+function handleGeneralSettingsChange(e) {
+    const { id, checked } = e.target;
+    const settings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
+
+    if (id === 'sound-toggle') {
+        settings.soundEnabled = checked;
+    }
+
+    localStorage.setItem('generalSettings', JSON.stringify(settings));
+}
+
 
 // --- Accessibility ---
 function loadAccessibilitySettings() {
@@ -90,6 +111,7 @@ function handleResetProgress() {
         progressService.resetProgress();
         localStorage.removeItem('userProfile');
         localStorage.removeItem('accessibilitySettings');
+        localStorage.removeItem('generalSettings');
         // Do not remove onboarding status
         alert("Your progress and profile have been reset. The page will now reload.");
         window.location.reload();
@@ -99,12 +121,14 @@ function handleResetProgress() {
 // --- Initialization ---
 function init() {
     loadProfile();
+    loadGeneralSettings();
     loadAccessibilitySettings();
 
     saveProfileBtn?.addEventListener('click', saveProfile);
     editPictureBtn?.addEventListener('click', editProfilePicture);
     resetProgressBtn?.addEventListener('click', handleResetProgress);
     
+    soundToggle?.addEventListener('change', handleGeneralSettingsChange);
     largeTextToggle?.addEventListener('change', handleAccessibilityChange);
     highContrastToggle?.addEventListener('change', handleAccessibilityChange);
     dyslexiaFontToggle?.addEventListener('change', handleAccessibilityChange);

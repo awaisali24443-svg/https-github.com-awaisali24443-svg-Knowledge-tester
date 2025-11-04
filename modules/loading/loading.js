@@ -123,7 +123,8 @@ async function startQuizGeneration() {
     }
 
     try {
-        const quizData = await generateQuiz(topicPrompt);
+        const systemInstruction = `You are an AI quiz maker for "Knowledge Tester". Your goal is to make learning fun and engaging, so use a natural, human-like, conversational tone as if you're a friendly teacher or quiz host. Avoid robotic, academic language. Before finalizing, please re-read your questions to ensure they sound natural and conversational.`
+        const quizData = await generateQuiz(topicPrompt, systemInstruction);
         sessionStorage.setItem('generatedQuizData', JSON.stringify(quizData));
         sessionStorage.removeItem('quizTopicPrompt'); // Clean up
         window.location.hash = '#quiz';

@@ -1,6 +1,5 @@
 import * as progressService from '../../services/progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
-import { playSound } from '../../services/soundService.js';
 
 console.log("Historical Knowledge module loaded.");
 
@@ -35,8 +34,12 @@ function handleTopicSelect(event) {
     };
     sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
 
-    // Create a more detailed prompt for the AI
-    const prompt = `Generate a quiz with ${NUM_QUESTIONS} multiple-choice questions about the historical topic "${topic}". The difficulty should be for an expert at Level ${level} out of ${MAX_LEVEL} (${descriptor} level). The questions should be highly specific and detailed. Ensure all questions are unique and cover different aspects of the topic.`;
+    // Create a more detailed, conversational prompt for the AI
+    const prompt = `
+        Please create a quiz with ${NUM_QUESTIONS} multiple-choice questions for the historical topic "${topic}".
+        The difficulty should be tailored for a user at Level ${level} out of ${MAX_LEVEL} (${descriptor} level).
+        For each question, provide 4 clear options and ensure one is correct.
+    `;
     sessionStorage.setItem('quizTopicPrompt', prompt);
     sessionStorage.setItem('quizTopicName', topic); // For loading messages
 

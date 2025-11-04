@@ -8,6 +8,27 @@ let quizContext = {};
 
 const quizContainer = document.getElementById('quiz-container');
 
+const motivationalHints = [
+    "You’re doing great!",
+    "This next one’s a brain-twister!",
+    "Keep up the awesome work!",
+    "One step closer to mastery!",
+    "Let's see how you handle this one.",
+    "Knowledge is power!"
+];
+
+// --- Keyboard Shortcut Handler ---
+const handleKeyPress = (e) => {
+    const key = parseInt(e.key, 10);
+    if (key >= 1 && key <= 4) {
+        const optionButtons = document.querySelectorAll('.quiz-option');
+        const targetButton = optionButtons[key - 1];
+        if (targetButton && !targetButton.disabled) {
+            targetButton.click();
+        }
+    }
+};
+
 async function renderQuiz() {
     if (!quizData || !quizData[currentQuestionIndex]) {
         handleError("Quiz data is missing or invalid.");
@@ -17,9 +38,11 @@ async function renderQuiz() {
     const question = quizData[currentQuestionIndex];
     const optionsHtml = question.options.map((option, index) => `
         <button data-option-index="${index}" class="quiz-option">
-            ${option}
+           <span>${index + 1}.</span> ${option}
         </button>
     `).join('');
+    
+    const hint = currentQuestionIndex > 0 ? motivationalHints[Math.floor(Math.random() * motivationalHints.length)] : '';
 
     const newContent = document.createElement('div');
     newContent.id = 'quiz-content-wrapper';
@@ -31,6 +54,7 @@ async function renderQuiz() {
             <span>Question ${currentQuestionIndex + 1} / ${quizData.length}</span>
             <span>${quizContext.topicName || ''} ${quizContext.isLeveled === false ? '' : `- Level ${quizContext.level || ''}`}</span>
         </div>
+        <div class="motivational-hint">${hint}</div>
         <h2 class="question-text">${question.question}</h2>
         <div class="options-grid">${optionsHtml}</div>
         <div id="quiz-feedback"></div>
@@ -153,6 +177,13 @@ function init() {
     } else {
         startNewQuiz();
     }
+    document.addEventListener('keydown', handleKeyPress);
 }
+
+// Cleanup listener when navigating away
+window.addEventListener('hashchange', () => {
+    document.removeEventListener('keydown', handleKeyPress);
+}, { once: true });
+
 
 init();

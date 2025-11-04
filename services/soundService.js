@@ -55,10 +55,16 @@ const sounds = {
 };
 
 /**
- * Plays a predefined sound effect.
+ * Plays a predefined sound effect, respecting user settings.
  * @param {string} soundName - The name of the sound to play (e.g., 'correct', 'incorrect').
  */
 export function playSound(soundName) {
+    // Check if sounds are enabled by the user
+    const settings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
+    if (settings.soundEnabled === false) {
+        return; // Do not play sound if disabled
+    }
+
     // Ensure user has interacted with the page before playing sound
     const context = getAudioContext();
     if (context && context.state === 'suspended') {
