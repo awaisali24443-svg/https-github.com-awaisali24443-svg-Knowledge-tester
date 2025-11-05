@@ -15,6 +15,12 @@
     50% { opacity: 0.7; }
 }
 
+.spinner-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .spinner {
     width: 56px;
     height: 56px;
@@ -29,4 +35,25 @@
     color: var(--color-text-muted);
     animation: pulse 2s ease-in-out infinite;
     transition: opacity 0.3s ease-in-out;
+}
+
+/* Error State Styles */
+#error-container {
+    text-align: center;
+    animation: fadeIn 0.5s ease-out;
+}
+#error-title {
+    color: var(--color-danger);
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+#error-details {
+    color: var(--color-text-muted);
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+}
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
 }

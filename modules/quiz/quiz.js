@@ -9,15 +9,10 @@ let quizContext = {};
 const quizContainer = document.getElementById('quiz-container');
 
 const motivationalHints = [
-    "You’re doing great!",
-    "This next one’s a brain-twister!",
-    "Keep up the awesome work!",
-    "One step closer to mastery!",
-    "Let's see how you handle this one.",
-    "Knowledge is power!"
+    "You’re doing great!", "This next one’s a brain-twister!", "Keep up the awesome work!",
+    "One step closer to mastery!", "Let's see how you handle this one.", "Knowledge is power!"
 ];
 
-// --- Keyboard Shortcut Handler ---
 const handleKeyPress = (e) => {
     const key = parseInt(e.key, 10);
     if (key >= 1 && key <= 4) {
@@ -31,7 +26,7 @@ const handleKeyPress = (e) => {
 
 async function renderQuiz() {
     if (!quizData || !quizData[currentQuestionIndex]) {
-        handleError("Quiz data is missing or invalid.");
+        handleError("Quiz data is missing or invalid. Returning to safety.", true);
         return;
     }
 
@@ -60,7 +55,6 @@ async function renderQuiz() {
         <div id="quiz-feedback"></div>
     `;
     
-    // Animate transition
     const oldContent = quizContainer.querySelector('#quiz-content-wrapper');
     if (oldContent) {
         oldContent.classList.add('exiting');
@@ -110,11 +104,8 @@ function handleNext() {
         currentQuestionIndex++;
         renderQuiz();
     } else {
-        // Prepare data for the results page
         sessionStorage.setItem('quizResults', JSON.stringify({
-            quizData,
-            userAnswers,
-            quizContext
+            quizData, userAnswers, quizContext
         }));
         quizState.clearQuizState();
         window.location.hash = '#results';
@@ -123,60 +114,28 @@ function handleNext() {
 
 function handleError(message, shouldClearState = false) {
     console.error(message);
-    // In a real app, you might want a more robust error display
-    alert(message); 
+    window.showToast(message, 'error');
     if (shouldClearState) {
         quizState.clearQuizState();
     }
     window.location.hash = '#home';
 }
 
-function startNewQuiz() {
-    const dataString = sessionStorage.getItem('generatedQuizData');
-    if (!dataString) {
-        // Redirect if there's no quiz data (e.g., page reload)
-        window.location.hash = quizContext.returnHash || '#home';
+function init() {
+    // **IMPROVEMENT**: Simplified, single entry point. Always load from the robust state service.
+    const savedState = quizState.loadQuizState();
+
+    if (savedState) {
+        quizData = savedState.quizData;
+        userAnswers = savedState.userAnswers;
+        currentQuestionIndex = savedState.currentQuestionIndex;
+        quizContext = savedState.quizContext;
+        renderQuiz();
+    } else {
+        handleError("No active quiz found. Please select a topic to start.", false);
         return;
     }
     
-    try {
-        quizData = JSON.parse(dataString);
-        userAnswers = new Array(quizData.length).fill(null);
-        currentQuestionIndex = 0;
-        
-        const contextString = sessionStorage.getItem('quizContext');
-        if (!contextString) throw new Error("Quiz context is missing.");
-        quizContext = JSON.parse(contextString);
-
-        renderQuiz();
-
-        // Save initial state for resuming
-        quizState.saveQuizState({ quizData, userAnswers, currentQuestionIndex, quizContext });
-
-        // Clean up session storage
-        sessionStorage.removeItem('generatedQuizData');
-        sessionStorage.removeItem('quizError');
-
-    } catch (err) {
-        handleError("Failed to start the quiz. The quiz data was invalid.", true);
-    }
-}
-
-function resumeQuiz() {
-    const saved = quizState.loadQuizState();
-    quizData = saved.quizData;
-    userAnswers = saved.userAnswers;
-    currentQuestionIndex = saved.currentQuestionIndex;
-    quizContext = saved.quizContext;
-    renderQuiz();
-}
-
-function init() {
-    if (quizState.hasSavedState()) {
-        resumeQuiz();
-    } else {
-        startNewQuiz();
-    }
     document.addEventListener('keydown', handleKeyPress);
 }
 
@@ -184,6 +143,5 @@ function init() {
 window.addEventListener('hashchange', () => {
     document.removeEventListener('keydown', handleKeyPress);
 }, { once: true });
-
 
 init();

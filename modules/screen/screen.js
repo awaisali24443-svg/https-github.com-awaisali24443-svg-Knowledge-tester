@@ -1,16 +1,14 @@
 import * as progressService from '../../services/progressService.js';
 import { MAX_LEVEL } from '../../constants.js';
+import { categoryData } from '../../services/topicService.js';
 
 console.log("Screen module loaded.");
 
-// Defines the categories and the topics that belong to them.
-// This mapping helps group the progress items visually.
-const topicCategories = {
-    'Programming Languages': ['Python', 'JavaScript', 'Java', 'SQL', 'TypeScript', 'C++'],
-    'Historical Knowledge': ['Ancient Rome', 'Ancient Egypt', 'The Mughal Empire', 'The Ottoman Empire'],
-    'Science': ['Biology', 'Chemistry', 'Science Inventions'],
-    'Technology': ['AI and Technology', 'Space and Astronomy']
-};
+// Dynamically generate the category-to-topic mapping from the single source of truth.
+const topicCategories = Object.values(categoryData).reduce((acc, category) => {
+    acc[category.categoryTitle] = category.topics.map(topic => topic.name);
+    return acc;
+}, {});
 
 
 function renderProgress() {
@@ -46,11 +44,11 @@ function renderProgress() {
     for (const category in topicCategories) {
         const topicsInCategory = topicCategories[category];
         
-        // Filter out topics from the progress data that belong to the current category
+        // Filter out topics from the progress data that belong to the current category and have progress
         const categoryProgressHtml = topicsInCategory
+            .filter(topic => levels[topic] > 1) // Only show topics where progress has been made
             .map(topic => {
                 const level = levels[topic] || 1;
-                // Create a progress item for each topic defined in the category map
                 return createProgressItemHtml(topic, level);
             })
             .join('');

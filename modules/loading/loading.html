@@ -1,4 +1,69 @@
-<div class="loading-container card">
-    <div class="spinner"></div>
-    <p id="loading-text" class="loading-text">Getting things ready...</p>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Tester</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%231f1f1f'/%3E%3Ctext x='50' y='65' font-family='Inter, sans-serif' font-size='50' font-weight='800' fill='%232dd4bf' text-anchor='middle'%3EKT%3C/text%3E%3C/svg%3E" type="image/svg+xml">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;800&family=Orbitron:wght@700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/global/global.css">
+    <link rel="stylesheet" href="/global/accessibility.css">
+    <link rel="stylesheet" href="/themes/theme-dark-cyber.css" id="theme-link">
+
+    <link rel="preconnect" href="https://aistudiocdn.com">
+    <script type="importmap">
+    {
+      "imports": {
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+      }
+    }
+    </script>
+</head>
+<body data-theme="light">
+    <!-- UI Effects -->
+    <div id="cursor-aura"></div>
+    <div id="toast-container"></div>
+
+    <!-- Onboarding Overlay -->
+    <div id="onboarding-overlay" class="hidden">
+        <div class="onboarding-card">
+            <h2>Welcome to Knowledge Tester</h2>
+            <p class="onboarding-subtitle">Your AI companion for learning everything from science to space.</p>
+            <div class="onboarding-steps">
+                <div class="step">
+                    <div class="step-icon">📚</div>
+                    <h3>1. Pick Your Topic</h3>
+                    <p>Choose from curated lists or generate a quiz on any subject imaginable.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">🎨</div>
+                    <h3>2. Choose Your Theme</h3>
+                    <p>Personalize your learning environment with a variety of professional themes.</p>
+                </div>
+                <div class="step">
+                    <div class="step-icon">🚀</div>
+                    <h3>3. Start Exploring</h3>
+                    <p>Test your knowledge, unlock levels, and track your progress.</p>
+                </div>
+            </div>
+            <button id="onboarding-skip-btn" class="btn btn-primary">Start Learning</button>
+        </div>
+    </div>
+
+    <header id="header-container"></header>
+    <main id="root-container"></main>
+    <footer class="site-footer">
+        <p>&copy; <span id="year"></span> Knowledge Tester. All rights reserved.</p>
+    </footer>
+
+    <!-- Dynamically generated config to provide API key -->
+    <script src="/config.js"></script>
+    
+    <!-- Main application script (router) -->
+    <script type="module" src="/global/global.js"></script>
+</body>
+</html>

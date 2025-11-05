@@ -1,5 +1,21 @@
 const QUIZ_STATE_KEY = 'quizInProgress';
 
+/**
+ * Initializes and saves the state for a brand new quiz.
+ * This makes the quiz start process resilient to page reloads.
+ * @param {Array} quizData - The array of question objects from the API.
+ * @param {object} quizContext - The context (topic, level, etc.) for the quiz.
+ */
+export const startNewQuizState = (quizData, quizContext) => {
+    const newState = {
+        quizData,
+        quizContext,
+        currentQuestionIndex: 0,
+        userAnswers: new Array(quizData.length).fill(null)
+    };
+    saveQuizState(newState);
+};
+
 export const saveQuizState = (state) => {
     try {
         const stateString = JSON.stringify(state);

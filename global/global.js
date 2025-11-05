@@ -76,7 +76,7 @@ function initAccessibility() {
 
 // --- Routing ---
 
-const routes = {
+const staticRoutes = {
     '': 'welcome', // Default route
     '#welcome': 'welcome',
     '#login': 'login',
@@ -84,10 +84,6 @@ const routes = {
     '#home': 'home',
     '#explore-topics': 'explore-topics',
     '#optional-quiz': 'optional-quiz-generator',
-    '#programming-quiz': 'programming-quiz',
-    '#historical-knowledge': 'historical-knowledge',
-    '#science-quiz': 'science-quiz',
-    '#technology-quiz': 'technology-quiz',
     '#loading': 'loading',
     '#quiz': 'quiz',
     '#results': 'results',
@@ -97,11 +93,14 @@ const routes = {
 
 let isNavigating = false;
 
-async function loadModule(moduleName) {
+async function loadModule(moduleName, context = {}) {
     if (!rootContainer || isNavigating) return;
     isNavigating = true;
 
     rootContainer.classList.add('module-exit');
+    
+    // Pass context to the next module
+    sessionStorage.setItem('moduleContext', JSON.stringify(context));
     
     await new Promise(resolve => setTimeout(resolve, 300));
 
@@ -152,8 +151,16 @@ async function loadModule(moduleName) {
 
 function handleRouteChange() {
     const hash = window.location.hash || '#welcome';
-    const moduleName = routes[hash] || 'welcome';
-    loadModule(moduleName);
+
+    // Handle dynamic routes first
+    if (hash.startsWith('#topics/')) {
+        const category = hash.split('/')[1];
+        loadModule('topic-list', { category });
+    } else {
+        // Handle static routes
+        const moduleName = staticRoutes[hash] || 'welcome';
+        loadModule(moduleName);
+    }
 
     // Update active nav link
     const navLinks = document.querySelectorAll('.nav-link');
