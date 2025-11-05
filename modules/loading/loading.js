@@ -1,4 +1,4 @@
-import { generateQuiz } from '../welcome/services/geminiService.js';
+import { generateQuiz } from '../../services/geminiService.js';
 
 const loadingTextElement = document.getElementById('loading-text');
 

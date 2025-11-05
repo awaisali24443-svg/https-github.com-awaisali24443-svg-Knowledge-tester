@@ -45,6 +45,8 @@ function createSwitcher() {
 
     options.forEach(option => {
         const themeId = option.dataset.themeId;
+        const theme = themes.find(t => t.id === themeId);
+        if (!theme) return;
         
         option.addEventListener('click', () => {
             applyTheme(themeId);
@@ -58,14 +60,15 @@ function createSwitcher() {
 
         // Hover preview
         option.addEventListener('mouseenter', () => {
-            if(themeLink) themeLink.href = `/themes/theme-${themeId}.css`;
+            if(themeLink) themeLink.href = `/themes/${theme.file}`;
         });
     });
 
     // Restore original theme on mouseleave if no selection was made
     panel.addEventListener('mouseleave', () => {
-        const currentThemeId = localStorage.getItem('selected-theme') || 'quantum-blue';
-        if(themeLink) themeLink.href = `/themes/theme-${currentThemeId}.css`;
+        const currentThemeId = localStorage.getItem('selected-theme') || 'dark-cyber';
+        const currentTheme = themes.find(t => t.id === currentThemeId) || themes[0];
+        if(themeLink) themeLink.href = `/themes/${currentTheme.file}`;
     });
 
     aiSuggestBtn.addEventListener('click', () => {

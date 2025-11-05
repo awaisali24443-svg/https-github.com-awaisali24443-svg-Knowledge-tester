@@ -109,6 +109,7 @@ const routes = {
     '': 'welcome', // Default route
     '#welcome': 'welcome',
     '#login': 'login',
+    '#signup': 'signup',
     '#home': 'home',
     '#explore-topics': 'explore-topics',
     '#optional-quiz': 'optional-quiz-generator',

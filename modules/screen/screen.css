@@ -98,3 +98,12 @@
     min-width: 70px;
     text-align: right;
 }
+
+.no-progress-message {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-style: italic;
+    padding: 2rem;
+    background-color: var(--color-bg);
+    border-radius: 8px;
+}

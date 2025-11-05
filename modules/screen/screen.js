@@ -3,10 +3,15 @@ import { MAX_LEVEL } from '../../constants.js';
 
 console.log("Screen module loaded.");
 
-const topics = {
-    programming: ['Python', 'JavaScript', 'Java', 'SQL', 'TypeScript', 'C++'],
-    history: ['Ancient Rome', 'Ancient Egypt', 'The Mughal Empire', 'The Ottoman Empire']
+// Defines the categories and the topics that belong to them.
+// This mapping helps group the progress items visually.
+const topicCategories = {
+    'Programming Languages': ['Python', 'JavaScript', 'Java', 'SQL', 'TypeScript', 'C++'],
+    'Historical Knowledge': ['Ancient Rome', 'Ancient Egypt', 'The Mughal Empire', 'The Ottoman Empire'],
+    'Science': ['Biology', 'Chemistry', 'Science Inventions'],
+    'Technology': ['AI and Technology', 'Space and Astronomy']
 };
+
 
 function renderProgress() {
     const progress = progressService.getProgress();
@@ -31,20 +36,42 @@ function renderProgress() {
         levelsUnlockedEl.textContent = totalLevelsUnlocked;
     }
 
-    // Render Topic-specific Progress
-    const programmingList = document.getElementById('programming-progress-list');
-    const historicalList = document.getElementById('historical-progress-list');
+    // Render Topic-specific Progress Dynamically
+    const progressListContainer = document.getElementById('progress-list-container');
+    if (!progressListContainer) return;
 
-    if (programmingList) {
-        programmingList.innerHTML = topics.programming.map(topic => 
-            createProgressItemHtml(topic, levels[topic] || 1)
-        ).join('');
+    let allProgressHtml = '';
+    const topicsWithProgress = Object.keys(levels);
+
+    for (const category in topicCategories) {
+        const topicsInCategory = topicCategories[category];
+        
+        // Filter out topics from the progress data that belong to the current category
+        const categoryProgressHtml = topicsInCategory
+            .map(topic => {
+                const level = levels[topic] || 1;
+                // Create a progress item for each topic defined in the category map
+                return createProgressItemHtml(topic, level);
+            })
+            .join('');
+
+        // Only render the category section if it contains progress items
+        if (categoryProgressHtml.trim() !== '') {
+            allProgressHtml += `
+                <div class="progress-category">
+                    <h2>${category}</h2>
+                    <div class="progress-list">
+                        ${categoryProgressHtml}
+                    </div>
+                </div>
+            `;
+        }
     }
 
-    if (historicalList) {
-        historicalList.innerHTML = topics.history.map(topic => 
-            createProgressItemHtml(topic, levels[topic] || 1)
-        ).join('');
+    if (topicsWithProgress.length === 0) {
+         progressListContainer.innerHTML = '<p class="no-progress-message">You haven\'t started any leveled quizzes yet. Go to "Explore Topics" to begin!</p>';
+    } else {
+        progressListContainer.innerHTML = allProgressHtml;
     }
 }
 

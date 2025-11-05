@@ -1,4 +1,3 @@
-
 // signup.js - Logic for the signup module
 
 const signupForm = document.getElementById('signup-form');
@@ -10,4 +9,3 @@ if (signupForm) {
         // Future logic: validate inputs, send to server, handle response
     });
 }
-    
