@@ -158,6 +158,41 @@
     color: var(--color-secondary);
 }
 
+/* Activity Feed */
+.activity-feed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 0.5rem; /* For scrollbar */
+}
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background-color: var(--color-bg);
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+}
+.activity-icon {
+    font-size: 1.5rem;
+}
+.activity-text strong {
+    color: var(--color-primary);
+}
+.activity-text {
+    flex-grow: 1;
+    font-size: 0.95rem;
+}
+.activity-placeholder {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-style: italic;
+    padding: 1rem;
+}
+
 
 /* Missions */
 .missions-list {

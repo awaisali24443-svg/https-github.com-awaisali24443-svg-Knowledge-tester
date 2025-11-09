@@ -2,6 +2,7 @@ import * as quizState from '../../services/quizStateService.js';
 import * as progressService from '../../services/progressService.js';
 import * as missionService from '../../services/missionService.js';
 import * as achievementService from '../../services/achievementService.js';
+import { createActivity } from '../../services/activityFeedService.js';
 import { playSound } from '../../services/soundService.js';
 import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
 import { UNLOCK_SCORE } from '../../constants.js';
@@ -38,6 +39,8 @@ function getReviewCardHTML(question, userAnswer) {
 async function handleProgressUpdate(quizContext, score, missedConcepts, percentage) {
     if (quizContext.isChallenge) return;
 
+    createActivity({ type: 'quiz_complete', text: `completed a quiz on ${quizContext.topicName}`, icon: '🎯' });
+
     if (quizContext.learningPathInfo) {
         const { pathId, stepIndex, totalSteps } = quizContext.learningPathInfo;
         if (score >= UNLOCK_SCORE && stepIndex < totalSteps) {
@@ -55,12 +58,14 @@ async function handleProgressUpdate(quizContext, score, missedConcepts, percenta
 
         if (didLevelUp) {
             window.showLevelUpModal(newLevel);
+            createActivity({ type: 'level_up', text: `reached Level ${newLevel}!`, icon: '🚀' });
         }
 
         const newProgress = await progressService.getProgress(true);
         const newAchievements = await achievementService.checkAchievements(newProgress, quizContext, score);
         newAchievements.forEach(ach => {
             window.showToast(`🏆 Achievement Unlocked: ${ach.name}`);
+            createActivity({ type: 'achievement', text: `unlocked the "${ach.name}" achievement!`, icon: ach.icon });
         });
 
         await missionService.checkAndCompleteMissions(quizContext, score, percentage);

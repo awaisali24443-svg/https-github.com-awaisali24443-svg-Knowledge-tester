@@ -2,6 +2,7 @@ import * as quizState from '../../services/quizStateService.js';
 import * as progressService from '../../services/progressService.js';
 import { playSound } from '../../services/soundService.js';
 import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
+import { createActivity } from '../../services/activityFeedService.js';
 
 let sceneManager;
 
@@ -30,6 +31,7 @@ async function renderChallengeResults() {
     if (score > personalBest) {
         newBest = true;
         await progressService.updateUserProfile({ challengeHighScore: score });
+        createActivity({ type: 'high_score', text: `set a new high score of ${score} in Challenge Mode!`, icon: '🔥' });
     }
 
     let highScoreHTML = newBest

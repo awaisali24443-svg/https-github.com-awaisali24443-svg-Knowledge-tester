@@ -2,6 +2,7 @@ import { getProgress, calculateLevelInfo } from '../../services/progressService.
 import { getActiveMissions } from '../../services/missionService.js';
 import { generateLearningPath } from '../../services/geminiService.js';
 import { saveLearningPath, getActiveLearningPaths } from '../../services/learningPathService.js';
+import { getRecentActivities } from '../../services/activityFeedService.js';
 import { MODULE_CONTEXT_KEY } from '../../constants.js';
 
 const welcomeMessage = document.getElementById('welcome-message');
@@ -14,6 +15,7 @@ const learningPathForm = document.getElementById('learning-path-form');
 const generatePathBtn = document.getElementById('generate-path-btn');
 const learningGoalInput = document.getElementById('learning-goal-input');
 const learningPathsList = document.getElementById('learning-paths-list');
+const activityFeedList = document.getElementById('activity-feed-list');
 
 async function renderWelcome() {
     const progress = await getProgress(true);
@@ -41,6 +43,21 @@ async function renderMissions() {
         <div class="mission-card ${mission.isComplete ? 'completed' : ''}">
             <div class="mission-info"><p>${mission.description}</p></div>
             <div class="mission-reward">+${mission.reward} XP</div>
+        </div>
+    `).join('');
+}
+
+async function renderActivityFeed() {
+    if (!activityFeedList) return;
+    const activities = await getRecentActivities();
+    if (activities.length === 0) {
+        activityFeedList.innerHTML = '<div class="activity-placeholder">No recent activity yet.</div>';
+        return;
+    }
+    activityFeedList.innerHTML = activities.map(act => `
+        <div class="activity-item">
+            <span class="activity-icon">${act.icon || '🔹'}</span>
+            <p class="activity-text"><strong>${act.username}</strong> ${act.text}</p>
         </div>
     `).join('');
 }
@@ -108,6 +125,7 @@ export function init() {
     renderWelcome();
     renderMissions();
     renderLearningPaths();
+    renderActivityFeed();
     learningPathForm?.addEventListener('submit', handleGeneratePath);
 }
 
