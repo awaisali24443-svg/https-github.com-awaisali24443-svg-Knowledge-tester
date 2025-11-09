@@ -29,6 +29,8 @@ const getDefaultProgress = () => ({
         totalQuizzes: 0,
         totalCorrect: 0,
         xp: 0,
+        weeklyXP: 0, // For leaderboard
+        lastWeekReset: getWeekId(new Date()), // For leaderboard
         streak: 0,
         lastQuizDate: null,
         challengeHighScore: 0,
@@ -44,6 +46,16 @@ const isSameDay = (date1, date2) => {
            date1.getDate() === date2.getDate();
 };
 
+// Function to get a unique ID for the current week (e.g., "2023-34")
+const getWeekId = (date) => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    return `${d.getUTCFullYear()}-${weekNo}`;
+};
+
+
 export const getProgress = () => {
     try {
         const progressString = localStorage.getItem(PROGRESS_KEY);
@@ -58,6 +70,13 @@ export const getProgress = () => {
                 achievements: savedProgress.achievements || [],
             };
             
+            // Check for weekly leaderboard reset
+            const currentWeekId = getWeekId(new Date());
+            if (progress.stats.lastWeekReset !== currentWeekId) {
+                progress.stats.weeklyXP = 0;
+                progress.stats.lastWeekReset = currentWeekId;
+            }
+
             if (progress.stats.lastQuizDate) {
                 const today = new Date();
                 const lastDate = new Date(progress.stats.lastQuizDate);
@@ -96,6 +115,7 @@ export const unlockNextLevel = (topic, maxLevel = 50) => {
     if (currentLevel < maxLevel) {
         progress.levels[topic] = currentLevel + 1;
         progress.stats.xp += 100; // Bonus XP for topic leveling up
+        progress.stats.weeklyXP += 100;
         saveProgress(progress);
     }
 };
@@ -125,6 +145,7 @@ export const recordQuizResult = (topic, score, quizData, userAnswers, xpGained) 
     progress.stats.totalQuizzes += 1;
     progress.stats.totalCorrect += score;
     progress.stats.xp += xpGained;
+    progress.stats.weeklyXP += xpGained;
 
     // --- Update Topic History for AI Tutor & Nemesis Quizzes ---
     if (topic && quizData) {

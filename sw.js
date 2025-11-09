@@ -1,6 +1,6 @@
 // sw.js - Service Worker for PWA capabilities
 
-const CACHE_NAME = 'knowledge-tester-v1.3.0'; // Updated version for new features
+const CACHE_NAME = 'knowledge-tester-v1.4.0'; // Updated version for leaderboard
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -16,8 +16,10 @@ const ASSETS_TO_CACHE = [
     '/services/topicService.js',
     '/services/navigationService.js',
     '/services/threeManager.js',
-    '/services/stellarMap.js', // New
-    '/services/achievementService.js', // New
+    '/services/stellarMap.js',
+    '/services/achievementService.js',
+    '/services/missionService.js',
+    '/services/leaderboardService.js', // New
     '/constants.js',
     '/manifest.json',
     '/icon.svg',
@@ -53,6 +55,10 @@ const ASSETS_TO_CACHE = [
     '/modules/study/study.html',
     '/modules/study/study.css',
     '/modules/study/study.js',
+    '/modules/leaderboard/leaderboard.html', // New
+    '/modules/leaderboard/leaderboard.css', // New
+    '/modules/leaderboard/leaderboard.js', // New
+
 
     // Fonts CSS
     'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;800&family=Orbitron:wght@700;800&display=swap'

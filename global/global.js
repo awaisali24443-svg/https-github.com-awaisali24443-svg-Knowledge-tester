@@ -1,7 +1,3 @@
-/*
-    GLOBAL SCRIPT
-    This file handles routing and loading shared components.
-*/
 import { playSound } from '/services/soundService.js';
 import { getProgress, calculateLevelInfo } from '/services/progressService.js';
 
@@ -15,7 +11,7 @@ function initCursorAura() {
     const aura = document.getElementById('cursor-aura');
     if (!aura) return;
     document.addEventListener('mousemove', e => {
-        aura.style.transform = `translate(${e.clientX - 15}px, e.clientY - 15}px)`;
+        aura.style.transform = `translate(${e.clientX - 15}px, ${e.clientY - 15}px)`;
     });
 }
 
@@ -204,7 +200,8 @@ const staticRoutes = {
     '#results': 'results',
     '#screen': 'screen',
     '#settings': 'settings',
-    '#study': 'study'
+    '#study': 'study',
+    '#leaderboard': 'leaderboard' // New route
 };
 
 let isNavigating = false;
