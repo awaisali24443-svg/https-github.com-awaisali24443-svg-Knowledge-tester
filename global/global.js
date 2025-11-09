@@ -237,6 +237,7 @@ const routes = {
     '#signup': { module: 'signup', auth: false },
     // Authenticated routes
     '#home': { module: 'home', auth: true },
+    '#explore-topics': { module: 'explore-topics', auth: true },
     '#challenge-setup': { module: 'challenge-setup', auth: true },
     '#loading': { module: 'loading', auth: true },
     '#quiz': { module: 'quiz', auth: true },
@@ -329,6 +330,29 @@ function handleRouteChange() {
         return;
     }
     
+    // Handle parameterized routes for topic lists
+    if (hash.startsWith('#topics/')) {
+        if (!currentUser) {
+            showToast("You must be logged in to view topics.", "error");
+            window.location.hash = '#login';
+            return;
+        }
+        try {
+            const category = hash.substring('#topics/'.length);
+            // Load the topic-list module with the category as context
+            loadModule('topic-list', { category });
+             // Update active nav link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+        } catch (error) {
+            console.error("Failed to parse topic category from hash:", error);
+            showToast("Invalid topic category.", "error");
+            window.location.hash = '#home';
+        }
+        return;
+    }
+
     // Default route logic
     if (!hash) {
         hash = currentUser ? '#home' : '#welcome';
