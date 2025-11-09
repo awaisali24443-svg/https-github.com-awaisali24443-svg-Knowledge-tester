@@ -7,7 +7,59 @@ const errorContainer = document.getElementById('error-container');
 const loadingTextElement = document.getElementById('loading-text');
 
 const topicMessages = {
-    // ... (messages remain the same)
+    'science': [
+        "Calibrating the microscope...",
+        "Mixing the perfect chemical solution for questions...",
+        "Consulting with Nobel laureates...",
+        "Splitting atoms for quiz data..."
+    ],
+    'biology': [
+        "Sequencing the DNA of this quiz...",
+        "Observing the subject in its natural habitat...",
+        "Classifying questions into the right phylum..."
+    ],
+    'chemistry': [
+        "Titrating the difficulty level...",
+        "Bonding elements into challenging questions...",
+        "Waiting for the reaction to complete..."
+    ],
+    'history': [
+        "Dusting off ancient scrolls...",
+        "Consulting the annals of time...",
+        "Synchronizing with the historical timeline...",
+        "Avoiding any temporal paradoxes..."
+    ],
+    'ancient rome': [
+        "Consulting the Sibylline Books...",
+        "Assembling the legions of trivia...",
+        "Building the aqueducts of knowledge..."
+    ],
+    'programming': [
+        "Compiling the code of knowledge...",
+        "Debugging the final question...",
+        "Querying the master database of syntax...",
+        "Running lint checks on the answers..."
+    ],
+     'python': [
+        "Wrangling data pythons for facts...",
+        "Importing knowledge from the global scope...",
+        "Avoiding indentation errors in your quiz..."
+    ],
+    'javascript': [
+        "Awaiting promises from the knowledge server...",
+        "Fetching trivia from the DOM of history...",
+        "Running `npm install more-questions`..."
+    ],
+    'technology': [
+        "Upgrading the trivia servers to quantum...",
+        "Polishing the chrome on futuristic facts...",
+        "Downloading data from the cloud..."
+    ],
+    'space and astronomy': [
+        "Gazing through the cosmic telescope...",
+        "Calculating orbital mechanics of trivia...",
+        "Receiving data transmissions from deep space..."
+    ],
     'default': [
         "Asking the silicon brain...", "Reticulating splines for maximum quizitude...",
         "Translating universal knowledge...", "Aligning the knowledge crystals...",

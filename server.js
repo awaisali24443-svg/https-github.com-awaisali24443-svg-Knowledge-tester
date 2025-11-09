@@ -16,6 +16,12 @@ app.get('/config.js', (req, res) => {
   `);
 });
 
+// Add route for PWA icon
+app.get('/icon.svg', (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='#1f1f1f'/><text x='50' y='65' font-family='Inter, sans-serif' font-size='50' font-weight='800' fill='#2dd4bf' text-anchor='middle'>KT</text></svg>`);
+});
+
 // Serve static files from the root directory
 app.use(express.static(path.join(__dirname, '.')));
 
