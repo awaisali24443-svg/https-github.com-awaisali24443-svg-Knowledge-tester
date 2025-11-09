@@ -17,6 +17,9 @@ const motivationalHints = [
     "You’re doing great!", "This next one’s a brain-twister!", "Keep up the awesome work!",
     "One step closer to mastery!", "Let's see how you handle this one.", "Knowledge is power!"
 ];
+const initialHints = [
+    "Let's get started!", "Here's your first question. Good luck!", "Ready to test your knowledge?", "The journey begins now!"
+];
 
 const handleKeyPress = (e) => {
     const key = parseInt(e.key, 10);
@@ -42,7 +45,9 @@ async function renderQuiz() {
         </button>
     `).join('');
     
-    const hint = currentQuestionIndex > 0 ? motivationalHints[Math.floor(Math.random() * motivationalHints.length)] : '';
+    const hint = currentQuestionIndex > 0 
+        ? motivationalHints[Math.floor(Math.random() * motivationalHints.length)] 
+        : initialHints[Math.floor(Math.random() * initialHints.length)];
 
     const newContent = document.createElement('div');
     newContent.id = 'quiz-content-wrapper';

@@ -1,6 +1,7 @@
 import { categoryData } from '../../services/topicService.js';
 import { NUM_QUESTIONS } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
+import { startQuizFlow } from '../../services/navigationService.js';
 
 console.log("Home module (Dashboard) loaded.");
 
@@ -12,7 +13,7 @@ function animateFeatureCards() {
     });
 }
 
-function handleSurpriseMe(e) {
+async function handleSurpriseMe(e) {
     e.preventDefault();
     playSound('start');
 
@@ -30,10 +31,7 @@ function handleSurpriseMe(e) {
         returnHash: '#home'
     };
     
-    sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
-    sessionStorage.setItem('quizTopicPrompt', prompt);
-    
-    window.location.hash = '#loading';
+    await startQuizFlow(quizContext, prompt);
 }
 
 function personalizeDashboard() {

@@ -1,11 +1,11 @@
 /*
     THEME STYLES
     This file consolidates all professional themes for the application.
-    The active theme is controlled by the `data-theme` attribute on the body tag.
+    The active theme is controlled by the `data-theme` attribute on the :root (html) tag.
 */
 
 /* 1. Light Professional Theme (Default) */
-body[data-theme="light"] {
+:root[data-theme="light"] {
   --color-primary: #3b82f6; /* accent */
   --color-secondary: #14b8a6;
   --color-bg: #ffffff; /* background */
@@ -24,7 +24,7 @@ body[data-theme="light"] {
 }
 
 /* 2. Dark Professional Theme */
-body[data-theme="dark"] {
+:root[data-theme="dark"] {
   --color-primary: #0077ff; /* accent */
   --color-secondary: #2dd4bf;
   --color-bg: #0a0a0a; /* background */
@@ -43,7 +43,7 @@ body[data-theme="dark"] {
 }
 
 /* 3. Cyber Neon Theme */
-body[data-theme="cyber"] {
+:root[data-theme="cyber"] {
   --color-primary: #ff007f; /* accent (pink) */
   --color-secondary: #00ffff; /* secondary-accent (cyan) */
   --color-bg: #0d0f1a; /* background */

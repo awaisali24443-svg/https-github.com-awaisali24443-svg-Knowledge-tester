@@ -1,6 +1,7 @@
 import * as progressService from '../../services/progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
 import { categoryData } from '../../services/topicService.js';
+import { startQuizFlow } from '../../services/navigationService.js';
 
 console.log("Unified Topic List module loaded.");
 
@@ -17,7 +18,7 @@ function getLevelDescriptor(level) {
     return "Noob";
 }
 
-function handleTopicSelect(event) {
+async function handleTopicSelect(event) {
     const card = event.currentTarget;
     const topic = card.dataset.topic;
     const returnHash = card.dataset.returnHash;
@@ -26,13 +27,17 @@ function handleTopicSelect(event) {
     const level = progressService.getCurrentLevel(topic);
     const descriptor = getLevelDescriptor(level);
 
-    const quizContext = { topicName: topic, level: level, returnHash: returnHash };
-    sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
-
     const prompt = `Create a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topic}". The difficulty should be for a user at Level ${level} of ${MAX_LEVEL} (${descriptor}).`;
-    sessionStorage.setItem('quizTopicPrompt', prompt);
-    sessionStorage.setItem('quizTopicName', topic);
-    window.location.hash = '#loading';
+    
+    const quizContext = { 
+        topicName: topic, 
+        level: level, 
+        returnHash: returnHash,
+        isLeveled: true,
+        prompt: prompt
+    };
+
+    await startQuizFlow(quizContext, prompt);
 }
 
 function renderTopicCards(category) {

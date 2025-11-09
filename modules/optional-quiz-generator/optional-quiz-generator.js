@@ -1,5 +1,6 @@
 import { NUM_QUESTIONS } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
+import { startQuizFlow } from '../../services/navigationService.js';
 
 console.log("Optional Quiz Generator module loaded.");
 
@@ -36,7 +37,7 @@ if (topicForm) {
         });
     }
 
-    topicForm.addEventListener('submit', (e) => {
+    topicForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const topic = topicInput.value.trim();
         if (!topic) return;
@@ -51,10 +52,7 @@ if (topicForm) {
             prompt: prompt, // Store the prompt for retries
             returnHash: '#optional-quiz'
         };
-        sessionStorage.setItem('quizContext', JSON.stringify(quizContext));
-        sessionStorage.setItem('quizTopicPrompt', prompt);
-        sessionStorage.setItem('quizTopicName', topic);
-
-        window.location.hash = '#loading';
+        
+        await startQuizFlow(quizContext, prompt);
     });
 }

@@ -127,8 +127,26 @@ body.theme-transitioning * {
     transition: background-color 0.5s ease, border-color 0.5s ease;
     height: 70px;
 }
-.site-nav .logo img { height: 48px; width: auto; transition: transform 0.3s ease; }
-.site-nav .logo:hover img { transform: scale(1.05) rotate(-2deg); }
+.site-nav .logo .logo-svg { 
+    height: 40px; 
+    width: auto; 
+    transition: transform 0.3s ease; 
+}
+.site-nav .logo:hover .logo-svg { 
+    transform: scale(1.05); 
+}
+
+.logo-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    fill: var(--color-text);
+    stroke: url(#logo-gradient);
+    stroke-width: 0.2;
+    paint-order: stroke;
+    transition: fill 0.5s ease;
+}
 
 .nav-links { list-style: none; display: flex; gap: 1rem; }
 .nav-link { 

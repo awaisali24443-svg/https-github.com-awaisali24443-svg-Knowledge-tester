@@ -12,6 +12,18 @@
     display: block;
 }
 
+.welcome-logo-text {
+    font-family: Inter, sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    fill: var(--color-text);
+    stroke: url(#welcome-neon-grad);
+    stroke-width: 0.5;
+    letter-spacing: 2px;
+    filter: url(#welcome-neon-glow);
+    transition: fill 0.5s ease;
+}
+
 .welcome-subtitle {
     font-size: 1.1rem;
     color: var(--color-text-muted);
@@ -19,10 +31,20 @@
     margin: 0 auto 2.5rem;
 }
 
-.continue-btn {
-    padding: 0.8rem 2.5rem;
-    font-size: 1.1rem;
+.welcome-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
 }
+
+.welcome-actions .btn {
+    width: 100%;
+}
+
 
 @keyframes fadeInGlow {
     from { 

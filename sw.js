@@ -14,6 +14,7 @@ const ASSETS_TO_CACHE = [
     '/services/quizStateService.js',
     '/services/soundService.js',
     '/services/topicService.js',
+    '/services/navigationService.js',
     '/constants.js',
     '/manifest.json',
     '/icon.svg',

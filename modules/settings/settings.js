@@ -150,15 +150,11 @@ function init() {
     loadGeneralSettings();
     loadAccessibilitySettings();
 
-    // Load and set saved theme
-    const savedTheme = localStorage.getItem('selectedTheme');
-    if (savedTheme && themes.includes(savedTheme)) {
-      document.body.setAttribute('data-theme', savedTheme);
+    // Load and set saved theme for the dropdown selector
+    const savedTheme = localStorage.getItem('selectedTheme') || 'light';
+    if (themes.includes(savedTheme)) {
       themeSelector.value = savedTheme;
     } else {
-      // Default to light theme if nothing is saved or the saved theme is invalid
-      document.body.setAttribute('data-theme', 'light');
-      localStorage.setItem('selectedTheme', 'light');
       themeSelector.value = 'light';
     }
 
@@ -166,8 +162,15 @@ function init() {
     themeSelector?.addEventListener('change', (e) => {
       const selectedTheme = e.target.value;
       if (themes.includes(selectedTheme)) {
-          document.body.setAttribute('data-theme', selectedTheme);
+          // Add class to disable transitions during theme switch for a smoother experience
+          document.body.classList.add('theme-transitioning');
+          document.documentElement.setAttribute('data-theme', selectedTheme);
           localStorage.setItem('selectedTheme', selectedTheme);
+          
+          // Remove the class after a short delay to re-enable transitions
+          setTimeout(() => {
+              document.body.classList.remove('theme-transitioning');
+          }, 150);
       }
     });
 

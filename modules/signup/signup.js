@@ -7,10 +7,11 @@ if (signupForm) {
         e.preventDefault();
         await window.showConfirmationModal({
             title: 'Feature In Development',
-            text: 'Signup functionality is not yet implemented in this demo.',
-            confirmText: 'Got it',
+            text: 'Signup functionality is not yet implemented. You will be logged in as a guest.',
+            confirmText: 'Continue',
             isAlert: true
         });
-        // Future logic: validate inputs, send to server, handle response
+        // Redirect to home after modal confirmation, creating a consistent "demo" flow
+        window.location.hash = '#home';
     });
 }
