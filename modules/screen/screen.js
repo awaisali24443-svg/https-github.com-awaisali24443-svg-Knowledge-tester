@@ -1,3 +1,5 @@
+// modules/screen/screen.js
+
 import * as progressService from '../../services/progressService.js';
 import { MAX_LEVEL } from '../../constants.js';
 import { categoryData } from '../../services/topicService.js';
@@ -7,6 +9,7 @@ import { generateNemesisQuiz } from '../../services/geminiService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 
 let sceneManager;
+let eventListeners = [];
 
 const topicCategories = Object.values(categoryData).reduce((acc, category) => {
     acc[category.categoryTitle] = category.topics.map(topic => topic.name);
@@ -56,53 +59,60 @@ async function handleNemesisQuiz(e) {
 }
 
 async function renderProgress() {
-    const progress = await progressService.getProgress();
-    const statCards = document.querySelectorAll('.stat-card');
+    const progressContent = document.getElementById('progress-content');
+    try {
+        const progress = await progressService.getProgress();
+        const statCards = document.querySelectorAll('.stat-card');
 
-    if (!progress) {
-        statCards.forEach(card => card.innerHTML = '<p>Error</p>');
-        return;
-    }
-
-    const { achievements, history, levels } = progress;
-    renderAchievements(achievements || []);
-
-    const totalQuizzes = Object.values(history || {}).reduce((sum, item) => sum + item.correct + item.incorrect, 0) / 5;
-    const totalCorrect = Object.values(history || {}).reduce((sum, item) => sum + item.correct, 0);
-    const totalPossibleScore = totalQuizzes * 5;
-    const avg = totalPossibleScore > 0 ? Math.round((totalCorrect / totalPossibleScore) * 100) : 0;
-    const totalLevelsUnlocked = Object.values(levels || {}).reduce((sum, level) => sum + (level - 1), 0);
-    
-    document.getElementById('total-quizzes').textContent = Math.floor(totalQuizzes);
-    document.getElementById('average-score').textContent = `${avg}%`;
-    document.getElementById('levels-unlocked').textContent = totalLevelsUnlocked;
-    statCards.forEach(card => card.classList.add('loaded'));
-
-    const progressListContainer = document.getElementById('progress-list-container');
-    let allProgressHtml = '';
-
-    for (const category in topicCategories) {
-        const topicsInCategory = topicCategories[category];
-        const categoryProgressHtml = topicsInCategory
-            .filter(topic => levels && levels[topic] > 1)
-            .map(topic => createProgressItemHtml(topic, levels[topic], history[topic]))
-            .join('');
-
-        if (categoryProgressHtml.trim() !== '') {
-            allProgressHtml += `
-                <div class="progress-category">
-                    <h2>${category}</h2>
-                    <div class="progress-list">${categoryProgressHtml}</div>
-                </div>
-            `;
+        if (!progress) {
+            throw new Error("Could not load your progress data.");
         }
-    }
 
-    if (Object.keys(levels || {}).length === 0) {
-        progressListContainer.innerHTML = '<p class="no-progress-message">You haven\'t started any leveled quizzes yet. Launch a mission from the Topic Universe to begin!</p>';
-    } else {
-        progressListContainer.innerHTML = allProgressHtml;
-        document.querySelectorAll('.nemesis-quiz-btn').forEach(btn => btn.addEventListener('click', handleNemesisQuiz));
+        const { achievements, history, levels } = progress;
+        renderAchievements(achievements || []);
+
+        const totalQuizzes = Object.values(history || {}).reduce((sum, item) => sum + item.correct + item.incorrect, 0) / 5;
+        const totalCorrect = Object.values(history || {}).reduce((sum, item) => sum + item.correct, 0);
+        const totalPossibleScore = totalQuizzes * 5;
+        const avg = totalPossibleScore > 0 ? Math.round((totalCorrect / totalPossibleScore) * 100) : 0;
+        const totalLevelsUnlocked = Object.values(levels || {}).reduce((sum, level) => sum + (level - 1), 0);
+        
+        document.getElementById('total-quizzes').textContent = Math.floor(totalQuizzes);
+        document.getElementById('average-score').textContent = `${avg}%`;
+        document.getElementById('levels-unlocked').textContent = totalLevelsUnlocked;
+        statCards.forEach(card => card.classList.add('loaded'));
+
+        const progressListContainer = document.getElementById('progress-list-container');
+        let allProgressHtml = '';
+
+        for (const category in topicCategories) {
+            const topicsInCategory = topicCategories[category];
+            const categoryProgressHtml = topicsInCategory
+                .filter(topic => levels && levels[topic] > 1)
+                .map(topic => createProgressItemHtml(topic, levels[topic], history[topic]))
+                .join('');
+
+            if (categoryProgressHtml.trim() !== '') {
+                allProgressHtml += `
+                    <div class="progress-category">
+                        <h2>${category}</h2>
+                        <div class="progress-list">${categoryProgressHtml}</div>
+                    </div>
+                `;
+            }
+        }
+
+        if (Object.keys(levels || {}).length === 0) {
+            progressListContainer.innerHTML = '<p class="no-progress-message">You haven\'t started any leveled quizzes yet. Launch a mission from the Topic Universe to begin!</p>';
+        } else {
+            progressListContainer.innerHTML = allProgressHtml;
+            document.querySelectorAll('.nemesis-quiz-btn').forEach(btn => {
+                btn.addEventListener('click', handleNemesisQuiz);
+                eventListeners.push({ element: btn, type: 'click', handler: handleNemesisQuiz });
+            });
+        }
+    } catch (error) {
+        progressContent.innerHTML = `<div class="no-progress-message" style="color: var(--color-danger);">${error.message} Please try refreshing.</div>`;
     }
 }
 
@@ -134,5 +144,9 @@ export async function init() {
 }
 
 export function cleanup() {
+    eventListeners.forEach(({ element, type, handler }) => {
+        element.removeEventListener(type, handler);
+    });
+    eventListeners = [];
     sceneManager = cleanupModuleScene(sceneManager);
 }
