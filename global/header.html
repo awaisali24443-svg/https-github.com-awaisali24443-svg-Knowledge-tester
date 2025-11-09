@@ -15,13 +15,22 @@
         </a>
     </div>
     <ul class="nav-links">
-        <li><a href="#home" class="nav-link" title="Home">🏠<span class="nav-link-text">Home</span></a></li>
-        <li><a href="#leaderboard" class="nav-link" title="Leaderboard">🏆<span class="nav-link-text">Leaderboard</span></a></li>
-        <li><a href="#challenge-setup" class="nav-link" title="Challenge Mode">🧪<span class="nav-link-text">Challenge</span></a></li>
-        <li><a href="#screen" class="nav-link" title="My Progress">📈<span class="nav-link-text">Progress</span></a></li>
-        <li><a href="#settings" class="nav-link" title="Profile & Settings">👤<span class="nav-link-text">Profile</span></a></li>
+        <!-- Links for Authenticated Users -->
+        <div id="user-nav" class="hidden">
+            <li><a href="#home" class="nav-link" title="Home">🏠<span class="nav-link-text">Home</span></a></li>
+            <li><a href="#leaderboard" class="nav-link" title="Leaderboard">🏆<span class="nav-link-text">Leaderboard</span></a></li>
+            <li><a href="#challenge-setup" class="nav-link" title="Challenge Mode">🧪<span class="nav-link-text">Challenge</span></a></li>
+            <li><a href="#screen" class="nav-link" title="My Progress">📈<span class="nav-link-text">Progress</span></a></li>
+            <li><a href="#settings" class="nav-link" title="Profile & Settings">👤<span class="nav-link-text">Profile</span></a></li>
+            <li><button id="logout-btn" class="nav-link nav-action-btn" title="Logout">🚪<span class="nav-link-text">Logout</span></button></li>
+        </div>
+        <!-- Links for Guests -->
+        <div id="guest-nav" class="hidden">
+            <li><a href="#login" class="nav-link" title="Login">🔑<span class="nav-link-text">Login</span></a></li>
+            <li><a href="#signup" class="btn btn-primary nav-action-btn" title="Sign Up">Sign Up</a></li>
+        </div>
     </ul>
-    <div class="header-user-stats">
+    <div class="header-user-stats hidden">
         <div class="stat-item" title="Player Level">
             <span id="header-level">LVL 1</span>
         </div>

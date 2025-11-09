@@ -9,6 +9,16 @@
     margin-bottom: 1.5rem;
 }
 
+.auth-error {
+    background-color: color-mix(in srgb, var(--color-danger) 15%, transparent);
+    color: var(--color-danger);
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: 500;
+}
+
 .form-group {
     margin-bottom: 1.25rem;
 }
@@ -22,7 +32,18 @@
 .auth-card .btn {
     width: 100%;
     margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 50px; /* Ensure button height is consistent */
 }
+
+.auth-card .btn .spinner {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
 
 .auth-actions {
     text-align: center;

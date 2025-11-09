@@ -1,6 +1,6 @@
 // sw.js - Service Worker for PWA capabilities
 
-const CACHE_NAME = 'knowledge-tester-v1.4.0'; // Updated version for leaderboard
+const CACHE_NAME = 'knowledge-tester-v2.0.0'; // Major version bump for backend integration
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -19,7 +19,9 @@ const ASSETS_TO_CACHE = [
     '/services/stellarMap.js',
     '/services/achievementService.js',
     '/services/missionService.js',
-    '/services/leaderboardService.js', // New
+    '/services/leaderboardService.js',
+    '/services/authService.js', // New
+    '/firebase-config.js', // New
     '/constants.js',
     '/manifest.json',
     '/icon.svg',
@@ -55,9 +57,9 @@ const ASSETS_TO_CACHE = [
     '/modules/study/study.html',
     '/modules/study/study.css',
     '/modules/study/study.js',
-    '/modules/leaderboard/leaderboard.html', // New
-    '/modules/leaderboard/leaderboard.css', // New
-    '/modules/leaderboard/leaderboard.js', // New
+    '/modules/leaderboard/leaderboard.html',
+    '/modules/leaderboard/leaderboard.css',
+    '/modules/leaderboard/leaderboard.js',
 
 
     // Fonts CSS
@@ -93,7 +95,7 @@ self.addEventListener('activate', (event) => {
 // Fetch event: serve from cache, fall back to network, and cache new requests
 self.addEventListener('fetch', (event) => {
     // For external resources like Google Fonts, use a stale-while-revalidate strategy.
-    if (event.request.url.startsWith('https://fonts.gstatic.com')) {
+    if (event.request.url.startsWith('https://fonts.gstatic.com') || event.request.url.startsWith('https://www.gstatic.com')) {
         event.respondWith(
             caches.open(CACHE_NAME).then(cache => {
                 return cache.match(event.request).then(response => {
@@ -121,7 +123,7 @@ self.addEventListener('fetch', (event) => {
                     return fetchResponse;
                 }
 
-                // Don't cache the API key config script
+                // Don't cache config script
                 if (event.request.url.includes('/config.js')) {
                     return fetchResponse;
                 }

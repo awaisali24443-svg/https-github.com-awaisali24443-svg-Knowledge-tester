@@ -1,12 +1,21 @@
 import { playSound } from '/services/soundService.js';
 import { getProgress, calculateLevelInfo } from '/services/progressService.js';
+import { onAuthStateChanged, getCurrentUser, logOut } from '/services/authService.js';
 
 const rootContainer = document.getElementById('root-container');
 const headerContainer = document.getElementById('header-container');
 const yearSpan = document.getElementById('year');
+let currentUser = null;
+
+// --- Auth State Management ---
+onAuthStateChanged(async (user) => {
+    currentUser = user;
+    await loadHeader(); // Reload header to show correct links
+    handleRouteChange(); // Re-evaluate route based on new auth state
+});
+
 
 // --- UI Effects ---
-
 function initCursorAura() {
     const aura = document.getElementById('cursor-aura');
     if (!aura) return;
@@ -34,8 +43,6 @@ function showToast(message, type = 'success') {
         toast.addEventListener('transitionend', () => toast.remove());
     }, 3000);
 }
-
-// Make toast globally available
 window.showToast = showToast;
 
 function initGlobalSounds() {
@@ -63,6 +70,7 @@ function initOnboarding() {
 }
 
 function initAccessibility() {
+    // This now only applies visual settings, not data
     const settings = JSON.parse(localStorage.getItem('accessibilitySettings') || '{}');
     if (settings.largeText) document.body.classList.add('large-text');
     if (settings.highContrast) document.body.classList.add('high-contrast');
@@ -71,14 +79,16 @@ function initAccessibility() {
 }
 
 // --- Header Stats UI ---
-function updateHeaderStats() {
-    const progress = getProgress();
-    const { level } = calculateLevelInfo(progress.stats.xp);
+async function updateHeaderStats() {
+    if (!currentUser) return; // Don't update if logged out
+    const progress = await getProgress(); // Now async
+    if (!progress) return; // User might not have progress doc yet
+    const { level } = calculateLevelInfo(progress.xp);
     const levelEl = document.getElementById('header-level');
     const streakEl = document.getElementById('header-streak');
     
     if (levelEl) levelEl.textContent = `LVL ${level}`;
-    if (streakEl) streakEl.textContent = `🔥 ${progress.stats.streak}`;
+    if (streakEl) streakEl.textContent = `🔥 ${progress.streak}`;
 }
 window.updateHeaderStats = updateHeaderStats;
 
@@ -188,20 +198,20 @@ function showLevelUpModal(newLevel) {
 window.showLevelUpModal = showLevelUpModal;
 
 // --- Routing ---
-
-const staticRoutes = {
-    '': 'home', // Default route
-    '#home': 'home',
-    '#login': 'login',
-    '#signup': 'signup',
-    '#challenge-setup': 'challenge-setup',
-    '#loading': 'loading',
-    '#quiz': 'quiz',
-    '#results': 'results',
-    '#screen': 'screen',
-    '#settings': 'settings',
-    '#study': 'study',
-    '#leaderboard': 'leaderboard' // New route
+const routes = {
+    // Public routes
+    '#login': { module: 'login', auth: false },
+    '#signup': { module: 'signup', auth: false },
+    // Authenticated routes
+    '#home': { module: 'home', auth: true },
+    '#challenge-setup': { module: 'challenge-setup', auth: true },
+    '#loading': { module: 'loading', auth: true },
+    '#quiz': { module: 'quiz', auth: true },
+    '#results': { module: 'results', auth: true },
+    '#screen': { module: 'screen', auth: true },
+    '#settings': { module: 'settings', auth: true },
+    '#study': { module: 'study', auth: true },
+    '#leaderboard': { module: 'leaderboard', auth: true },
 };
 
 let isNavigating = false;
@@ -212,7 +222,6 @@ async function loadModule(moduleName, context = {}) {
 
     rootContainer.classList.add('module-exit');
     
-    // Pass context to the next module
     sessionStorage.setItem('moduleContext', JSON.stringify(context));
     
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -264,10 +273,19 @@ async function loadModule(moduleName, context = {}) {
 
 function handleRouteChange() {
     const hash = window.location.hash || '#home';
+    const route = routes[hash] || routes['#home'];
 
-    // Handle static routes
-    const moduleName = staticRoutes[hash] || 'home';
-    loadModule(moduleName);
+    // Auth guard
+    if (route.auth && !currentUser) {
+        window.location.hash = '#login';
+        return;
+    }
+    if (!route.auth && currentUser) {
+        window.location.hash = '#home';
+        return;
+    }
+
+    loadModule(route.module);
 
     // Update active nav link
     const navLinks = document.querySelectorAll('.nav-link');
@@ -276,15 +294,39 @@ function handleRouteChange() {
     });
 }
 
+async function handleLogout() {
+    try {
+        await logOut();
+        window.location.hash = '#login';
+        showToast('You have been logged out.', 'success');
+    } catch (error) {
+        showToast(`Logout failed: ${error.message}`, 'error');
+    }
+}
+
 async function loadHeader() {
     try {
         const response = await fetch('/global/header.html');
         if (!response.ok) throw new Error('Header template not found.');
         headerContainer.innerHTML = await response.text();
         
-        updateHeaderStats(); // Initial load of stats
+        const userNav = document.getElementById('user-nav');
+        const guestNav = document.getElementById('guest-nav');
+        const userStats = document.querySelector('.header-user-stats');
+
+        if (currentUser) {
+            userNav.classList.remove('hidden');
+            guestNav.classList.add('hidden');
+            userStats.classList.remove('hidden');
+            updateHeaderStats();
+            document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
+        } else {
+            userNav.classList.add('hidden');
+            guestNav.classList.remove('hidden');
+            userStats.classList.add('hidden');
+        }
         
-        // Init navbar logic
+        // Init mobile navbar logic
         const hamburger = document.querySelector('.nav-hamburger');
         const navLinksContainer = document.querySelector('.nav-links');
         if (hamburger && navLinksContainer) {
@@ -292,9 +334,7 @@ async function loadHeader() {
                 navLinksContainer.classList.toggle('active');
                 hamburger.classList.toggle('active');
             });
-
-            // Close mobile nav on link click
-            document.querySelectorAll('.nav-link').forEach(link => {
+            document.querySelectorAll('.nav-link, .nav-action-btn').forEach(link => {
                 link.addEventListener('click', () => {
                     navLinksContainer.classList.remove('active');
                     hamburger.classList.remove('active');
@@ -307,17 +347,14 @@ async function loadHeader() {
     }
 }
 
-// Ping system to prevent server from idling
 function startPingSystem() {
     setInterval(() => {
         fetch('/manifest.json').catch(err => console.error('Ping failed:', err));
-        console.log('Pinging server to keep alive.');
     }, 4 * 60 * 1000); // Every 4 minutes
 }
 
 
 function init() {
-    loadHeader();
     initCursorAura();
     initGlobalSounds();
     initOnboarding();
@@ -325,23 +362,23 @@ function init() {
     startPingSystem();
     
     window.addEventListener('hashchange', handleRouteChange);
-    handleRouteChange(); // Initial load
+    
     if (yearSpan) {
         yearSpan.textContent = new Date().getFullYear();
     }
 
-    // Register Service Worker for PWA capabilities
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                })
-                .catch(err => {
-                    console.log('ServiceWorker registration failed: ', err);
-                });
+            navigator.serviceWorker.register('/sw.js').then(
+                reg => console.log('SW registered.', reg),
+                err => console.log('SW registration failed: ', err)
+            );
         });
     }
 }
 
-init();
+// Wait for firebase auth to be ready before initializing the app
+const unsubscribe = onAuthStateChanged(() => {
+    init();
+    unsubscribe(); // Run init only once
+});

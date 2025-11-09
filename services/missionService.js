@@ -1,21 +1,22 @@
 // services/missionService.js
 import { categoryData } from './topicService.js';
+import { getCurrentUser } from './authService.js';
 
-const MISSIONS_KEY = 'knowledgeTesterDailyMissions';
+const db = firebase.firestore();
 
 const MISSION_TEMPLATES = [
     { type: 'complete_category', description: 'Complete a quiz in the {category} category.', reward: 100 },
     { type: 'score_above', description: 'Get a score of 80% or higher in any quiz.', reward: 75 },
     { type: 'perfect_score', description: 'Get a perfect score in any quiz.', reward: 150 },
-    { type: 'try_new_topic', description: 'Try a quiz on a topic you haven\'t played before.', reward: 50 },
 ];
 
-function generateNewMissions() {
+async function generateNewMissions() {
+    const user = getCurrentUser();
+    if (!user) return [];
+
     const allCategories = Object.values(categoryData).map(c => c.categoryTitle);
-    const selectedTemplates = [];
     const missions = [];
 
-    // Simple shuffle and pick 3 unique templates
     const shuffledTemplates = [...MISSION_TEMPLATES].sort(() => 0.5 - Math.random());
     
     for (const template of shuffledTemplates) {
@@ -28,25 +29,30 @@ function generateNewMissions() {
             mission.description = template.description.replace('{category}', randomCategory);
             mission.target = randomCategory;
         }
-
         missions.push(mission);
     }
     
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
     const missionState = { date: today, missions: missions };
     
     try {
-        localStorage.setItem(MISSIONS_KEY, JSON.stringify(missionState));
+        const missionsRef = db.collection('users').doc(user.uid).collection('missions').doc('daily');
+        await missionsRef.set(missionState);
     } catch(e) { console.error("Could not save missions:", e); }
     
     return missions;
 }
 
-export function getActiveMissions() {
+export async function getActiveMissions() {
+    const user = getCurrentUser();
+    if (!user) return [];
+    
     try {
-        const stored = localStorage.getItem(MISSIONS_KEY);
-        if (stored) {
-            const missionState = JSON.parse(stored);
+        const missionsRef = db.collection('users').doc(user.uid).collection('missions').doc('daily');
+        const doc = await missionsRef.get();
+
+        if (doc.exists) {
+            const missionState = doc.data();
             const today = new Date().toISOString().split('T')[0];
             if (missionState.date === today) {
                 return missionState.missions;
@@ -55,60 +61,52 @@ export function getActiveMissions() {
     } catch(e) {
         console.error("Could not load missions:", e);
     }
-    // If no stored missions or date is old, generate new ones
-    return generateNewMissions();
+    return await generateNewMissions();
 }
 
-// This function is called from the results screen to check if a mission was completed.
-export function checkAndCompleteMissions(quizContext, score, scorePercentage) {
-    const missionState = JSON.parse(localStorage.getItem(MISSIONS_KEY) || '{}');
-    if (!missionState.missions) return [];
+export async function checkAndCompleteMissions(quizContext, score, scorePercentage) {
+    const user = getCurrentUser();
+    if (!user) return [];
 
+    const missionsRef = db.collection('users').doc(user.uid).collection('missions').doc('daily');
+    const doc = await missionsRef.get();
+    if (!doc.exists) return [];
+
+    const missionState = doc.data();
     const completedMissions = [];
-    
+    let missionsUpdated = false;
+
     missionState.missions.forEach(mission => {
         if (mission.isComplete) return;
 
         let wasCompleted = false;
         switch (mission.type) {
             case 'complete_category':
-                // Find which category the topic belongs to
                 const topicCategory = Object.values(categoryData).find(cat => 
                     cat.topics.some(t => t.name === quizContext.topicName)
                 )?.categoryTitle;
 
-                if (topicCategory === mission.target) {
-                    wasCompleted = true;
-                }
+                if (topicCategory === mission.target) wasCompleted = true;
                 break;
             case 'score_above':
-                if (scorePercentage >= 80) {
-                    wasCompleted = true;
-                }
+                if (scorePercentage >= 80) wasCompleted = true;
                 break;
             case 'perfect_score':
-                if (scorePercentage === 100) {
-                    wasCompleted = true;
-                }
-                break;
-            case 'try_new_topic':
-                // This is a simplified check. A more robust implementation would check progressService.
-                if (quizContext.level === 1) { // Assume level 1 means it's a new topic
-                    wasCompleted = true;
-                }
+                if (scorePercentage === 100) wasCompleted = true;
                 break;
         }
 
         if (wasCompleted) {
             mission.isComplete = true;
             completedMissions.push(mission);
+            missionsUpdated = true;
             window.showToast(`🚀 Mission Complete: ${mission.description}`, 'success');
         }
     });
 
-    if (completedMissions.length > 0) {
+    if (missionsUpdated) {
         try {
-            localStorage.setItem(MISSIONS_KEY, JSON.stringify(missionState));
+            await missionsRef.set(missionState);
         } catch(e) { console.error("Could not update missions:", e); }
     }
     

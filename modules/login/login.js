@@ -1,31 +1,62 @@
 import { SceneManager } from '../../services/threeManager.js';
+import { logIn } from '../../services/authService.js';
+
 let sceneManager;
 
-console.log("Login module loaded.");
-
+const loginForm = document.getElementById('login-form');
 const loginBtn = document.getElementById('login-btn');
+const errorMessageDiv = document.getElementById('error-message');
 
-if (loginBtn) {
-    loginBtn.addEventListener('click', async (e) => {
+function setLoading(isLoading) {
+    const btnText = loginBtn.querySelector('.btn-text');
+    const spinner = loginBtn.querySelector('.spinner');
+    
+    loginBtn.disabled = isLoading;
+    if (isLoading) {
+        btnText.classList.add('hidden');
+        spinner.classList.remove('hidden');
+    } else {
+        btnText.classList.remove('hidden');
+        spinner.classList.add('hidden');
+    }
+}
+
+function displayError(message) {
+    errorMessageDiv.textContent = message;
+    errorMessageDiv.classList.remove('hidden');
+}
+
+if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
+        setLoading(true);
+        errorMessageDiv.classList.add('hidden');
+
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        if (!email || !password) {
-            window.showToast('Please fill in both email and password.', 'error');
-            return;
+        try {
+            await logIn(email, password);
+            // The onAuthStateChanged listener in global.js will handle the redirect
+            window.showToast('✅ Login successful!', 'success');
+            // No need to redirect here, global listener handles it.
+        } catch (error) {
+            console.error('Login failed:', error);
+            let userMessage = 'An unknown error occurred.';
+            switch(error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                case 'auth/invalid-credential':
+                    userMessage = 'Invalid email or password.';
+                    break;
+                case 'auth/invalid-email':
+                    userMessage = 'Please enter a valid email address.';
+                    break;
+            }
+            displayError(userMessage);
+        } finally {
+            setLoading(false);
         }
-
-        await window.showConfirmationModal({
-            title: 'Feature In Development',
-            text: 'Login functionality is not yet implemented. You will be logged in as a guest.',
-            confirmText: 'Continue',
-            isAlert: true
-        });
-
-        // Redirect to home after modal confirmation
-        window.location.hash = '#home';
     });
 }
 
@@ -37,11 +68,20 @@ function init() {
     }
 }
 
-window.addEventListener('hashchange', () => {
+function cleanup() {
     if (sceneManager) {
         sceneManager.destroy();
         sceneManager = null;
     }
-}, { once: true });
+}
+
+// Use MutationObserver for robust cleanup
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.getElementById('login-form')) {
+        cleanup();
+        obs.disconnect();
+    }
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
 
 init();

@@ -27,26 +27,36 @@ function startCountdown() {
     }, 1000);
 }
 
-function renderLeaderboard() {
-    const leaderboardData = getLeaderboardData();
+async function renderLeaderboard() {
+    const leaderboardData = await getLeaderboardData();
     const tbody = document.getElementById('leaderboard-body');
     if (!tbody) return;
 
+    if (leaderboardData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3">Leaderboard is empty. Be the first!</td></tr>';
+        return;
+    }
+
     let html = '';
     leaderboardData.forEach((player, index) => {
-        const rank = index + 1;
+        const rank = player.rank || index + 1;
         let rankHtml;
-        switch(rank) {
-            case 1: rankHtml = `<span class="rank-badge gold">🥇</span>`; break;
-            case 2: rankHtml = `<span class="rank-badge silver">🥈</span>`; break;
-            case 3: rankHtml = `<span class="rank-badge bronze">🥉</span>`; break;
-            default: rankHtml = rank;
+        if (typeof rank === 'number') {
+            switch(rank) {
+                case 1: rankHtml = `<span class="rank-badge gold">🥇</span>`; break;
+                case 2: rankHtml = `<span class="rank-badge silver">🥈</span>`; break;
+                case 3: rankHtml = `<span class="rank-badge bronze">🥉</span>`; break;
+                default: rankHtml = rank;
+            }
+        } else {
+            rankHtml = rank; // '...'
         }
+
 
         html += `
             <tr class="${player.isUser ? 'user-row' : ''}">
                 <td class="rank-cell">${rankHtml}</td>
-                <td class="player-cell">${player.name} ${player.isUser ? '(You)' : ''}</td>
+                <td class="player-cell">${player.name}</td>
                 <td class="xp-cell">${player.weeklyXP.toLocaleString()} XP</td>
             </tr>
         `;
@@ -55,8 +65,8 @@ function renderLeaderboard() {
 }
 
 
-function init() {
-    renderLeaderboard();
+async function init() {
+    await renderLeaderboard();
     startCountdown();
     
     const canvas = document.querySelector('.background-canvas');
@@ -66,12 +76,21 @@ function init() {
     }
 }
 
-window.addEventListener('hashchange', () => {
+function cleanup() {
     if (countdownInterval) clearInterval(countdownInterval);
     if (sceneManager) {
         sceneManager.destroy();
         sceneManager = null;
     }
-}, { once: true });
+}
+
+// Use MutationObserver for robust cleanup
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.getElementById('leaderboard-body')) {
+        cleanup();
+        obs.disconnect();
+    }
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
 
 init();

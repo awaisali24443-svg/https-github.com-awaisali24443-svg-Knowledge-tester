@@ -3,14 +3,21 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 10000;
 
-// Dynamically generate a configuration script to pass the API key to the frontend
+// Dynamically generate a configuration script to pass environment variables to the frontend
 app.get('/config.js', (req, res) => {
   res.setHeader('Content-Type', 'application/javascript');
-  // Polyfill process.env for the browser to access the API_KEY
   res.send(`
     window.process = {
       env: {
-        API_KEY: '${process.env.API_KEY}'
+        API_KEY: '${process.env.API_KEY}',
+        FIREBASE_CONFIG: {
+          apiKey: '${process.env.FIREBASE_API_KEY}',
+          authDomain: '${process.env.FIREBASE_AUTH_DOMAIN}',
+          projectId: '${process.env.FIREBASE_PROJECT_ID}',
+          storageBucket: '${process.env.FIREBASE_STORAGE_BUCKET}',
+          messagingSenderId: '${process.env.FIREBASE_MESSAGING_SENDER_ID}',
+          appId: '${process.env.FIREBASE_APP_ID}'
+        }
       }
     };
   `);

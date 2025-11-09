@@ -1,17 +1,20 @@
-import { NUM_QUESTIONS } from '../../constants.js';
-import { playSound } from '../../services/soundService.js';
-import { startQuizFlow } from '../../services/navigationService.js';
 import { getProgress, calculateLevelInfo } from '../../services/progressService.js';
 import { getActiveMissions } from '../../services/missionService.js';
 import { StellarMap } from '../../services/stellarMap.js';
+import { getCurrentUser } from '../../services/authService.js';
 
 let stellarMap;
 
-function displayDailyMissions() {
+async function displayDailyMissions() {
     const container = document.getElementById('daily-missions-container');
     if (!container) return;
-    const missions = getActiveMissions();
+    const missions = await getActiveMissions(); // Now async
     
+    if (!missions || missions.length === 0) {
+        container.innerHTML = '<p>No active missions. Check back tomorrow!</p>';
+        return;
+    }
+
     let html = missions.map(mission => `
         <div class="mission-card ${mission.isComplete ? 'completed' : ''}">
             <p class="mission-title">${mission.description}</p>
@@ -22,12 +25,20 @@ function displayDailyMissions() {
     container.innerHTML = html;
 }
 
-function updatePlayerStats() {
-    const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    const progress = getProgress();
-    const { level, currentXP, nextLevelXP, percentage } = calculateLevelInfo(progress.stats.xp);
+async function updatePlayerStats() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    const progress = await getProgress(); // Now async
+    if (!progress) {
+        // Handle case where user doc might not be fully created yet
+        document.getElementById('player-name').textContent = `Welcome, Agent!`;
+        return;
+    }
+
+    const { level, currentXP, nextLevelXP, percentage } = calculateLevelInfo(progress.xp);
     
-    document.getElementById('player-name').textContent = `Agent, ${profile.name || 'Welcome Back'}`;
+    document.getElementById('player-name').textContent = `Agent, ${progress.username || 'Welcome Back'}`;
     document.getElementById('player-level').textContent = `LVL ${level}`;
     document.getElementById('xp-progress-text').textContent = `${currentXP.toLocaleString()} / ${nextLevelXP.toLocaleString()} XP`;
     document.getElementById('xp-progress-bar').style.width = `${percentage}%`;
@@ -41,9 +52,9 @@ function cleanup() {
     }
 }
 
-function init() {
-    updatePlayerStats();
-    displayDailyMissions();
+async function init() {
+    await updatePlayerStats();
+    await displayDailyMissions();
     
     // Defer scene initialization to improve perceived performance
     setTimeout(() => {
