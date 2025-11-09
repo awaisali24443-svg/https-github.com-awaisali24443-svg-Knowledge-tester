@@ -1,30 +1,28 @@
 const express = require('express');
 const path = require('path');
-const { GoogleGenAI, Type } = require('@google/genai');
+const { GoogleGenAI, Type, HarmCategory, HarmBlockThreshold } = require('@google/genai');
 const app = express();
 const port = process.env.PORT || 10000;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 
-// Initialize Gemini AI on the server
+// Initialize Gemini AI on the server with basic safety settings
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const safetySettings = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+];
 
-// Schemas for structured responses (moved from client to server)
+// Schemas for structured responses
 const quizSchema = {
     type: Type.ARRAY,
     items: {
         type: Type.OBJECT,
         properties: { question: { type: Type.STRING }, options: { type: Type.ARRAY, items: { type: Type.STRING } }, correctAnswerIndex: { type: Type.INTEGER }, explanation: { type: Type.STRING } },
         required: ['question', 'options', 'correctAnswerIndex', 'explanation']
-    }
-};
-const flashcardSchema = {
-    type: Type.ARRAY,
-    items: {
-        type: Type.OBJECT,
-        properties: { term: { type: Type.STRING }, definition: { type: Type.STRING } },
-        required: ['term', 'definition']
     }
 };
 const learningPathSchema = {
@@ -40,51 +38,49 @@ const learningPathSchema = {
 // Secure server-side proxy endpoint for all Gemini API calls
 app.post('/api/gemini/generate', async (req, res) => {
     const { type, payload } = req.body;
+    let model, config;
 
     try {
         switch (type) {
-            case 'quiz': {
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash', contents: payload.prompt,
-                    config: { responseMimeType: "application/json", responseSchema: quizSchema, temperature: 0.7, topP: 1, topK: 32 }
-                });
+            case 'quiz':
+                model = 'gemini-2.5-flash';
+                config = { responseMimeType: "application/json", responseSchema: quizSchema, temperature: 0.7, topP: 1, topK: 32, safetySettings };
+                const response = await ai.models.generateContent({ model, contents: payload.prompt, config });
                 res.json(JSON.parse(response.text));
                 break;
-            }
-            case 'study': {
-                const responseStream = await ai.models.generateContentStream({
-                    model: 'gemini-2.5-flash', contents: payload.prompt,
-                    config: { temperature: 0.5, topP: 1, topK: 32 }
-                });
+
+            case 'study':
+                model = 'gemini-2.5-flash';
+                config = { temperature: 0.5, topP: 1, topK: 32, safetySettings };
+                const responseStream = await ai.models.generateContentStream({ model, contents: payload.prompt, config });
                 res.setHeader('Content-Type', 'text/plain; charset=utf-8');
                 for await (const chunk of responseStream) {
                     res.write(chunk.text);
                 }
                 res.end();
                 break;
-            }
-            case 'flashcards': {
-                const prompt = `Based on the following study guide, generate a set of 5-10 key flashcards (term and definition) that cover the most important concepts.\n\nStudy Guide:\n---\n${payload.guideContent}\n---\n\nGenerate the flashcards in the required JSON format.`;
-                const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: "application/json", responseSchema: flashcardSchema }
-                });
-                res.json(JSON.parse(response.text));
+
+            case 'path':
+                model = 'gemini-2.5-flash';
+                const prompt = `A user wants to achieve the following goal: "${payload.goal}". Generate a structured learning path with 5-7 logical steps to help them achieve this. Each step should have a clear title and a short description. The path should start with fundamental concepts and progressively build up to more advanced topics.`;
+                config = { responseMimeType: "application/json", responseSchema: learningPathSchema, safetySettings };
+                const pathResponse = await ai.models.generateContent({ model, contents: prompt, config });
+                res.json(JSON.parse(pathResponse.text));
                 break;
-            }
-            case 'path': {
-                 const prompt = `A user wants to achieve the following goal: "${payload.goal}". Generate a structured learning path with 5-7 logical steps to help them achieve this. Each step should have a clear title and a short description. The path should start with fundamental concepts and progressively build up to more advanced topics.`;
-                 const response = await ai.models.generateContent({
-                    model: 'gemini-2.5-flash', contents: prompt, config: { responseMimeType: "application/json", responseSchema: learningPathSchema }
-                });
-                res.json(JSON.parse(response.text));
-                break;
-            }
+                
             default:
                 res.status(400).json({ message: 'Invalid generation type specified.' });
         }
     } catch (error) {
-        console.error(`Error in /api/gemini/generate (${type}):`, error);
-        res.status(500).json({ message: 'An error occurred while communicating with the AI service.' });
+        console.error(`Error in /api/gemini/generate (${type}):`, error.message);
+        // Improved Error Handling: Check for specific error types
+        if (error.message.includes('SAFETY')) {
+            res.status(400).json({ message: 'The request was blocked. This topic may be restricted.' });
+        } else if (error instanceof SyntaxError) {
+             res.status(500).json({ message: 'The AI returned an invalid format. Please try a different topic.' });
+        } else {
+            res.status(500).json({ message: 'An error occurred while communicating with the AI service.' });
+        }
     }
 });
 
@@ -107,12 +103,6 @@ app.get('/config.js', (req, res) => {
       }
     };
   `);
-});
-
-// Add route for PWA icon
-app.get('/icon.svg', (req, res) => {
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.send(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='#1f1f1f'/><text x='50' y='65' font-family='Inter, sans-serif' font-size='50' font-weight='800' fill='#2dd4bf' text-anchor='middle'>KT</text></svg>`);
 });
 
 // Serve static files from the root directory
