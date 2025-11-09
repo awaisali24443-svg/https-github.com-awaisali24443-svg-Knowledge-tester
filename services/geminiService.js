@@ -114,3 +114,14 @@ export const generateStudyGuide = async (prompt, systemInstruction) => {
 export const generateNemesisQuiz = (topicName, missedConcepts) => {
     return `Generate a challenging 5-question multiple-choice quiz about "${topicName}". This is a "Nemesis Quiz" designed to target the user's weak spots. Focus specifically on the following concepts they have struggled with: ${missedConcepts}. The questions should test their understanding of these specific areas.`;
 };
+
+/**
+ * Generates personalized feedback from an AI Coach.
+ * @param {string} prompt - The prompt containing the user's quiz results.
+ * @returns {Promise<string>} - A promise that resolves to the AI coach's feedback.
+ */
+export const generateAICoachInsight = async (prompt) => {
+    const systemInstruction = "You are a friendly and encouraging AI Coach for the 'Knowledge Tester' quiz app. Your goal is to provide a brief, positive, and insightful summary of the user's performance. Highlight one area they did well in and one concept they might want to review, based on the questions they got wrong. Keep it concise (2-3 sentences) and use a supportive tone. Do not use markdown.";
+    const config = { systemInstruction };
+    return generateContent(prompt, config);
+};

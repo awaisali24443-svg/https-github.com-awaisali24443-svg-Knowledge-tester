@@ -16,6 +16,16 @@ export class StellarMap {
     #intersected = null;
     #userLevels = {};
 
+    // Animation state
+    #isAnimating = false;
+    #cameraTargetPosition = new THREE.Vector3();
+    #controlsTarget = new THREE.Vector3();
+    #animationStartTime = 0;
+    #animationDuration = 1.5; // in seconds
+    #animationStartPosition = new THREE.Vector3();
+    #animationStartTarget = new THREE.Vector3();
+    #animationEndObject = null;
+
     // UI Elements
     #infoPanel;
     #loadingOverlay;
@@ -134,8 +144,23 @@ export class StellarMap {
     }
 
     #onClick = () => {
+        if (this.#isAnimating) return;
+
         if (this.#intersected) {
-            this.#showInfoPanel(this.#intersected.userData);
+            const constellationGroup = this.#intersected.parent;
+
+            this.#controlsTarget.copy(constellationGroup.position);
+            const offset = new THREE.Vector3(0, 2, 10);
+            this.#cameraTargetPosition.copy(constellationGroup.position).add(offset);
+            
+            this.#animationStartPosition.copy(this.#camera.position);
+            this.#animationStartTarget.copy(this.#controls.target);
+
+            this.#animationStartTime = this.#clock.getElapsedTime();
+            this.#isAnimating = true;
+            this.#animationEndObject = this.#intersected;
+
+            this.#infoPanel.classList.add('hidden');
         } else {
             this.#infoPanel.classList.add('hidden');
         }
@@ -166,31 +191,48 @@ export class StellarMap {
 
     #animate = () => {
         requestAnimationFrame(this.#animate);
+        const elapsedTime = this.#clock.getElapsedTime();
+
+        if (this.#isAnimating) {
+            const progress = (elapsedTime - this.#animationStartTime) / this.#animationDuration;
+            const easedProgress = 0.5 - 0.5 * Math.cos(Math.min(progress, 1) * Math.PI);
+
+            const currentPos = this.#animationStartPosition.clone();
+            const currentTarget = this.#animationStartTarget.clone();
+
+            this.#camera.position.copy(currentPos.lerp(this.#cameraTargetPosition, easedProgress));
+            this.#controls.target.copy(currentTarget.lerp(this.#controlsTarget, easedProgress));
+
+            if (progress >= 1) {
+                this.#isAnimating = false;
+                if (this.#animationEndObject) {
+                    this.#showInfoPanel(this.#animationEndObject.userData);
+                    this.#animationEndObject = null;
+                }
+            }
+        }
 
         this.#controls.update();
 
         // Raycasting for hover effect
-        this.#raycaster.setFromCamera(this.#mouse, this.#camera);
-        const intersects = this.#raycaster.intersectObjects(this.#objects.stars);
+        if (!this.#isAnimating) {
+            this.#raycaster.setFromCamera(this.#mouse, this.#camera);
+            const intersects = this.#raycaster.intersectObjects(this.#objects.stars);
 
-        if (intersects.length > 0) {
-            if (this.#intersected !== intersects[0].object) {
-                if (this.#intersected) {
-                    this.#intersected.scale.set(1, 1, 1);
+            if (intersects.length > 0) {
+                if (this.#intersected !== intersects[0].object) {
+                    if (this.#intersected) this.#intersected.scale.set(1, 1, 1);
+                    this.#intersected = intersects[0].object;
+                    this.#intersected.scale.set(1.5, 1.5, 1.5);
+                    this.#canvas.style.cursor = 'pointer';
                 }
-                this.#intersected = intersects[0].object;
-                this.#intersected.scale.set(1.5, 1.5, 1.5);
-                this.#canvas.style.cursor = 'pointer';
+            } else {
+                if (this.#intersected) this.#intersected.scale.set(1, 1, 1);
+                this.#intersected = null;
+                this.#canvas.style.cursor = 'grab';
             }
-        } else {
-            if (this.#intersected) {
-                this.#intersected.scale.set(1, 1, 1);
-            }
-            this.#intersected = null;
-            this.#canvas.style.cursor = 'grab';
         }
         
-        const elapsedTime = this.#clock.getElapsedTime();
         this.#objects.constellations.forEach((group, i) => {
             group.rotation.y = elapsedTime * 0.05 * (i % 2 === 0 ? 1 : -1);
         });
@@ -211,7 +253,7 @@ export class StellarMap {
 (function(){function r(a,b){if(a.length!=b.length)return!1;for(var c=0;c<a.length;c++)if(a[c]!==b[c])return!1;return!0}function v(a){return a.slice().sort(function(a,b){return a-b})}function x(a,b,c){var d=Math.abs(a-b),e=Math.abs(b-c),g=Math.abs(a-c);return d<e?e<g?c:b:d<g?a:b}var y=[1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368E3,20922789888E3,355687428096E3,6402373705728E3,121645100408832E3,243290200817664E4],
 z=function(){function a(){}a.prototype.set=function(b){return Object.assign(this,b),this};return a}();THREE.OrbitControls=function(a,b){function c(a){a.preventDefault(),a.stopPropagation()}function d(a){a.preventDefault(),a.stopPropagation()}function e(a){a.preventDefault()}function g(a,b,c){var d;return function(){var e=this,g=arguments,h=c&&!d;clearTimeout(d),d=setTimeout(function(){d=null,c||a.apply(e,g)},b),h&&a.apply(e,g)}}function h(){return Math.pow(.95,na.zoomSpeed)}function l(a){ma.theta+=a}function n(a){ma.phi+=
 a}function p(a){switch(a.type){case"touchstart":w=a.touches.length;break;case"touchend":case"touchcancel":w=a.touches.length;break;case"touchmove":w=a.touches.length;break;default:w=0}var b;switch(w){case 1:b=a.touches[0].pageX,a=a.touches[0].pageY;break;case 2:var c=a.touches[0].pageX,d=a.touches[0].pageY,e=a.touches[1].pageX,g=a.touches[1].pageY;b=(c+e)/2,a=(d+g)/2;break;default:b=a.pageX,a=a.pageY}return{x:b,y:a}}this.object=a,this.domElement=b,this.domElement.style.touchAction=
-"none",this.enabled=!0,this.target=new THREE.Vector3,this.minDistance=0,this.maxDistance=1/0,this.minZoom=0,this.maxZoom=1/0,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.minAzimuthAngle=-1/0,this.maxAzimuthAngle=1/0,this.enableDamping=!1,this.dampingFactor=.05,this.enableZoom=!0,this.zoomSpeed=1,this.enableRotate=!0,this.rotateSpeed=1,this.enablePan=!0,this.panSpeed=1,this.screenSpacePanning=!0,this.keyPanSpeed=7,this.autoRotate=!1,this.autoRotateSpeed=2,this.keys={LEFT:"ArrowLeft",UP:"ArrowUp",
+"none",this.enabled=!0,this.target=new THREE.Vector3,this.minDistance=0,this.maxDistance=1/0,this.minZoom=0,this.maxZoom=1/0,this.minPolarAngle=0,this.maxPolarAngle=Math.PI,this.minAzimuthAngle=-1/0,this.maxAzimuthAngle=1/0,this.enableDamping=!0,this.dampingFactor=.05,this.enableZoom=!0,this.zoomSpeed=1,this.enableRotate=!0,this.rotateSpeed=1,this.enablePan=!0,this.panSpeed=1,this.screenSpacePanning=!0,this.keyPanSpeed=7,this.autoRotate=!1,this.autoRotateSpeed=2,this.keys={LEFT:"ArrowLeft",UP:"ArrowUp",
 RIGHT:"ArrowRight",BOTTOM:"ArrowDown"},this.mouseButtons={LEFT:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.PAN},this.touches={ONE:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN},this.target0=this.target.clone(),this.position0=this.object.position.clone(),this.zoom0=this.object.zoom,this.getPolarAngle=function(){return ma.phi},this.getAzimuthalAngle=function(){return ma.theta},this.getDistance=function(){return this.object.position.distanceTo(this.target)},this.saveState=function(){na.target0.copy(na.target),
 na.position0.copy(na.object.position),na.zoom0=na.object.zoom},this.reset=function(){na.target.copy(na.target0),na.object.position.copy(na.position0),na.object.zoom=na.zoom0,na.object.updateProjectionMatrix(),na.dispatchEvent(A),na.update(),t=u},this.update=function(){var b=new THREE.Vector3,c=new THREE.Quaternion,d=(new THREE.Vector3,new THREE.Vector3),e=2*Math.PI;return function(){var g=na.object.position;b.copy(g).sub(na.target),b.applyQuaternion(c.setFromUnitVectors(na.object.up,new THREE.Vector3(0,
 1,0))),ma.radius=b.length(),ma.theta=Math.atan2(b.x,b.z),ma.phi=Math.acos(THREE.MathUtils.clamp(b.y/ma.radius,-1,1)),na.autoRotate&&t!==B&&l(2*Math.PI/60/60*na.autoRotateSpeed),ma.theta<na.minAzimuthAngle?ma.theta=na.minAzimuthAngle:ma.theta>na.maxAzimuthAngle&&(ma.theta=na.maxAzimuthAngle),ma.phi=Math.max(na.minPolarAngle,Math.min(na.maxPolarAngle,ma.phi)),ma.makeSafe();var h=ma.radius*Math.sin(ma.phi)*Math.sin(ma.theta),p=ma.radius*Math.cos(ma.phi),q=ma.radius*Math.sin(ma.phi)*Math.cos(ma.theta);

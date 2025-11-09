@@ -1,6 +1,7 @@
 import * as progressService from '../../services/progressService.js';
 import { checkAndCompleteMissions } from '../../services/missionService.js';
 import { checkAchievements } from '../../services/achievementService.js';
+import * as geminiService from '../../services/geminiService.js';
 import { UNLOCK_SCORE, MAX_LEVEL } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
 import * as quizState from '../../services/quizStateService.js';
@@ -157,6 +158,8 @@ async function renderStandardResults(score) {
             <div id="score-text" class="score-text">${score}/${quizData.length}</div>
         </div>
         
+        <div id="ai-coach-container" class="ai-coach-container"></div>
+        
         <div class="xp-breakdown">
             <div class="xp-item" style="animation-delay: 0.2s"><span>Base Score</span><span class="xp-value" data-value="${baseXP}">+0</span></div>
             ${perfectBonus > 0 ? `<div class="xp-item" style="animation-delay: 0.4s"><span>Perfect Bonus</span><span class="xp-value" data-value="${perfectBonus}">+0</span></div>` : ''}
@@ -168,6 +171,35 @@ async function renderStandardResults(score) {
         <div class="results-actions">${primaryActionHtml}${secondaryActionsHtml}</div>
         <div class="review-container">${reviewHtml}</div>
     `;
+
+    // --- AI Coach Insight ---
+    const aiCoachContainer = document.getElementById('ai-coach-container');
+    if (aiCoachContainer) {
+        (async () => {
+            try {
+                aiCoachContainer.innerHTML = `<div class="spinner"></div><p>Generating AI feedback...</p>`;
+                const incorrectAnswersForPrompt = quizData
+                    .map((q, i) => ({ ...q, userAnswer: q.options[userAnswers[i]] }))
+                    .filter((q, i) => userAnswers[i] !== q.correctAnswerIndex);
+                const correctAnswersForPrompt = quizData.filter((q, i) => userAnswers[i] === q.correctAnswerIndex);
+
+                let prompt;
+                if (score === quizData.length) {
+                    prompt = `The user got a perfect score! Here are the questions they answered correctly: ${JSON.stringify(correctAnswersForPrompt.map(q => q.question))}. Write a brief, encouraging message congratulating them on their mastery of the topic.`;
+                } else {
+                    prompt = `A user took a quiz on "${quizContext.topicName}". They got ${score} out of ${quizData.length} correct.
+                    - Questions they got RIGHT: ${JSON.stringify(correctAnswersForPrompt.map(q => q.question))}
+                    - Questions they got WRONG (with their incorrect answer and the correct explanation): ${JSON.stringify(incorrectAnswersForPrompt.map(q => ({question: q.question, theirAnswer: q.userAnswer, explanation: q.explanation})))}
+                    Please provide a short, encouraging summary of their performance. Highlight a specific strength and a concept to review, based on their answers.`;
+                }
+                const insight = await geminiService.generateAICoachInsight(prompt);
+                aiCoachContainer.innerHTML = `<div class="ai-coach-content"><strong>🤖 AI Coach:</strong> <span>${insight}</span></div>`;
+            } catch (error) {
+                console.error('AI Coach error:', error);
+                aiCoachContainer.classList.add('hidden');
+            }
+        })();
+    }
     
     document.getElementById('retry-missed-btn')?.addEventListener('click', () => handleRetryMissed(incorrectAnswers));
     document.getElementById('challenge-friend-btn')?.addEventListener('click', handleChallengeFriend);

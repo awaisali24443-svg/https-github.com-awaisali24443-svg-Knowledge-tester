@@ -44,6 +44,35 @@
     font-weight: 800; 
 }
 
+/* AI Coach Insight */
+.ai-coach-container {
+    text-align: left;
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background-color: color-mix(in srgb, var(--color-secondary) 10%, transparent);
+    border-left: 4px solid var(--color-secondary);
+    border-radius: 8px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 60px;
+}
+.ai-coach-container .spinner {
+    width: 24px;
+    height: 24px;
+    border-width: 3px;
+    flex-shrink: 0;
+}
+.ai-coach-container p {
+    color: var(--color-text-muted);
+    margin: 0;
+}
+.ai-coach-content strong {
+    color: var(--color-secondary);
+}
+
+
 /* XP Breakdown */
 .xp-breakdown {
     background: var(--color-bg);
