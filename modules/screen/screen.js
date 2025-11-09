@@ -1,6 +1,9 @@
 import * as progressService from '../../services/progressService.js';
 import { MAX_LEVEL } from '../../constants.js';
 import { categoryData } from '../../services/topicService.js';
+import { SceneManager } from '../../services/threeManager.js';
+
+let sceneManager;
 
 console.log("Screen module loaded.");
 
@@ -90,5 +93,22 @@ function createProgressItemHtml(topic, level) {
     `;
 }
 
-// Initial render
-renderProgress();
+function init() {
+    // Initial render
+    renderProgress();
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('calmGeometric');
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
+init();

@@ -21,18 +21,6 @@ export const categoryData = {
             { name: "C++", icon: "⚙️", description: "Performance-critical systems" },
         ]
     },
-    history: {
-        title: "Historical Knowledge",
-        categoryTitle: "Historical Knowledge",
-        subtitle: "Journey through time and test your knowledge of the past.",
-        returnHash: '#topics/history',
-        topics: [
-            { name: "Ancient Rome", icon: "🏛️", description: "Republic, Empire, and legacy" },
-            { name: "Ancient Egypt", icon: "🏺", description: "Pharaohs, pyramids, and the Nile" },
-            { name: "The Mughal Empire", icon: "🕌", description: "Art, architecture, and empire in India" },
-            { name: "The Ottoman Empire", icon: "🌙", description: "A global power for six centuries" },
-        ]
-    },
     science: {
         title: "Science Quizzes",
         categoryTitle: "Science",

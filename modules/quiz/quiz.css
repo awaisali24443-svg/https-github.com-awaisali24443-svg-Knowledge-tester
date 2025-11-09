@@ -18,6 +18,15 @@
     transform: translateY(-20px);
 }
 
+.challenge-timer {
+    text-align: center;
+    font-size: 1.8rem;
+    font-family: 'Orbitron', sans-serif;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    animation: popIn 0.5s ease-out;
+}
+
 .progress-bar { 
     width: 100%; 
     background-color: var(--color-border); 

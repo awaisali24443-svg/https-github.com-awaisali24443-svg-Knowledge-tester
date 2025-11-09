@@ -1,5 +1,8 @@
 import { generateQuiz, generateStudyGuide } from '../../services/geminiService.js';
 import * as quizState from '../../services/quizStateService.js';
+import { SceneManager } from '../../services/threeManager.js';
+
+let sceneManager;
 
 const spinnerWrapper = document.getElementById('spinner-wrapper');
 const errorContainer = document.getElementById('error-container');
@@ -117,11 +120,21 @@ function init() {
 
     showLoadingState();
     startGeneration();
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('subtleParticles');
+    }
 }
 
 // Cleanup interval when the user navigates away
 window.addEventListener('hashchange', () => {
     if (messageInterval) clearInterval(messageInterval);
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
 }, { once: true });
 
 init();

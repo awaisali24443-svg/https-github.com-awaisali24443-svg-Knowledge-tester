@@ -2,7 +2,9 @@ import * as progressService from '../../services/progressService.js';
 import { UNLOCK_SCORE, MAX_LEVEL, NUM_QUESTIONS } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
 import * as quizState from '../../services/quizStateService.js';
+import { SceneManager } from '../../services/threeManager.js';
 
+let sceneManager;
 let quizData = null;
 let userAnswers = [];
 let quizContext = {};
@@ -43,17 +45,17 @@ function animateCountUp(element, finalValue, total) {
     
     const timer = setInterval(() => {
         current += 1;
-        element.textContent = `${current}/${total}`;
-        if (current === finalValue) {
+        element.textContent = total ? `${current}/${total}` : current;
+        if (current >= finalValue) {
             clearInterval(timer);
+             element.textContent = total ? `${finalValue}/${total}` : finalValue;
         }
     }, stepTime);
 }
 
-function renderResults() {
+
+function renderStandardResults(score) {
     playSound('complete');
-    const score = userAnswers.reduce((acc, answer, index) => 
-        (answer === quizData[index].correctAnswerIndex ? acc + 1 : acc), 0);
     
     // --- GAMIFICATION UPDATE ---
     const xpGained = score * 10; // 10 XP per correct answer
@@ -99,17 +101,16 @@ function renderResults() {
         secondaryActionsHtml += `<button id="retry-missed-btn" class="btn btn-secondary">Retry Missed (${incorrectAnswers.length})</button>`;
     }
     secondaryActionsHtml += `<button id="retry-quiz-btn" class="btn btn-secondary">Retry Same Questions</button>`;
-    secondaryActionsHtml += `<button id="back-to-topics-btn" class="btn btn-secondary">Back to Topics</button>`;
+    secondaryActionsHtml += `<button id="back-to-topics-btn" class="btn btn-secondary">Back</button>`;
 
     const reviewHtml = quizData.map((q, index) => {
         const userAnswerIndex = userAnswers[index];
-        const isCorrect = userAnswerIndex === q.correctAnswerIndex;
         return `<div class="review-item" style="animation-delay: ${index * 0.15}s">
             <p class="review-question">${index + 1}. ${q.question}</p>
             <div class="review-options">
                 ${q.options.map((opt, i) => `<div class="review-option ${i === q.correctAnswerIndex ? 'review-correct' : (i === userAnswerIndex ? 'review-incorrect' : '')}">${opt}</div>`).join('')}
             </div>
-            ${!isCorrect ? `<div class="review-explanation"><strong>Explanation:</strong> ${q.explanation}</div>` : ''}
+            ${userAnswerIndex !== q.correctAnswerIndex ? `<div class="review-explanation"><strong>Explanation:</strong> ${q.explanation}</div>` : ''}
         </div>`;
     }).join('');
 
@@ -139,20 +140,45 @@ function renderResults() {
         </div>
         <div class="review-container">${reviewHtml}</div>
     `;
-
+    
+    document.getElementById('retry-missed-btn')?.addEventListener('click', () => handleRetryMissed(incorrectAnswers));
     const scoreTextEl = document.getElementById('score-text');
     const scoreFgCircle = document.getElementById('score-fg');
     setTimeout(() => {
         scoreFgCircle.style.strokeDashoffset = strokeDashoffset;
         animateCountUp(scoreTextEl, score, quizData.length);
     }, 100);
-
-    document.getElementById('back-to-topics-btn')?.addEventListener('click', () => window.location.hash = quizContext.returnHash || '#home');
-    document.getElementById('next-level-btn')?.addEventListener('click', () => handleNextLevel());
-    document.getElementById('retry-level-btn')?.addEventListener('click', () => handleRetryLevel());
-    document.getElementById('retry-quiz-btn')?.addEventListener('click', handleRetrySameQuiz);
-    document.getElementById('retry-missed-btn')?.addEventListener('click', () => handleRetryMissed(incorrectAnswers));
 }
+
+function renderChallengeResults(score) {
+    playSound('complete');
+    const progress = progressService.getProgress();
+    const oldHighScore = progress.stats.challengeHighScore;
+    const isNewHighScore = progressService.updateChallengeHighScore(score);
+
+    if (isNewHighScore) {
+        triggerConfetti();
+    }
+    
+    resultsContainer.innerHTML = `
+        <h2 class="results-title">Challenge Complete!</h2>
+        <div class="challenge-high-score">
+            High Score: <span>${isNewHighScore ? score : oldHighScore}</span>
+        </div>
+        <div class="score-container">
+            <div id="score-text" class="score-text" style="font-size: 3.5rem;">0</div>
+        </div>
+        <p class="results-summary">${isNewHighScore ? "🎉 New High Score! 🎉" : "Great effort!"}</p>
+        <div class="results-actions">
+            <button id="retry-level-btn" class="btn btn-primary">Try Again</button>
+            <button id="back-to-topics-btn" class="btn btn-secondary">Back to Dashboard</button>
+        </div>
+    `;
+    
+    const scoreTextEl = document.getElementById('score-text');
+    animateCountUp(scoreTextEl, score, null);
+}
+
 
 function _startNewQuiz(topicName, level, returnHash, promptOverride = null) {
     let prompt;
@@ -168,7 +194,6 @@ function _startNewQuiz(topicName, level, returnHash, promptOverride = null) {
     }
     
     sessionStorage.setItem('quizContext', JSON.stringify(newQuizContext));
-    sessionStorage.setItem('quizTopicPrompt', prompt);
     window.location.hash = '#loading';
 }
 
@@ -194,7 +219,9 @@ function handleRetryMissed(missedQuestions) {
 }
 
 function handleRetryLevel() {
-    if (quizContext.isLeveled === false) {
+    if (quizContext.isChallenge) {
+        window.location.hash = '#challenge-setup';
+    } else if (quizContext.isLeveled === false) {
         _startNewQuiz(quizContext.topicName, null, quizContext.returnHash, quizContext.prompt);
     } else {
         _startNewQuiz(quizContext.topicName, quizContext.level, quizContext.returnHash);
@@ -227,13 +254,41 @@ function init() {
         quizData = results.quizData;
         userAnswers = results.userAnswers;
         quizContext = results.quizContext;
-        renderResults();
+        
+        const score = userAnswers.reduce((acc, answer, index) => 
+            (answer !== null && answer === quizData[index].correctAnswerIndex ? acc + 1 : acc), 0);
+
+        if (quizContext.isChallenge) {
+            renderChallengeResults(score);
+        } else {
+            renderStandardResults(score);
+        }
+
+        // Common event listeners
+        document.getElementById('back-to-topics-btn')?.addEventListener('click', () => window.location.hash = quizContext.returnHash || '#home');
+        document.getElementById('next-level-btn')?.addEventListener('click', () => handleNextLevel());
+        document.getElementById('retry-level-btn')?.addEventListener('click', () => handleRetryLevel());
+        document.getElementById('retry-quiz-btn')?.addEventListener('click', handleRetrySameQuiz);
+
     } catch (e) {
         console.error("Failed to parse results data:", e);
         window.location.hash = '#home';
     } finally {
         sessionStorage.removeItem('quizResults');
     }
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('subtleParticles');
+    }
 }
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
 
 init();

@@ -181,6 +181,7 @@ const staticRoutes = {
     '#home': 'home',
     '#explore-topics': 'explore-topics',
     '#optional-quiz': 'optional-quiz-generator',
+    '#challenge-setup': 'challenge-setup',
     '#loading': 'loading',
     '#quiz': 'quiz',
     '#results': 'results',
@@ -298,12 +299,22 @@ async function loadHeader() {
     }
 }
 
+// Ping system to prevent server from idling
+function startPingSystem() {
+    setInterval(() => {
+        fetch('/manifest.json').catch(err => console.error('Ping failed:', err));
+        console.log('Pinging server to keep alive.');
+    }, 4 * 60 * 1000); // Every 4 minutes
+}
+
+
 function init() {
     loadHeader();
     initCursorAura();
     initGlobalSounds();
     initOnboarding();
     initAccessibility();
+    startPingSystem();
     
     window.addEventListener('hashchange', handleRouteChange);
     handleRouteChange(); // Initial load

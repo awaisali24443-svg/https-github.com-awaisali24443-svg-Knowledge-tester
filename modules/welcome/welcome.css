@@ -1,9 +1,26 @@
 .welcome-container {
     text-align: center;
-    animation: fadeInGlow 1.5s ease-in-out;
     padding: 3rem 2rem;
     max-width: 600px;
+    position: relative;
+    width: 100%;
 }
+
+#welcome-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+}
+
+.welcome-content {
+    position: relative;
+    z-index: 1;
+    animation: fadeInGlow 1.5s ease-in-out;
+}
+
 
 .welcome-logo {
     width: 100%;

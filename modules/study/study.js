@@ -1,5 +1,7 @@
 import { startQuizFlow } from '../../services/navigationService.js';
+import { SceneManager } from '../../services/threeManager.js';
 
+let sceneManager;
 let quizContext = {};
 
 /**
@@ -57,12 +59,22 @@ function init() {
     if (startQuizBtn) {
         startQuizBtn.addEventListener('click', handleStartQuiz);
     }
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('subtleParticles');
+    }
 }
 
 // Clean up sessionStorage when the user navigates away from the study page
 window.addEventListener('hashchange', () => {
     sessionStorage.removeItem('studyGuideContent');
     sessionStorage.removeItem('quizContext');
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
 }, { once: true });
 
 init();

@@ -1,6 +1,9 @@
 import { NUM_QUESTIONS } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
+import { SceneManager } from '../../services/threeManager.js';
+
+let sceneManager;
 
 console.log("Optional Quiz Generator module loaded.");
 
@@ -77,3 +80,20 @@ if (topicForm) {
         await startQuizFlow(quizContext);
     });
 }
+
+function init() {
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('dataStream');
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
+init();

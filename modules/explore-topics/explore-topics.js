@@ -1,5 +1,22 @@
-// explore-topics.js - Logic for the topic category selection module
+import { SceneManager } from '../../services/threeManager.js';
+let sceneManager;
 
 console.log("Explore Topics module loaded.");
 
-// This file is ready for any future interactive elements on this page.
+function init() {
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('atomicStructure');
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
+
+init();

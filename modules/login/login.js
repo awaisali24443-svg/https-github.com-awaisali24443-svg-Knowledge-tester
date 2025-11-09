@@ -1,3 +1,6 @@
+import { SceneManager } from '../../services/threeManager.js';
+let sceneManager;
+
 console.log("Login module loaded.");
 
 const loginBtn = document.getElementById('login-btn');
@@ -25,3 +28,20 @@ if (loginBtn) {
         window.location.hash = '#home';
     });
 }
+
+function init() {
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('calmGeometric');
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
+init();

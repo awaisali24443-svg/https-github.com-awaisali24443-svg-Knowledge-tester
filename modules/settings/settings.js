@@ -1,4 +1,7 @@
 import * as progressService from '../../services/progressService.js';
+import { SceneManager } from '../../services/threeManager.js';
+
+let sceneManager;
 
 console.log("Settings/Profile module loaded.");
 
@@ -194,6 +197,20 @@ function init() {
     highContrastToggle?.addEventListener('change', handleAccessibilityChange);
     dyslexiaFontToggle?.addEventListener('change', handleAccessibilityChange);
     reduceMotionToggle?.addEventListener('change', handleAccessibilityChange);
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('calmGeometric');
+    }
 }
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
 
 init();

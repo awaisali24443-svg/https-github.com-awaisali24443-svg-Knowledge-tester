@@ -27,14 +27,14 @@
 .topic-card-flipper {
     background-color: transparent;
     aspect-ratio: 4 / 5;
-    perspective: 1000px;
+    perspective: 1500px; /* Increased perspective for a more dramatic 3D effect */
 }
 .topic-card-inner {
     position: relative;
     width: 100%;
     height: 100%;
     text-align: center;
-    transition: transform 0.6s;
+    transition: transform 0.7s cubic-bezier(0.68, -0.55, 0.27, 1.55); /* Added bounce */
     transform-style: preserve-3d;
 }
 .topic-card-flipper:hover .topic-card-inner,
@@ -56,10 +56,11 @@
     border-radius: 12px;
     background-color: var(--color-bg);
     transition: all 0.3s ease;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.1); /* Subtle inner shadow for depth */
 }
 .topic-card-flipper:hover .topic-card-front {
     border-color: var(--color-primary);
-    box-shadow: 0 0 15px var(--color-glow);
+    box-shadow: 0 0 15px var(--color-glow), inset 0 0 10px rgba(0,0,0,0.05);
 }
 .topic-card-back {
     transform: rotateY(180deg);

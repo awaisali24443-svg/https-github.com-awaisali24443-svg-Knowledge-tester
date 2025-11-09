@@ -3,8 +3,10 @@ import { NUM_QUESTIONS } from '../../constants.js';
 import { playSound } from '../../services/soundService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 import { getProgress } from '../../services/progressService.js';
+import { SceneManager } from '../../services/threeManager.js';
 
-console.log("Home module (Dashboard) loaded.");
+let cardListeners = [];
+let sceneManager;
 
 function animateFeatureCards() {
     const featureCards = document.querySelectorAll('.feature-card');
@@ -13,6 +15,41 @@ function animateFeatureCards() {
         card.style.opacity = '0';
     });
 }
+
+function apply3DTiltEffect(card) {
+    const handleMouseMove = (e) => {
+        const { left, top, width, height } = card.getBoundingClientRect();
+        const x = e.clientX - left;
+        const y = e.clientY - top;
+
+        const rotateX = -1 * ((height / 2 - y) / (height / 2)) * 8; // Max rotation 8 degrees
+        const rotateY = ((width / 2 - x) / (width / 2)) * 8;
+
+        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+    };
+
+    const handleMouseLeave = () => {
+        card.style.transform = 'rotateX(0deg) rotateY(0deg) scale(1)';
+    };
+
+    card.addEventListener('mousemove', handleMouseMove);
+    card.addEventListener('mouseleave', handleMouseLeave);
+    
+    cardListeners.push({ element: card, move: handleMouseMove, leave: handleMouseLeave });
+}
+
+function cleanupEffects() {
+    cardListeners.forEach(({ element, move, leave }) => {
+        element.removeEventListener('mousemove', move);
+        element.removeEventListener('mouseleave', leave);
+    });
+    cardListeners = [];
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}
+
 
 async function handleSurpriseMe(e) {
     e.preventDefault();
@@ -49,10 +86,31 @@ function personalizeDashboard() {
     }
 }
 
-const surpriseMeCard = document.getElementById('surprise-me-card');
-if (surpriseMeCard) {
-    surpriseMeCard.addEventListener('click', handleSurpriseMe);
+function init() {
+    console.log("Home module (Dashboard) loaded.");
+    
+    document.querySelectorAll('.feature-card').forEach(apply3DTiltEffect);
+    
+    const surpriseMeCard = document.getElementById('surprise-me-card');
+    if (surpriseMeCard) {
+        surpriseMeCard.addEventListener('click', handleSurpriseMe);
+    }
+    
+    animateFeatureCards();
+    personalizeDashboard();
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('abstractHub');
+    }
 }
 
-animateFeatureCards();
-personalizeDashboard();
+window.addEventListener('hashchange', () => {
+    if (window.location.hash !== '#home') {
+        cleanupEffects();
+    }
+}, { once: true });
+
+
+init();

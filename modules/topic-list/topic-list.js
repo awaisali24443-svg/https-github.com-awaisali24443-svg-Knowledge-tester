@@ -2,6 +2,9 @@ import * as progressService from '../../services/progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
 import { categoryData } from '../../services/topicService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
+import { SceneManager } from '../../services/threeManager.js';
+
+let sceneManager;
 
 console.log("Unified Topic List module loaded.");
 
@@ -119,6 +122,20 @@ function init() {
         console.error("No category provided to topic-list module.");
         document.getElementById('topic-grid').innerHTML = `<p>Error: No category was selected. Please go back.</p>`;
     }
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('atomicStructure');
+    }
 }
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
 
 init();

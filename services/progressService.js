@@ -7,6 +7,7 @@ const getDefaultProgress = () => ({
         xp: 0,
         streak: 0,
         lastQuizDate: null,
+        challengeHighScore: 0,
     },
     levels: {}
 });
@@ -131,6 +132,22 @@ export const recordQuizResult = (score, numQuestions, xpGained) => {
     
     saveProgress(progress);
 };
+
+/**
+ * Updates the high score for Challenge Mode if the new score is higher.
+ * @param {number} newScore - The score from the completed challenge.
+ * @returns {boolean} - True if the high score was updated, false otherwise.
+ */
+export const updateChallengeHighScore = (newScore) => {
+    const progress = getProgress();
+    if (newScore > progress.stats.challengeHighScore) {
+        progress.stats.challengeHighScore = newScore;
+        saveProgress(progress);
+        return true;
+    }
+    return false;
+};
+
 
 /**
  * Resets all user progress, including stats and levels.

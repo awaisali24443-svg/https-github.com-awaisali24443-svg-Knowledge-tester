@@ -1,3 +1,5 @@
+import { SceneManager } from '../../services/threeManager.js';
+let sceneManager;
 // signup.js - Logic for the signup module
 
 const signupForm = document.getElementById('signup-form');
@@ -15,3 +17,20 @@ if (signupForm) {
         window.location.hash = '#home';
     });
 }
+
+function init() {
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('calmGeometric');
+    }
+}
+
+window.addEventListener('hashchange', () => {
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
+}, { once: true });
+
+init();

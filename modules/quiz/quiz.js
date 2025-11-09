@@ -1,13 +1,17 @@
 import * as quizState from '../../services/quizStateService.js';
 import { playSound } from '../../services/soundService.js';
+import { SceneManager } from '../../services/threeManager.js';
 
+let sceneManager;
 let quizData = null;
 let userAnswers = [];
 let currentQuestionIndex = 0;
 let quizContext = {};
 
+// Timers
 let autoAdvanceTimer = null;
 let countdownInterval = null;
+let challengeInterval = null;
 let isTimerPaused = false;
 let countdownValue = 3;
 
@@ -49,9 +53,12 @@ async function renderQuiz() {
         ? motivationalHints[Math.floor(Math.random() * motivationalHints.length)] 
         : initialHints[Math.floor(Math.random() * initialHints.length)];
 
+    const challengeTimerHtml = quizContext.isChallenge ? `<div id="challenge-timer" class="challenge-timer">00:90</div>` : '';
+
     const newContent = document.createElement('div');
     newContent.id = 'quiz-content-wrapper';
     newContent.innerHTML = `
+        ${challengeTimerHtml}
         <div class="progress-bar">
             <div class="progress-bar-inner" style="width: ${((currentQuestionIndex + 1) / quizData.length) * 100}%"></div>
         </div>
@@ -71,8 +78,12 @@ async function renderQuiz() {
         await new Promise(resolve => setTimeout(resolve, 300));
     }
     
-    quizContainer.innerHTML = '';
+    // Clear canvas before injecting new content if we are re-rendering
+    if(quizContainer.querySelector('.background-canvas')) {
+        quizContainer.innerHTML = '<canvas class="background-canvas"></canvas>';
+    }
     quizContainer.appendChild(newContent);
+
 
     document.querySelectorAll('.quiz-option').forEach(button => {
         button.addEventListener('click', handleAnswerSelect);
@@ -100,28 +111,32 @@ function handleAnswerSelect(e) {
         }
     });
 
-    const isLastQuestion = currentQuestionIndex === quizData.length - 1;
-    const feedbackContainer = document.getElementById('quiz-feedback');
-    
-    let timerControls = '';
-    if (!isLastQuestion) {
-        timerControls = `
-            <button id="timer-control-btn" class="timer-control-btn" aria-label="Pause auto-advance">❚❚</button>
-            <span class="countdown"></span>
+    if (quizContext.isChallenge) {
+        autoAdvanceTimer = setTimeout(handleNext, 1000); // Auto-advance faster in challenge mode
+    } else {
+        const isLastQuestion = currentQuestionIndex === quizData.length - 1;
+        const feedbackContainer = document.getElementById('quiz-feedback');
+        
+        let timerControls = '';
+        if (!isLastQuestion) {
+            timerControls = `
+                <button id="timer-control-btn" class="timer-control-btn" aria-label="Pause auto-advance">❚❚</button>
+                <span class="countdown"></span>
+            `;
+        }
+
+        feedbackContainer.innerHTML = `
+            <button id="next-btn" class="btn btn-primary">${isLastQuestion ? 'Finish Quiz' : 'Next Question'}</button>
+            ${timerControls}
         `;
-    }
+        
+        const nextBtn = document.getElementById('next-btn');
+        nextBtn.addEventListener('click', handleNext);
+        document.getElementById('timer-control-btn')?.addEventListener('click', toggleTimer);
 
-    feedbackContainer.innerHTML = `
-        <button id="next-btn" class="btn btn-primary">${isLastQuestion ? 'Finish Quiz' : 'Next Question'}</button>
-        ${timerControls}
-    `;
-    
-    const nextBtn = document.getElementById('next-btn');
-    nextBtn.addEventListener('click', handleNext);
-    document.getElementById('timer-control-btn')?.addEventListener('click', toggleTimer);
-
-    if (!isLastQuestion) {
-        startAutoAdvance();
+        if (!isLastQuestion) {
+            startAutoAdvance();
+        }
     }
 
     quizState.saveQuizState({ quizData, userAnswers, currentQuestionIndex, quizContext });
@@ -194,12 +209,36 @@ function handleNext() {
         currentQuestionIndex++;
         renderQuiz();
     } else {
-        sessionStorage.setItem('quizResults', JSON.stringify({
-            quizData, userAnswers, quizContext
-        }));
-        quizState.clearQuizState();
-        window.location.hash = '#results';
+        // For both challenge and regular modes, last question answered means quiz is over.
+        finishQuiz();
     }
+}
+
+function finishQuiz() {
+    clearInterval(challengeInterval); // Stop challenge timer if it's running
+    sessionStorage.setItem('quizResults', JSON.stringify({
+        quizData, userAnswers, quizContext
+    }));
+    quizState.clearQuizState();
+    window.location.hash = '#results';
+}
+
+function startChallengeTimer() {
+    let timeLeft = 90;
+    const timerEl = document.getElementById('challenge-timer');
+    if (!timerEl) return;
+
+    challengeInterval = setInterval(() => {
+        timeLeft--;
+        const seconds = String(timeLeft % 60).padStart(2, '0');
+        const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        timerEl.textContent = `${minutes}:${seconds}`;
+
+        if (timeLeft <= 0) {
+            clearInterval(challengeInterval);
+            finishQuiz();
+        }
+    }, 1000);
 }
 
 function handleError(message, shouldClearState = false) {
@@ -219,19 +258,36 @@ function init() {
         userAnswers = savedState.userAnswers;
         currentQuestionIndex = savedState.currentQuestionIndex;
         quizContext = savedState.quizContext;
-        renderQuiz();
+        
+        renderQuiz().then(() => {
+            if (quizContext.isChallenge) {
+                startChallengeTimer();
+            }
+        });
+
     } else {
         handleError("No active quiz found. Please select a topic to start.", false);
         return;
     }
     
     document.addEventListener('keydown', handleKeyPress);
+
+    const canvas = document.querySelector('.background-canvas');
+    if (canvas && window.THREE) {
+        sceneManager = new SceneManager(canvas);
+        sceneManager.init('subtleParticles');
+    }
 }
 
 window.addEventListener('hashchange', () => {
     document.removeEventListener('keydown', handleKeyPress);
     clearTimeout(autoAdvanceTimer);
     clearInterval(countdownInterval);
+    clearInterval(challengeInterval);
+    if (sceneManager) {
+        sceneManager.destroy();
+        sceneManager = null;
+    }
 }, { once: true });
 
 init();
