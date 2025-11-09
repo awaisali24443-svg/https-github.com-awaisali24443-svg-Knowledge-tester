@@ -183,6 +183,56 @@ export async function recordQuizResult(topic, score, quizData, userAnswers, xpGa
     }
 }
 
-// Other functions would be refactored similarly, using transactions where necessary
-// For brevity, I'll focus on the core read/write operations.
-// unlockAchievement, updateChallengeHighScore, etc., would follow the same pattern.
+/**
+ * Updates the user's profile information in Firestore.
+ * @param {object} profileData - The data to update (e.g., { username, bio, pictureURL }).
+ * @returns {Promise<void>}
+ */
+export async function updateUserProfile(profileData) {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        const userDocRef = db.collection('users').doc(user.uid);
+        await userDocRef.update(profileData);
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        window.showToast("Failed to update profile.", "error");
+        throw error;
+    }
+}
+
+/**
+ * Resets all progress for the current user in Firestore.
+ * This is a destructive action.
+ * @returns {Promise<void>}
+ */
+export async function resetUserProgress() {
+    const user = getCurrentUser();
+    if (!user) return;
+    
+    const userDocRef = db.collection('users').doc(user.uid);
+    const progressDocRef = userDocRef.collection('progress').doc('main');
+
+    try {
+        // Reset top-level stats
+        await userDocRef.update({
+            xp: 0,
+            weeklyXP: 0,
+            streak: 0,
+            lastQuizDate: null,
+            challengeHighScore: 0,
+        });
+        
+        // Reset detailed progress
+        await progressDocRef.set({
+            levels: {},
+            history: {},
+            achievements: [],
+        });
+    } catch (error) {
+        console.error("Error resetting user progress:", error);
+        window.showToast("Failed to reset progress.", "error");
+        throw error;
+    }
+}

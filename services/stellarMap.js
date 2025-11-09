@@ -1,5 +1,5 @@
 import { categoryData } from './topicService.js';
-import { getCurrentLevel } from './progressService.js';
+import { getProgress } from './progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../constants.js';
 import { startQuizFlow } from './navigationService.js';
 
@@ -14,6 +14,7 @@ export class StellarMap {
     #clock;
     #objects = { stars: [], constellations: [] };
     #intersected = null;
+    #userLevels = {};
 
     // UI Elements
     #infoPanel;
@@ -28,7 +29,11 @@ export class StellarMap {
         this.#loadingOverlay = document.getElementById('stellar-map-loading');
     }
 
-    init() {
+    async init() {
+        // Fetch user progress first
+        const progress = await getProgress();
+        this.#userLevels = progress?.levels || {};
+
         // Scene and Camera
         this.#scene = new THREE.Scene();
         this.#camera = new THREE.PerspectiveCamera(60, this.#canvas.clientWidth / this.#canvas.clientHeight, 0.1, 1000);
@@ -93,7 +98,7 @@ export class StellarMap {
 
             const points = [];
             category.topics.forEach(topic => {
-                const level = getCurrentLevel(topic.name);
+                const level = this.#userLevels[topic.name] || 1;
                 const color = level > 1 ? 0x00ffff : 0xffffff;
                 const starMat = new THREE.MeshPhongMaterial({
                     color: color,
@@ -140,13 +145,12 @@ export class StellarMap {
         this.#infoPanel.classList.remove('hidden');
         document.getElementById('info-panel-title').textContent = topicData.name;
         document.getElementById('info-panel-desc').textContent = topicData.description;
-        const level = getCurrentLevel(topicData.name);
+        const level = this.#userLevels[topicData.name] || 1;
         document.getElementById('info-panel-level').textContent = `LVL ${level}`;
 
         const quizBtn = document.getElementById('info-panel-quiz-btn');
         quizBtn.onclick = () => {
-            const descriptor = level >= 40 ? "Expert" : "Beginner"; // Simplified
-            const prompt = `Create a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topicData.name}". The difficulty should be for a user at Level ${level} of ${MAX_LEVEL} (${descriptor}).`;
+            const prompt = `Create a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topicData.name}". The difficulty should be for a user at Level ${level} of ${MAX_LEVEL}.`;
             const quizContext = { topicName: topicData.name, level, returnHash: '#home', isLeveled: true, prompt, generationType: 'quiz' };
             startQuizFlow(quizContext);
         };

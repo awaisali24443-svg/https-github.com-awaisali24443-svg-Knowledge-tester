@@ -14,9 +14,12 @@
                 <button id="edit-picture-btn" class="edit-picture-btn" aria-label="Edit profile picture">✏️</button>
             </div>
             <div class="profile-info">
-                <input type="text" id="display-name" class="profile-input" placeholder="Your Name">
-                <textarea id="profile-bio" class="profile-input" placeholder="Your bio or field of interest..."></textarea>
-                <button id="save-profile-btn" class="btn btn-primary">Save Profile</button>
+                <input type="text" id="username" class="profile-input" placeholder="Loading..." disabled>
+                <textarea id="profile-bio" class="profile-input" placeholder="Your bio or field of interest..." disabled></textarea>
+                <button id="save-profile-btn" class="btn btn-primary" disabled>
+                    <span class="btn-text">Save Profile</span>
+                    <div class="spinner hidden"></div>
+                </button>
             </div>
         </div>
     </div>
@@ -40,13 +43,13 @@
     <div class="settings-section">
         <h2>Quick Actions</h2>
         <div class="quick-actions-grid">
-            <a href="#optional-quiz" class="quick-action-card">
-                <span class="quick-action-icon">🧠</span>
-                <span>Forge a Quiz</span>
+            <a href="#challenge-setup" class="quick-action-card">
+                <span class="quick-action-icon">🧪</span>
+                <span>Challenge Mode</span>
             </a>
-            <a href="#explore-topics" class="quick-action-card">
-                <span class="quick-action-icon">📚</span>
-                <span>Explore Topics</span>
+            <a href="#home" class="quick-action-card">
+                <span class="quick-action-icon">🌌</span>
+                <span>Topic Universe</span>
             </a>
             <a href="#screen" class="quick-action-card">
                  <span class="quick-action-icon">📈</span>
@@ -102,11 +105,11 @@
     <!-- Data Management Section -->
     <div class="settings-section">
         <h2>Data Management</h2>
-        <p class="section-description">Manage your quiz history and progress. All data is stored locally in your browser.</p>
+        <p class="section-description">Manage your quiz history and progress. All data is stored on your secure account.</p>
         <div class="danger-zone">
             <div>
                 <strong>Reset All Progress & Data</strong>
-                <p>This will permanently delete your profile, scores, and reset all topics back to Level 1. This action cannot be undone.</p>
+                <p>This will permanently delete your scores and reset all topics back to Level 1. This action cannot be undone.</p>
             </div>
             <button id="reset-progress-btn" class="btn-danger">Reset All</button>
         </div>

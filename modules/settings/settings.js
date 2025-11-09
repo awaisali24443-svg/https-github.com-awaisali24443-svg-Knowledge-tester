@@ -1,12 +1,11 @@
 import * as progressService from '../../services/progressService.js';
 import { SceneManager } from '../../services/threeManager.js';
+import { logOut } from '../../services/authService.js';
 
 let sceneManager;
 
-console.log("Settings/Profile module loaded.");
-
 // --- DOM Elements ---
-const displayNameInput = document.getElementById('display-name');
+const usernameInput = document.getElementById('username');
 const profileBioInput = document.getElementById('profile-bio');
 const saveProfileBtn = document.getElementById('save-profile-btn');
 const profilePictureImg = document.getElementById('profile-picture');
@@ -28,21 +27,42 @@ const dyslexiaFontToggle = document.getElementById('dyslexia-font-toggle');
 const reduceMotionToggle = document.getElementById('reduce-motion-toggle');
 
 // --- Profile Management ---
-function loadProfile() {
-    const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    displayNameInput.value = profile.name || '';
-    profileBioInput.value = profile.bio || '';
-    profilePictureImg.src = profile.picture || 'https://avatar.iran.liara.run/public/boy';
+async function loadProfile() {
+    const progress = await progressService.getProgress();
+    if (progress) {
+        usernameInput.value = progress.username || '';
+        profileBioInput.value = progress.bio || '';
+        profilePictureImg.src = progress.pictureURL || 'https://avatar.iran.liara.run/public/boy';
+    }
+    usernameInput.disabled = false;
+    profileBioInput.disabled = false;
+    saveProfileBtn.disabled = false;
 }
 
-function saveProfile() {
-    const profile = {
-        name: displayNameInput.value.trim(),
+function setSaveLoading(isLoading) {
+    const btnText = saveProfileBtn.querySelector('.btn-text');
+    const spinner = saveProfileBtn.querySelector('.spinner');
+    saveProfileBtn.disabled = isLoading;
+    btnText.classList.toggle('hidden', isLoading);
+    spinner.classList.toggle('hidden', !isLoading);
+}
+
+async function saveProfile() {
+    setSaveLoading(true);
+    const profileData = {
+        username: usernameInput.value.trim(),
         bio: profileBioInput.value.trim(),
-        picture: profilePictureImg.src
+        pictureURL: profilePictureImg.src
     };
-    localStorage.setItem('userProfile', JSON.stringify(profile));
-    window.showToast('✅ Profile saved successfully!');
+    try {
+        await progressService.updateUserProfile(profileData);
+        window.showToast('✅ Profile saved successfully!');
+        await window.updateHeaderStats(); // To reflect potential username change
+    } catch (error) {
+        window.showToast('❌ Failed to save profile.', 'error');
+    } finally {
+        setSaveLoading(false);
+    }
 }
 
 async function editProfilePicture() {
@@ -50,12 +70,11 @@ async function editProfilePicture() {
         title: "Edit Profile Picture",
         text: "Enter a new image URL for your profile picture:",
         confirmText: "Save",
-        cancelText: "Cancel",
         isPrompt: true,
         promptValue: profilePictureImg.src
     });
 
-    if (newUrl) { // prompt returns the new value, or null on cancel
+    if (newUrl) {
         profilePictureImg.src = newUrl;
     }
 }
@@ -94,22 +113,10 @@ function handleAccessibilityChange(e) {
     let settingKey = '';
 
     switch (id) {
-        case 'large-text-toggle':
-            bodyClass = 'large-text';
-            settingKey = 'largeText';
-            break;
-        case 'high-contrast-toggle':
-            bodyClass = 'high-contrast';
-            settingKey = 'highContrast';
-            break;
-        case 'dyslexia-font-toggle':
-            bodyClass = 'dyslexia-font';
-            settingKey = 'dyslexiaFont';
-            break;
-        case 'reduce-motion-toggle':
-            bodyClass = 'reduce-motion';
-            settingKey = 'reduceMotion';
-            break;
+        case 'large-text-toggle': bodyClass = 'large-text'; settingKey = 'largeText'; break;
+        case 'high-contrast-toggle': bodyClass = 'high-contrast'; settingKey = 'highContrast'; break;
+        case 'dyslexia-font-toggle': bodyClass = 'dyslexia-font'; settingKey = 'dyslexiaFont'; break;
+        case 'reduce-motion-toggle': bodyClass = 'reduce-motion'; settingKey = 'reduceMotion'; break;
     }
 
     if (bodyClass) {
@@ -124,27 +131,23 @@ function handleAccessibilityChange(e) {
 async function handleResetProgress() {
     const isConfirmed = await window.showConfirmationModal({
         title: "Confirm Data Reset",
-        text: "Are you sure you want to reset ALL your progress and profile data? This action cannot be undone.",
-        confirmText: "Reset All",
-        cancelText: "Cancel"
+        text: "Are you sure you want to reset ALL your progress? This will reset your XP, levels, and achievements, but will not delete your account. This action cannot be undone.",
+        confirmText: "Reset Progress",
     });
 
     if (isConfirmed) {
-        progressService.resetProgress();
-        localStorage.removeItem('userProfile');
-        localStorage.removeItem('accessibilitySettings');
-        localStorage.removeItem('generalSettings');
-        localStorage.removeItem('selectedTheme');
-        // Do not remove onboarding status
-
-        await window.showConfirmationModal({
-            title: "Data Reset",
-            text: "Your progress and profile have been reset. The page will now reload.",
-            confirmText: "OK",
-            isAlert: true
-        });
-
-        window.location.reload();
+        try {
+            await progressService.resetUserProgress();
+            await window.showConfirmationModal({
+                title: "Progress Reset",
+                text: "Your progress has been reset. You will now be logged out.",
+                isAlert: true
+            });
+            await logOut();
+            window.location.hash = '#login';
+        } catch (error) {
+            window.showToast("An error occurred while resetting progress.", "error");
+        }
     }
 }
 
@@ -152,39 +155,27 @@ async function handleGoPro() {
     await window.showConfirmationModal({
         title: "Feature Coming Soon!",
         text: "Pro features are currently in development. Thank you for your interest!",
-        confirmText: "Got it!",
         isAlert: true
     });
 }
 
 // --- Initialization ---
-function init() {
-    loadProfile();
+async function init() {
+    await loadProfile();
     loadGeneralSettings();
     loadAccessibilitySettings();
 
-    // Load and set saved theme for the dropdown selector
     const savedTheme = localStorage.getItem('selectedTheme') || 'light';
     if (themes.includes(savedTheme)) {
       themeSelector.value = savedTheme;
-    } else {
-      themeSelector.value = 'light';
     }
 
-    // Add theme change listener
     themeSelector?.addEventListener('change', (e) => {
       const selectedTheme = e.target.value;
-      if (themes.includes(selectedTheme)) {
-          // Add class to disable transitions during theme switch for a smoother experience
-          document.body.classList.add('theme-transitioning');
-          document.documentElement.setAttribute('data-theme', selectedTheme);
-          localStorage.setItem('selectedTheme', selectedTheme);
-          
-          // Remove the class after a short delay to re-enable transitions
-          setTimeout(() => {
-              document.body.classList.remove('theme-transitioning');
-          }, 150);
-      }
+      document.body.classList.add('theme-transitioning');
+      document.documentElement.setAttribute('data-theme', selectedTheme);
+      localStorage.setItem('selectedTheme', selectedTheme);
+      setTimeout(() => document.body.classList.remove('theme-transitioning'), 150);
     });
 
     saveProfileBtn?.addEventListener('click', saveProfile);
@@ -205,12 +196,19 @@ function init() {
     }
 }
 
-window.addEventListener('hashchange', () => {
+function cleanup() {
     if (sceneManager) {
         sceneManager.destroy();
         sceneManager = null;
     }
-}, { once: true });
+}
 
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.querySelector('.settings-container')) {
+        cleanup();
+        obs.disconnect();
+    }
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
 
 init();

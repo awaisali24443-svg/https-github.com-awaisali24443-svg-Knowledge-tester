@@ -61,11 +61,18 @@ export function logOut() {
 
 /**
  * Attaches a listener for authentication state changes.
- * @param {function} callback - The function to call when the auth state changes.
+ * @param {function(firebase.User | null, boolean)} callback - The function to call when the auth state changes. The second argument is true if it's a new user's first login.
  * @returns {firebase.Unsubscribe} - The unsubscribe function.
  */
 export function onAuthStateChanged(callback) {
-    return auth.onAuthStateChanged(callback);
+    return auth.onAuthStateChanged(user => {
+        if (user) {
+            const isNewUser = user.metadata.creationTime === user.metadata.lastSignInTime;
+            callback(user, isNewUser);
+        } else {
+            callback(null, false);
+        }
+    });
 }
 
 /**

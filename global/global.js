@@ -8,10 +8,15 @@ const yearSpan = document.getElementById('year');
 let currentUser = null;
 
 // --- Auth State Management ---
-onAuthStateChanged(async (user) => {
+onAuthStateChanged(async (user, isNewUser) => {
     currentUser = user;
     await loadHeader(); // Reload header to show correct links
     handleRouteChange(); // Re-evaluate route based on new auth state
+    
+    // Show welcome modal for brand new users on their first login
+    if (isNewUser) {
+        showWelcomeModal();
+    }
 });
 
 
@@ -53,21 +58,18 @@ function initGlobalSounds() {
     });
 }
 
-function initOnboarding() {
-    const overlay = document.getElementById('onboarding-overlay');
-    const skipBtn = document.getElementById('onboarding-skip-btn');
-    if (!overlay || !skipBtn) return;
-
-    const hasOnboarded = localStorage.getItem('knowledgeTesterOnboarded');
-    if (!hasOnboarded) {
-        overlay.classList.remove('hidden');
-    }
-
-    skipBtn.addEventListener('click', () => {
+function showWelcomeModal() {
+    const overlay = document.getElementById('welcome-modal-overlay');
+    const closeBtn = document.getElementById('welcome-modal-close-btn');
+    if (!overlay || !closeBtn) return;
+    
+    overlay.classList.remove('hidden');
+    
+    closeBtn.addEventListener('click', () => {
         overlay.classList.add('hidden');
-        localStorage.setItem('knowledgeTesterOnboarded', 'true');
-    });
+    }, { once: true });
 }
+
 
 function initAccessibility() {
     // This now only applies visual settings, not data
@@ -357,7 +359,6 @@ function startPingSystem() {
 function init() {
     initCursorAura();
     initGlobalSounds();
-    initOnboarding();
     initAccessibility();
     startPingSystem();
     

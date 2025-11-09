@@ -67,6 +67,22 @@
     font-family: inherit;
     font-size: 1rem;
 }
+.profile-input:disabled {
+    background-color: var(--color-bg-light);
+    cursor: not-allowed;
+}
+#save-profile-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 48px;
+}
+#save-profile-btn .spinner {
+    width: 20px;
+    height: 20px;
+    border-width: 2px;
+}
+
 #profile-bio { min-height: 80px; resize: vertical; }
 
 /* Go Pro Section */

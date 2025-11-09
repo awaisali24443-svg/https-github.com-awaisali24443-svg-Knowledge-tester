@@ -4,6 +4,19 @@
     text-align: center;
 }
 
+.loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--color-text-muted);
+}
+.loading-overlay .spinner {
+    margin-bottom: 1rem;
+}
+
+
 .progress-title {
     font-size: 2.5rem;
     font-weight: 800;

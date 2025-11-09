@@ -64,7 +64,7 @@ function init() {
     const canvas = document.querySelector('.background-canvas');
     if (canvas && window.THREE) {
         sceneManager = new SceneManager(canvas);
-        sceneManager.init('calmGeometric');
+        sceneManager.init('particleGalaxy');
     }
 }
 

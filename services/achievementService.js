@@ -1,5 +1,6 @@
 import * as progressService from './progressService.js';
 import { MAX_LEVEL } from '../constants.js';
+import { categoryData } from './topicService.js';
 
 export const ALL_ACHIEVEMENTS = [
     {
@@ -7,7 +8,7 @@ export const ALL_ACHIEVEMENTS = [
         name: 'First Steps',
         description: 'Complete your first quiz.',
         icon: '🎓',
-        check: (progress) => progress.stats.totalQuizzes >= 1
+        check: (progress) => (Object.values(progress.history).reduce((sum, item) => sum + item.correct + item.incorrect, 0) / 5) >= 1
     },
     {
         id: 'perfect_score',
@@ -21,7 +22,7 @@ export const ALL_ACHIEVEMENTS = [
         name: 'Adept Learner',
         description: 'Reach player level 10.',
         icon: '🧠',
-        check: (progress) => progressService.calculateLevelInfo(progress.stats.xp).level >= 10
+        check: (progress) => progressService.calculateLevelInfo(progress.xp).level >= 10
     },
     {
         id: 'topic_master',
@@ -36,7 +37,7 @@ export const ALL_ACHIEVEMENTS = [
         description: 'Master all topics in the Science category.',
         icon: '🔬',
         check: (progress) => {
-            const scienceTopics = ['Biology', 'Chemistry', 'Physics', 'Science Inventions'];
+            const scienceTopics = categoryData.science.topics.map(t => t.name);
             return scienceTopics.every(topic => progress.levels[topic] >= MAX_LEVEL);
         }
     },
@@ -46,7 +47,7 @@ export const ALL_ACHIEVEMENTS = [
         description: 'Master all topics in the Programming category.',
         icon: '💻',
         check: (progress) => {
-            const programmingTopics = ["Python", "JavaScript", "Java", "SQL", "TypeScript", "C++"];
+            const programmingTopics = categoryData.programming.topics.map(t => t.name);
             return programmingTopics.every(topic => progress.levels[topic] >= MAX_LEVEL);
         }
     },
@@ -55,7 +56,7 @@ export const ALL_ACHIEVEMENTS = [
         name: 'On a Roll',
         description: 'Maintain a 3-day quiz streak.',
         icon: '🔥',
-        check: (progress) => progress.stats.streak >= 3
+        check: (progress) => progress.streak >= 3
     },
     {
         id: 'explorer',
@@ -64,36 +65,43 @@ export const ALL_ACHIEVEMENTS = [
         icon: '🗺️',
         check: (progress) => {
             const completedCategories = new Set(Object.keys(progress.levels).map(topic => {
-                for (const catKey in progressService.categoryData) {
-                    if (progressService.categoryData[catKey].topics.some(t => t.name === topic)) {
+                for (const catKey in categoryData) {
+                    if (categoryData[catKey].topics.some(t => t.name === topic)) {
                         return catKey;
                     }
                 }
                 return null;
             }));
-            return completedCategories.size >= Object.keys(progressService.categoryData).length;
+            return completedCategories.size >= Object.keys(categoryData).length;
         }
     }
 ];
 
 /**
  * Checks the user's progress against all achievements and unlocks any new ones.
- * @param {object} progress - The updated user progress object.
+ * @param {object} progress - The updated user progress object from Firestore.
  * @param {object} quizContext - The context of the quiz that was just completed.
  * @param {number} score - The score from the completed quiz.
- * @returns {Array<object>} - An array of newly unlocked achievement objects.
+ * @returns {Promise<Array<object>>} - A promise that resolves to an array of newly unlocked achievement objects.
  */
-export function checkAchievements(progress, quizContext, score) {
+export async function checkAchievements(progress, quizContext, score) {
     const newAchievements = [];
+    const unlockedAchievements = progress.achievements || [];
 
     for (const achievement of ALL_ACHIEVEMENTS) {
-        if (!progress.achievements.includes(achievement.id)) {
+        if (!unlockedAchievements.includes(achievement.id)) {
             if (achievement.check(progress, quizContext, score)) {
-                if (progressService.unlockAchievement(achievement.id)) {
-                    newAchievements.push(achievement);
-                }
+                unlockedAchievements.push(achievement.id);
+                newAchievements.push(achievement);
             }
         }
+    }
+    
+    // If new achievements were found, update them in the database.
+    if (newAchievements.length > 0) {
+        await progressService.updateUserProfile({
+             'progress.main.achievements': unlockedAchievements 
+        });
     }
     
     return newAchievements;

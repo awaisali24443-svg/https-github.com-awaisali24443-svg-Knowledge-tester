@@ -56,28 +56,34 @@ function animateCountUp(element, finalValue, prefix = '', suffix = '') {
 }
 
 
-function renderStandardResults(score) {
-    const oldProgress = progressService.getProgress();
-    const oldLevelInfo = progressService.calculateLevelInfo(oldProgress.stats.xp);
+async function renderStandardResults(score) {
+    const oldProgress = await progressService.getProgress();
+    if (!oldProgress) {
+        // Handle case where progress couldn't be fetched
+        window.showToast('Error loading progress. Cannot save results.', 'error');
+        return;
+    }
+    const oldLevelInfo = progressService.calculateLevelInfo(oldProgress.xp);
 
     const scorePercentage = Math.round((score / quizData.length) * 100);
     const baseXP = score * 10;
     const perfectBonus = score === quizData.length ? 50 : 0;
-    const missionBonuses = checkAndCompleteMissions(quizContext, score, scorePercentage);
+    const missionBonuses = await checkAndCompleteMissions(quizContext, score, scorePercentage);
     const missionXP = missionBonuses.reduce((sum, mission) => sum + mission.reward, 0);
     const totalXPGained = baseXP + perfectBonus + missionXP;
     
-    // Record result and check for achievements
-    progressService.recordQuizResult(quizContext.topicName, score, quizData, userAnswers, totalXPGained);
-    const newProgress = progressService.getProgress();
-    const newAchievements = checkAchievements(newProgress, quizContext, score);
+    // Record result and get the new state
+    const newProgress = await progressService.recordQuizResult(quizContext.topicName, score, quizData, userAnswers, totalXPGained);
+    
+    // Check for achievements with the new progress state
+    const newAchievements = await checkAchievements(newProgress, quizContext, score);
     newAchievements.forEach((ach, index) => {
         setTimeout(() => {
              window.showToast(`🏆 ${ach.name}: ${ach.description}`);
         }, 1000 + index * 500);
     });
 
-    const newLevelInfo = progressService.calculateLevelInfo(newProgress.stats.xp);
+    const newLevelInfo = progressService.calculateLevelInfo(newProgress.xp);
     
     if (newLevelInfo.level > oldLevelInfo.level) {
         setTimeout(() => window.showLevelUpModal(newLevelInfo.level), 1500);
@@ -92,16 +98,16 @@ function renderStandardResults(score) {
     
     if (quizContext.isLeveled) {
         const didPass = score >= UNLOCK_SCORE;
-        const currentLevel = progressService.getCurrentLevel(quizContext.topicName); // Get the potentially new level
+        const currentLevel = await progressService.getCurrentLevel(quizContext.topicName);
 
         if (didPass) {
              if (currentLevel < MAX_LEVEL) {
                 triggerConfetti();
                 feedbackHtml = `<div class="results-feedback success"><strong>Topic Level ${quizContext.level} Passed!</strong> You've unlocked Level ${currentLevel}.</div>`;
                 primaryActionHtml = `<button id="next-level-btn" class="btn btn-primary">New Quiz (Level ${currentLevel})</button>`;
-                progressService.unlockNextLevel(quizContext.topicName, MAX_LEVEL);
             } else {
                  feedbackHtml = `<div class="results-feedback success"><strong>Congratulations!</strong> You've mastered ${quizContext.topicName}!</div>`;
+                 primaryActionHtml = ``; // No more levels
             }
         } else {
             feedbackHtml = `<div class="results-feedback failure"><strong>Nice try!</strong> You need a score of at least ${UNLOCK_SCORE} to advance.</div>`;
@@ -174,13 +180,16 @@ function renderStandardResults(score) {
     }, 100);
 }
 
-function renderChallengeResults(score) {
+async function renderChallengeResults(score) {
     playSound('complete');
-    const progress = progressService.getProgress();
-    const oldHighScore = progress.stats.challengeHighScore;
-    const isNewHighScore = progressService.updateChallengeHighScore(score);
+    const progress = await progressService.getProgress();
+    if (!progress) return; // Guard clause
 
+    const oldHighScore = progress.challengeHighScore || 0;
+    const isNewHighScore = score > oldHighScore;
+    
     if (isNewHighScore) {
+        await progressService.updateUserProfile({ challengeHighScore: score });
         triggerConfetti();
     }
     
@@ -200,8 +209,9 @@ function renderChallengeResults(score) {
 }
 
 
-function _startNewQuiz(topicName, level, returnHash, promptOverride = null, isChallenge = false) {
-    const history = progressService.getTopicHistory(topicName);
+async function _startNewQuiz(topicName, level, returnHash, promptOverride = null, isChallenge = false) {
+    const progress = await progressService.getProgress();
+    const history = progress.history[topicName] || { correct: 0, incorrect: 0 };
     const total = history.correct + history.incorrect;
     const performanceHistory = {
         recentCorrectPercentage: total > 5 ? (history.correct / total) * 100 : -1
@@ -210,7 +220,7 @@ function _startNewQuiz(topicName, level, returnHash, promptOverride = null, isCh
     let newQuizContext = { 
         topicName, 
         returnHash,
-        prompt: promptOverride || `Generate a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topicName}". The difficulty should be for a user at Level ${level}.`,
+        prompt: promptOverride || `Generate a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topicName}". The difficulty should be for a user at Level ${level} of ${MAX_LEVEL}.`,
         isLeveled: !promptOverride,
         level: level,
         generationType: 'quiz',
@@ -262,21 +272,21 @@ function handleRetryMissed(missedQuestions) {
     window.location.hash = '#quiz';
 }
 
-function handleRetryLevel() {
+async function handleRetryLevel() {
     if (quizContext.isChallenge) {
         window.location.hash = '#challenge-setup';
     } else {
-        const currentLevel = progressService.getCurrentLevel(quizContext.topicName);
+        const currentLevel = await progressService.getCurrentLevel(quizContext.topicName);
         _startNewQuiz(quizContext.topicName, currentLevel, quizContext.returnHash, quizContext.isLeveled ? null : quizContext.prompt);
     }
 }
 
-function handleNextLevel() {
-    const nextLevel = progressService.getCurrentLevel(quizContext.topicName);
+async function handleNextLevel() {
+    const nextLevel = await progressService.getCurrentLevel(quizContext.topicName);
     _startNewQuiz(quizContext.topicName, nextLevel, quizContext.returnHash);
 }
 
-function init() {
+async function init() {
     const resultsString = sessionStorage.getItem('quizResults');
     if (!resultsString) {
         console.error("No results data found. Redirecting home.");
@@ -294,9 +304,9 @@ function init() {
             (answer !== null && answer === quizData[index].correctAnswerIndex ? acc + 1 : acc), 0);
 
         if (quizContext.isChallenge) {
-            renderChallengeResults(score);
+            await renderChallengeResults(score);
         } else {
-            renderStandardResults(score);
+            await renderStandardResults(score);
         }
 
         document.getElementById('back-to-topics-btn')?.addEventListener('click', () => window.location.hash = quizContext.returnHash || '#home');

@@ -29,7 +29,7 @@ function renderAchievements(unlockedAchievements) {
 
 async function handleNemesisQuiz(e) {
     const topicName = e.currentTarget.dataset.topic;
-    const progress = progressService.getProgress();
+    const progress = await progressService.getProgress();
     const missedConcepts = progress.history[topicName]?.missedConcepts || [];
 
     if (missedConcepts.length < 3) {
@@ -57,18 +57,27 @@ async function handleNemesisQuiz(e) {
 }
 
 
-function renderProgress() {
-    const progress = progressService.getProgress();
-    const { stats, levels, achievements } = progress;
+async function renderProgress() {
+    const progress = await progressService.getProgress();
+    if (!progress) {
+        // Handle case where progress is not available
+        document.getElementById('progress-loading').innerHTML = '<p>Could not load progress.</p>';
+        return;
+    }
 
-    renderAchievements(achievements);
+    const { achievements, history, levels } = progress;
 
-    // Render Overall Stats
-    document.getElementById('total-quizzes').textContent = stats.totalQuizzes;
-    const totalPossibleScore = stats.totalQuizzes * 5;
-    const avg = totalPossibleScore > 0 ? Math.round((stats.totalCorrect / totalPossibleScore) * 100) : 0;
+    renderAchievements(achievements || []);
+
+    // Calculate and Render Overall Stats
+    const totalQuizzes = Object.values(history || {}).reduce((sum, item) => sum + item.correct + item.incorrect, 0) / 5; // Assuming 5 questions per quiz
+    const totalCorrect = Object.values(history || {}).reduce((sum, item) => sum + item.correct, 0);
+    const totalPossibleScore = totalQuizzes * 5;
+    const avg = totalPossibleScore > 0 ? Math.round((totalCorrect / totalPossibleScore) * 100) : 0;
+    const totalLevelsUnlocked = Object.values(levels || {}).reduce((sum, level) => sum + (level - 1), 0);
+    
+    document.getElementById('total-quizzes').textContent = Math.floor(totalQuizzes);
     document.getElementById('average-score').textContent = `${avg}%`;
-    const totalLevelsUnlocked = Object.values(levels).reduce((sum, level) => sum + (level - 1), 0);
     document.getElementById('levels-unlocked').textContent = totalLevelsUnlocked;
 
     // Render Topic-specific Progress
@@ -78,8 +87,8 @@ function renderProgress() {
     for (const category in topicCategories) {
         const topicsInCategory = topicCategories[category];
         const categoryProgressHtml = topicsInCategory
-            .filter(topic => levels[topic] > 1)
-            .map(topic => createProgressItemHtml(topic, levels[topic], progress.history[topic]))
+            .filter(topic => levels && levels[topic] > 1)
+            .map(topic => createProgressItemHtml(topic, levels[topic], history[topic]))
             .join('');
 
         if (categoryProgressHtml.trim() !== '') {
@@ -92,7 +101,7 @@ function renderProgress() {
         }
     }
 
-    if (Object.keys(levels).length === 0) {
+    if (Object.keys(levels || {}).length === 0) {
         progressListContainer.innerHTML = '<p class="no-progress-message">You haven\'t started any leveled quizzes yet. Launch a mission from the Topic Universe to begin!</p>';
     } else {
         progressListContainer.innerHTML = allProgressHtml;
@@ -123,8 +132,15 @@ function createProgressItemHtml(topic, level, history) {
     `;
 }
 
-function init() {
-    renderProgress();
+async function init() {
+    const loadingEl = document.getElementById('progress-loading');
+    const contentEl = document.getElementById('progress-content');
+    
+    await renderProgress();
+    
+    loadingEl.classList.add('hidden');
+    contentEl.classList.remove('hidden');
+
     const canvas = document.querySelector('.background-canvas');
     if (canvas && window.THREE) {
         sceneManager = new SceneManager(canvas);
@@ -132,11 +148,21 @@ function init() {
     }
 }
 
-window.addEventListener('hashchange', () => {
-    if (sceneManager) {
+function cleanup() {
+     if (sceneManager) {
         sceneManager.destroy();
         sceneManager = null;
     }
-}, { once: true });
+}
+
+// Use MutationObserver for robust cleanup
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.querySelector('.progress-container')) {
+        cleanup();
+        obs.disconnect();
+    }
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
+
 
 init();
