@@ -82,7 +82,7 @@ const routes = {
     [C.ROUTE_LOADING]: { module: 'loading', auth: true },
     [C.ROUTE_QUIZ]: { module: 'quiz', auth: true },
     [C.ROUTE_RESULTS]: { module: 'results', auth: true },
-    [C.ROUTE_PROGRESS]: { module: 'progress', auth: true }, // Formerly 'screen'
+    [C.ROUTE_PROGRESS]: { module: 'screen', auth: true }, // CRITICAL FIX: Was 'progress'
     [C.ROUTE_SETTINGS]: { module: 'settings', auth: true },
     [C.ROUTE_STUDY]: { module: 'study', auth: true },
     [C.ROUTE_LEADERBOARD]: { module: 'leaderboard', auth: true },
