@@ -1,6 +1,6 @@
 // sw.js - Service Worker for PWA capabilities
 
-const CACHE_NAME = 'knowledge-tester-v2.2.0'; // Version bump for final polish
+const CACHE_NAME = 'knowledge-tester-v2.3.0'; // Version bump for new features
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -60,7 +60,6 @@ const ASSETS_TO_CACHE = [
     '/modules/leaderboard/leaderboard.html',
     '/modules/leaderboard/leaderboard.css',
     '/modules/leaderboard/leaderboard.js',
-
 
     // Fonts CSS
     'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;800&family=Orbitron:wght@700;800&display=swap'
