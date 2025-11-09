@@ -76,6 +76,14 @@ body.theme-transitioning * {
     transition: none !important; /* Pause transitions during theme switch to prevent flashes */
 }
 
+/* Hide main content during splash screen */
+body.loading-splash #header-container,
+body.loading-splash #root-container,
+body.loading-splash .site-footer {
+    visibility: hidden;
+}
+
+
 /* Layout */
 #root-container {
     width: 100%;

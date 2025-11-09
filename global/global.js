@@ -10,6 +10,33 @@ const headerContainer = document.getElementById('header-container');
 const yearSpan = document.getElementById('year');
 let currentUser = null;
 
+// --- Splash Screen Logic ---
+function handleSplashScreen() {
+    const splashScreen = document.getElementById('splash-screen');
+    if (!splashScreen) return;
+
+    // Total duration of the CSS animation sequence in milliseconds
+    const animationDuration = 4500; 
+
+    const fadeOutSplash = () => {
+        if (!splashScreen) return;
+        splashScreen.classList.add('fade-out');
+        splashScreen.addEventListener('transitionend', () => {
+            splashScreen.style.display = 'none';
+            document.body.classList.remove('loading-splash');
+        }, { once: true });
+    };
+
+    // Wait until the window is fully loaded before starting the fade-out process.
+    // This ensures the app is ready to be displayed.
+    window.addEventListener('load', () => {
+        // Ensure the splash animation plays for its minimum duration,
+        // even if the page loads very quickly.
+        setTimeout(fadeOutSplash, animationDuration);
+    });
+}
+
+
 // --- Auth State Management ---
 onAuthStateChanged(async (user, isNewUser) => {
     currentUser = user;
@@ -218,6 +245,7 @@ const routes = {
     '#settings': { module: 'settings', auth: true },
     '#study': { module: 'study', auth: true },
     '#leaderboard': { module: 'leaderboard', auth: true },
+    '#learning-path': { module: 'learning-path', auth: true },
 };
 
 let isNavigating = false;
@@ -401,6 +429,7 @@ function startPingSystem() {
 
 
 function init() {
+    handleSplashScreen();
     initCursorAura();
     initGlobalSounds();
     initAccessibility();

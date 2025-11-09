@@ -1,10 +1,11 @@
 // sw.js - Service Worker for PWA capabilities
 
-const CACHE_NAME = 'knowledge-tester-v3.1.0'; // Final polish and refinement
+const CACHE_NAME = 'knowledge-tester-v3.4.0'; // Added Splash Screen
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/global/global.css',
+    '/global/splash.css',
     '/global/accessibility.css',
     '/themes/theme-dark-cyber.css',
     '/global/global.js',
@@ -22,6 +23,8 @@ const ASSETS_TO_CACHE = [
     '/services/leaderboardService.js',
     '/services/authService.js',
     '/services/moduleHelper.js',
+    '/services/learningPathService.js',
+    '/services/activityFeedService.js',
     '/firebase-config.js',
     '/constants.js',
     '/manifest.json',
@@ -64,6 +67,9 @@ const ASSETS_TO_CACHE = [
     '/modules/leaderboard/leaderboard.html',
     '/modules/leaderboard/leaderboard.css',
     '/modules/leaderboard/leaderboard.js',
+    '/modules/learning-path/learning-path.html',
+    '/modules/learning-path/learning-path.css',
+    '/modules/learning-path/learning-path.js',
 
     // Fonts CSS
     'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;700;800&family=Orbitron:wght@700;800&display=swap'

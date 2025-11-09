@@ -6,12 +6,45 @@
     </a>
     <h1 id="study-topic-title" class="study-title">Study Guide</h1>
 
-    <div id="study-content" class="study-content">
+    <div id="study-content" class="study-content markdown-body">
         <!-- AI-generated study content will be rendered here -->
-        <p>Loading study material...</p>
+        <div class="placeholder-text">
+            <span>Generating your study guide...</span>
+            <span class="blinking-cursor"></span>
+        </div>
     </div>
 
     <div class="study-actions">
-        <button id="start-quiz-btn" class="btn btn-primary">I'm Ready! Start Quiz</button>
+        <button id="start-quiz-btn" class="btn btn-primary" disabled>I'm Ready! Start Quiz</button>
+    </div>
+
+    <!-- New Study Tools Section -->
+    <div id="study-tools-section" class="study-tools-section hidden">
+        <h2>Study Tools</h2>
+        <div class="tools-grid">
+            <button id="generate-flashcards-btn" class="tool-card">
+                <span class="tool-icon">🃏</span>
+                <span>Generate Flashcards</span>
+                <div class="spinner hidden"></div>
+            </button>
+        </div>
+    </div>
+
+    <!-- New Flashcard Modal -->
+    <div id="flashcard-modal-overlay" class="hidden">
+        <div id="flashcard-modal-card">
+            <button id="flashcard-close-btn" class="flashcard-close-btn" aria-label="Close flashcards">✖</button>
+            <div id="flashcard-container">
+                <div id="flashcard-flipper">
+                    <div id="flashcard-front" class="flashcard-face"></div>
+                    <div id="flashcard-back" class="flashcard-face"></div>
+                </div>
+            </div>
+            <div id="flashcard-controls">
+                <button id="flashcard-prev-btn" class="btn btn-secondary">Previous</button>
+                <div id="flashcard-counter"></div>
+                <button id="flashcard-next-btn" class="btn btn-secondary">Next</button>
+            </div>
+        </div>
     </div>
 </div>
