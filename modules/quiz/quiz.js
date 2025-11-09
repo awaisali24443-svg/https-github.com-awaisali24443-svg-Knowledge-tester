@@ -6,6 +6,9 @@ let userAnswers = [];
 let currentQuestionIndex = 0;
 let quizContext = {};
 
+let autoAdvanceTimer = null;
+let countdownInterval = null;
+
 const quizContainer = document.getElementById('quiz-container');
 
 const motivationalHints = [
@@ -91,15 +94,39 @@ function handleAnswerSelect(e) {
     });
 
     const isLastQuestion = currentQuestionIndex === quizData.length - 1;
-    document.getElementById('quiz-feedback').innerHTML = `
+    const feedbackContainer = document.getElementById('quiz-feedback');
+    feedbackContainer.innerHTML = `
         <button id="next-btn" class="btn btn-primary">${isLastQuestion ? 'Finish Quiz' : 'Next Question'}</button>
     `;
-    document.getElementById('next-btn').addEventListener('click', handleNext);
+    
+    const nextBtn = document.getElementById('next-btn');
+    nextBtn.addEventListener('click', handleNext);
+
+    // Auto-advance logic, not for last question
+    if (!isLastQuestion) {
+        let countdown = 3;
+        const countdownSpan = document.createElement('span');
+        countdownSpan.className = 'countdown';
+        nextBtn.appendChild(countdownSpan);
+
+        const updateCountdown = () => {
+            countdownSpan.textContent = `(${countdown})`;
+            countdown--;
+        };
+        updateCountdown();
+
+        countdownInterval = setInterval(updateCountdown, 1000);
+        autoAdvanceTimer = setTimeout(handleNext, 3000);
+    }
+
 
     quizState.saveQuizState({ quizData, userAnswers, currentQuestionIndex, quizContext });
 }
 
 function handleNext() {
+    clearTimeout(autoAdvanceTimer);
+    clearInterval(countdownInterval);
+
     if (currentQuestionIndex < quizData.length - 1) {
         currentQuestionIndex++;
         renderQuiz();
@@ -142,6 +169,8 @@ function init() {
 // Cleanup listener when navigating away
 window.addEventListener('hashchange', () => {
     document.removeEventListener('keydown', handleKeyPress);
+    clearTimeout(autoAdvanceTimer);
+    clearInterval(countdownInterval);
 }, { once: true });
 
 init();

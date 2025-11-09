@@ -5,6 +5,8 @@ const loadingContainer = document.querySelector('.loading-container');
 const spinnerWrapper = document.getElementById('spinner-wrapper');
 const errorContainer = document.getElementById('error-container');
 const loadingTextElement = document.getElementById('loading-text');
+const topicTitleElement = document.getElementById('loading-topic-title');
+
 
 const topicMessages = {
     'science': [
@@ -73,6 +75,9 @@ let messageInterval;
 let quizContext = {};
 
 function showLoadingState() {
+    if (topicTitleElement && quizContext.topicName) {
+        topicTitleElement.textContent = `Forging your quiz on "${quizContext.topicName}"`;
+    }
     spinnerWrapper.classList.remove('hidden');
     errorContainer.classList.add('hidden');
     startLoadingMessages();

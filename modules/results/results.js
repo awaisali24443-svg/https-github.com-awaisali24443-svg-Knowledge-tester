@@ -8,6 +8,33 @@ let quizContext = {};
 
 const resultsContainer = document.getElementById('results-container');
 
+function triggerConfetti() {
+    const confettiContainer = document.createElement('div');
+    confettiContainer.id = 'confetti-container';
+    document.body.appendChild(confettiContainer);
+
+    const colors = ['var(--color-primary)', 'var(--color-secondary)', '#22c55e', '#f59e0b'];
+    for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = `${Math.random() * 100}vw`;
+        confetti.style.animationDelay = `${Math.random() * 2}s`;
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        if (i % 3 === 0) { // Rectangles
+            confetti.style.height = '15px';
+            confetti.style.width = '7px';
+            confetti.style.borderRadius = '2px';
+        }
+
+        confettiContainer.appendChild(confetti);
+    }
+
+    setTimeout(() => {
+        confettiContainer.remove();
+    }, 4000);
+}
+
 function animateCountUp(element, finalValue, total) {
     let current = 0;
     const duration = 1000;
@@ -46,6 +73,7 @@ function renderResults() {
 
         if (didPass) {
             if (!isMaxLevel) {
+                triggerConfetti();
                 const newLevel = quizContext.level + 1;
                 feedbackHtml = `<div class="results-feedback success"><strong>Level ${quizContext.level} Passed!</strong> You've unlocked Level ${newLevel}.</div>`;
                 actionsHtml = `<button id="next-level-btn" class="btn btn-primary">New Quiz (Next Level)</button>`;

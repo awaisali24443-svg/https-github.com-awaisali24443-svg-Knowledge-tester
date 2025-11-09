@@ -111,3 +111,10 @@
 #quiz-feedback button {
     animation: popIn 0.4s ease-out forwards;
 }
+
+#quiz-feedback .countdown {
+    display: inline-block;
+    margin-left: 8px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
