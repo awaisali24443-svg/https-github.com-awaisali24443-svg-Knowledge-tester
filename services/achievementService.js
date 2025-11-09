@@ -38,7 +38,7 @@ export const ALL_ACHIEVEMENTS = [
         icon: '🔬',
         check: (progress) => {
             const scienceTopics = categoryData.science.topics.map(t => t.name);
-            return scienceTopics.every(topic => progress.levels[topic] >= MAX_LEVEL);
+            return scienceTopics.every(topic => (progress.levels[topic] || 0) >= MAX_LEVEL);
         }
     },
      {
@@ -48,7 +48,7 @@ export const ALL_ACHIEVEMENTS = [
         icon: '💻',
         check: (progress) => {
             const programmingTopics = categoryData.programming.topics.map(t => t.name);
-            return programmingTopics.every(topic => progress.levels[topic] >= MAX_LEVEL);
+            return programmingTopics.every(topic => (progress.levels[topic] || 0) >= MAX_LEVEL);
         }
     },
     {
@@ -99,8 +99,8 @@ export async function checkAchievements(progress, quizContext, score) {
     
     // If new achievements were found, update them in the database.
     if (newAchievements.length > 0) {
-        await progressService.updateUserProfile({
-             'progress.main.achievements': unlockedAchievements 
+        await progressService.updateProgressData({
+             achievements: unlockedAchievements 
         });
     }
     

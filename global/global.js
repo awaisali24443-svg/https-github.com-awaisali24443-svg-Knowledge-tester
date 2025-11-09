@@ -1,6 +1,9 @@
+
+
 import { playSound } from '/services/soundService.js';
 import { getProgress, calculateLevelInfo } from '/services/progressService.js';
 import { onAuthStateChanged, getCurrentUser, logOut } from '/services/authService.js';
+import * as quizState from '/services/quizStateService.js';
 
 const rootContainer = document.getElementById('root-container');
 const headerContainer = document.getElementById('header-container');
@@ -202,6 +205,7 @@ window.showLevelUpModal = showLevelUpModal;
 // --- Routing ---
 const routes = {
     // Public routes
+    '#welcome': { module: 'welcome', auth: false },
     '#login': { module: 'login', auth: false },
     '#signup': { module: 'signup', auth: false },
     // Authenticated routes
@@ -274,12 +278,39 @@ async function loadModule(moduleName, context = {}) {
 }
 
 function handleRouteChange() {
-    const hash = window.location.hash || '#home';
-    const route = routes[hash] || routes['#home'];
+    let hash = window.location.hash;
+
+    // Handle special #challenge route
+    if (hash.startsWith('#challenge=')) {
+        if (!currentUser) {
+            showToast("You must be logged in to accept a challenge.", "error");
+            window.location.hash = '#login';
+            return;
+        }
+        try {
+            const encodedData = hash.substring('#challenge='.length);
+            const decodedString = atob(encodedData);
+            const { context, quiz } = JSON.parse(decodedString);
+            quizState.startNewQuizState(quiz, context);
+            window.location.hash = '#quiz'; // Redirect to the quiz module
+        } catch (error) {
+            console.error("Failed to decode challenge link:", error);
+            showToast("Invalid challenge link.", "error");
+            window.location.hash = '#home';
+        }
+        return;
+    }
+    
+    // Default route logic
+    if (!hash) {
+        hash = currentUser ? '#home' : '#welcome';
+    }
+
+    const route = routes[hash] || routes[currentUser ? '#home' : '#welcome'];
 
     // Auth guard
     if (route.auth && !currentUser) {
-        window.location.hash = '#login';
+        window.location.hash = '#welcome';
         return;
     }
     if (!route.auth && currentUser) {
@@ -297,12 +328,25 @@ function handleRouteChange() {
 }
 
 async function handleLogout() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (!logoutBtn) return;
+
+    logoutBtn.disabled = true;
+    const spinner = logoutBtn.querySelector('.spinner');
+    const btnContent = logoutBtn.querySelector('.btn-content');
+    spinner?.classList.remove('hidden');
+    btnContent?.classList.add('hidden');
+
     try {
         await logOut();
         window.location.hash = '#login';
         showToast('You have been logged out.', 'success');
     } catch (error) {
         showToast(`Logout failed: ${error.message}`, 'error');
+        // Re-enable button on failure
+        logoutBtn.disabled = false;
+        spinner?.classList.add('hidden');
+        btnContent?.classList.remove('hidden');
     }
 }
 

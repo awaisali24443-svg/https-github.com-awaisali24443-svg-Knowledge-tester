@@ -36,16 +36,17 @@
     <!-- 3D Library -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/controls/OrbitControls.js"></script>
 </head>
 <body>
     <!-- UI Effects -->
     <div id="cursor-aura"></div>
-    <div id="toast-container"></div>
+    <div id="toast-container" aria-live="polite"></div>
 
     <!-- Welcome Modal (for first-time login) -->
-    <div id="welcome-modal-overlay" class="hidden">
+    <div id="welcome-modal-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="welcome-modal-title">
         <div class="welcome-modal-card">
-            <h2>🚀 Welcome, Agent!</h2>
+            <h2 id="welcome-modal-title">🚀 Welcome, Agent!</h2>
             <p>Your journey into the Topic Universe begins now. Complete daily missions, master new subjects, and climb the leaderboard.</p>
             <p>Good luck!</p>
             <button id="welcome-modal-close-btn" class="btn btn-primary">Let's Go!</button>
@@ -53,7 +54,7 @@
     </div>
     
     <!-- Confirmation Modal -->
-    <div id="modal-container" class="hidden">
+    <div id="modal-container" class="hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-text">
         <div id="modal-card" class="card">
             <h3 id="modal-title">Confirm Action</h3>
             <p id="modal-text">Are you sure?</p>
@@ -68,9 +69,9 @@
     </div>
 
     <!-- Level Up Modal -->
-    <div id="level-up-container" class="hidden">
+    <div id="level-up-container" class="hidden" role="dialog" aria-modal="true" aria-labelledby="level-up-title-text">
         <div id="level-up-card">
-            <div class="level-up-title">LEVEL UP!</div>
+            <div id="level-up-title-text" class="level-up-title">LEVEL UP!</div>
             <div class="level-up-badge">
                 <span id="level-up-number"></span>
             </div>
@@ -82,9 +83,9 @@
     </div>
 
 
-    <header id="header-container"></header>
-    <main id="root-container"></main>
-    <footer class="site-footer">
+    <header id="header-container" role="banner"></header>
+    <main id="root-container" role="main"></main>
+    <footer class="site-footer" role="contentinfo">
         <p>&copy; <span id="year"></span> Knowledge Tester. All rights reserved.</p>
     </footer>
 

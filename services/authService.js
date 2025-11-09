@@ -15,8 +15,12 @@ export async function signUp(email, password, username) {
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     const user = userCredential.user;
     
-    // Create a user profile document in Firestore
-    await db.collection('users').doc(user.uid).set({
+    // Use a batched write to ensure atomic creation of user documents
+    const batch = db.batch();
+    
+    // 1. Create the main user document
+    const userDocRef = db.collection('users').doc(user.uid);
+    batch.set(userDocRef, {
         uid: user.uid,
         username: username,
         email: email,
@@ -30,13 +34,16 @@ export async function signUp(email, password, username) {
         challengeHighScore: 0,
     });
     
-    // Create subcollections for detailed progress
-    const progressRef = db.collection('users').doc(user.uid).collection('progress').doc('main');
-    await progressRef.set({
+    // 2. Create the progress subcollection document
+    const progressRef = userDocRef.collection('progress').doc('main');
+    batch.set(progressRef, {
         levels: {},
         history: {},
         achievements: [],
     });
+
+    // Commit the batch
+    await batch.commit();
 
     return userCredential;
 }

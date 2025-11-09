@@ -1,6 +1,6 @@
 // sw.js - Service Worker for PWA capabilities
 
-const CACHE_NAME = 'knowledge-tester-v2.6.0'; // Version bump for new features and cleanup
+const CACHE_NAME = 'knowledge-tester-v3.1.0'; // Final polish and refinement
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -21,6 +21,7 @@ const ASSETS_TO_CACHE = [
     '/services/missionService.js',
     '/services/leaderboardService.js',
     '/services/authService.js',
+    '/services/moduleHelper.js',
     '/firebase-config.js',
     '/constants.js',
     '/manifest.json',
@@ -54,6 +55,9 @@ const ASSETS_TO_CACHE = [
     '/modules/signup/signup.html',
     '/modules/signup/signup.css',
     '/modules/signup/signup.js',
+    '/modules/welcome/welcome.html',
+    '/modules/welcome/welcome.css',
+    '/modules/welcome/welcome.js',
     '/modules/study/study.html',
     '/modules/study/study.css',
     '/modules/study/study.js',

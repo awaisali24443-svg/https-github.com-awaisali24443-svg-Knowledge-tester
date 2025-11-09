@@ -3,6 +3,7 @@ import { SceneManager } from '../../services/threeManager.js';
 import { logOut } from '../../services/authService.js';
 
 let sceneManager;
+let initialProfileState = { username: '', bio: '' };
 
 // --- DOM Elements ---
 const usernameInput = document.getElementById('username');
@@ -27,16 +28,29 @@ const dyslexiaFontToggle = document.getElementById('dyslexia-font-toggle');
 const reduceMotionToggle = document.getElementById('reduce-motion-toggle');
 
 // --- Profile Management ---
+function checkProfileChanges() {
+    const hasChanged = usernameInput.value !== initialProfileState.username || profileBioInput.value !== initialProfileState.bio;
+    saveProfileBtn.disabled = !hasChanged;
+}
+
 async function loadProfile() {
     const progress = await progressService.getProgress();
     if (progress) {
-        usernameInput.value = progress.username || '';
-        profileBioInput.value = progress.bio || '';
+        initialProfileState.username = progress.username || '';
+        initialProfileState.bio = progress.bio || '';
+        usernameInput.value = initialProfileState.username;
+        profileBioInput.value = initialProfileState.bio;
         profilePictureImg.src = progress.pictureURL || 'https://avatar.iran.liara.run/public/boy';
     }
     usernameInput.disabled = false;
     profileBioInput.disabled = false;
-    saveProfileBtn.disabled = false;
+    
+    // Initially, the save button should be disabled as no changes have been made.
+    saveProfileBtn.disabled = true;
+
+    // Add listeners to check for changes
+    usernameInput.addEventListener('input', checkProfileChanges);
+    profileBioInput.addEventListener('input', checkProfileChanges);
 }
 
 function setSaveLoading(isLoading) {
@@ -56,12 +70,17 @@ async function saveProfile() {
     };
     try {
         await progressService.updateUserProfile(profileData);
+        // Update the initial state to the new saved state
+        initialProfileState.username = profileData.username;
+        initialProfileState.bio = profileData.bio;
         window.showToast('✅ Profile saved successfully!');
         await window.updateHeaderStats(); // To reflect potential username change
     } catch (error) {
         window.showToast('❌ Failed to save profile.', 'error');
     } finally {
         setSaveLoading(false);
+        // After attempting to save, disable the button again
+        saveProfileBtn.disabled = true;
     }
 }
 
@@ -76,6 +95,8 @@ async function editProfilePicture() {
 
     if (newUrl) {
         profilePictureImg.src = newUrl;
+        // Since this is a change, enable the save button
+        saveProfileBtn.disabled = false; 
     }
 }
 

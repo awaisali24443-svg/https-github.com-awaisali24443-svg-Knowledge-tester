@@ -25,7 +25,6 @@ export class StellarMap {
     #animationStartPosition = new THREE.Vector3();
     #animationStartTarget = new THREE.Vector3();
     #animationEndObject = null;
-    // FIX: Declare private field for animation frame ID.
     #animationFrameId;
 
     // UI Elements
@@ -115,7 +114,7 @@ export class StellarMap {
                 const level = this.#userLevels[topic.name] || 1;
                 const scale = 0.5 + (level / MAX_LEVEL) * 1.5;
                 sprite.scale.set(scale, scale, scale);
-                sprite.userData = { ...topic, level: level, category: category.title };
+                sprite.userData = { ...topic, level: level, category: category.title, baseScale: scale };
                 
                 categoryGroup.add(sprite);
                 this.#objects.constellations.push(sprite);
@@ -227,21 +226,29 @@ export class StellarMap {
                 if (this.#intersected !== intersects[0].object) {
                     if (this.#intersected) {
                         this.#intersected.material.color.setHex(0xffffff);
-                        this.#intersected.scale.divideScalar(1.5);
+                        const oldScale = this.#intersected.userData.baseScale;
+                        this.#intersected.scale.set(oldScale, oldScale, oldScale);
                     }
                     this.#intersected = intersects[0].object;
                     this.#intersected.material.color.setHex(0x00ffff); // Cyan highlight
-                    this.#intersected.scale.multiplyScalar(1.5);
                     this.#canvas.style.cursor = 'pointer';
                 }
             } else {
                 if (this.#intersected) {
                     this.#intersected.material.color.setHex(0xffffff);
-                    this.#intersected.scale.divideScalar(1.5);
+                    const oldScale = this.#intersected.userData.baseScale;
+                    this.#intersected.scale.set(oldScale, oldScale, oldScale);
                     this.#canvas.style.cursor = 'grab';
                 }
                 this.#intersected = null;
             }
+        }
+        
+        // Apply pulse to the currently hovered object
+        if (this.#intersected) {
+            const pulse = Math.sin(this.#clock.getElapsedTime() * 5) * 0.1 + 1.0;
+            const baseScale = this.#intersected.userData.baseScale * 1.5; // Scale up for hover
+            this.#intersected.scale.set(baseScale * pulse, baseScale * pulse, baseScale * pulse);
         }
 
         this.#controls.update();
@@ -276,48 +283,4 @@ export class StellarMap {
         this.#scene = null;
         this.#camera = null;
     }
-}
-// Add OrbitControls to the THREE namespace if it's not there already
-// This is a common pattern when using a CDN version of three.js
-if (window.THREE && typeof THREE.OrbitControls === 'undefined') {
-    THREE.OrbitControls = class {
-        constructor(object, domElement) {
-            this.object = object;
-            this.domElement = ( domElement !== undefined ) ? domElement : document;
-            this.enabled = true;
-            this.target = new THREE.Vector3();
-            this.minDistance = 0;
-            this.maxDistance = Infinity;
-            this.minZoom = 0;
-            this.maxZoom = Infinity;
-            this.minPolarAngle = 0;
-            this.maxPolarAngle = Math.PI;
-            this.minAzimuthAngle = - Infinity;
-            this.maxAzimuthAngle = Infinity;
-            this.enableDamping = false;
-            this.dampingFactor = 0.05;
-            this.enableZoom = true;
-            this.zoomSpeed = 1.0;
-            this.enableRotate = true;
-            this.rotateSpeed = 1.0;
-            this.enablePan = true;
-            this.panSpeed = 1.0;
-            this.screenSpacePanning = true;
-            this.keyPanSpeed = 7.0;
-            this.autoRotate = false;
-            this.autoRotateSpeed = 2.0;
-            this.keys = { LEFT: 'ArrowLeft', UP: 'ArrowUp', RIGHT: 'ArrowRight', BOTTOM: 'ArrowDown' };
-            this.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
-            this.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-            this.target0 = this.target.clone();
-            this.position0 = this.object.position.clone();
-            this.zoom0 = this.object.zoom;
-            this.getPolarAngle = () => {};
-            this.getAzimuthalAngle = () => {};
-            this.saveState = () => {};
-            this.reset = () => {};
-            this.update = () => {};
-            this.dispose = () => {};
-        }
-    };
 }

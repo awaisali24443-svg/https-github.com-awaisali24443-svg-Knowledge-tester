@@ -184,6 +184,20 @@ body.theme-transitioning * {
     color: var(--color-warning);
 }
 
+#logout-btn .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--color-text-muted);
+    border-bottom-color: var(--color-primary);
+    border-radius: 50%;
+    animation: rotation 1s linear infinite;
+}
+#logout-btn .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 
 /* Mobile Navigation */
 @media (max-width: 768px) {
@@ -554,6 +568,10 @@ body.theme-transitioning * {
 }
 
 /* Animations */
+@keyframes rotation {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
 @keyframes backgroundShift {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }

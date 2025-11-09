@@ -1,24 +1,22 @@
-import { SceneManager } from '../../services/threeManager.js';
+import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
 
 let sceneManager;
-console.log("Welcome module loaded.");
 
 function init() {
-    const canvas = document.querySelector('.background-canvas');
-    if (canvas && window.THREE) {
-        sceneManager = new SceneManager(canvas);
-        sceneManager.init('particleGalaxy');
-    }
+    sceneManager = initModuleScene('.background-canvas', 'particleGalaxy');
 }
 
-// Cleanup the animation when the user navigates away from the welcome screen
-window.addEventListener('hashchange', () => {
-    if (window.location.hash !== '#welcome' && window.location.hash !== '') {
-        if (sceneManager) {
-            sceneManager.destroy();
-            sceneManager = null;
-        }
+function cleanup() {
+    sceneManager = cleanupModuleScene(sceneManager);
+}
+
+// Cleanup the animation when the user navigates away
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.querySelector('.welcome-container')) {
+        cleanup();
+        obs.disconnect();
     }
-}, { once: true });
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
 
 init();

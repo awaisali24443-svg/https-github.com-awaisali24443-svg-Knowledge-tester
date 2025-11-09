@@ -22,7 +22,12 @@
             <li><a href="#challenge-setup" class="nav-link" title="Challenge Mode">🧪<span class="nav-link-text">Challenge</span></a></li>
             <li><a href="#screen" class="nav-link" title="My Progress">📈<span class="nav-link-text">Progress</span></a></li>
             <li><a href="#settings" class="nav-link" title="Profile & Settings">👤<span class="nav-link-text">Profile</span></a></li>
-            <li><button id="logout-btn" class="nav-link nav-action-btn" title="Logout">🚪<span class="nav-link-text">Logout</span></button></li>
+            <li>
+                <button id="logout-btn" class="nav-link nav-action-btn" title="Logout">
+                    <div class="spinner hidden"></div>
+                    <span class="btn-content">🚪<span class="nav-link-text">Logout</span></span>
+                </button>
+            </li>
         </div>
         <!-- Links for Guests -->
         <div id="guest-nav" class="hidden">

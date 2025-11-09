@@ -39,44 +39,13 @@ const quizSchema = {
     }
 };
 
-/**
- * A generic content generation function to reduce code duplication.
- * @param {string} prompt - The full prompt.
- * @param {object} config - The configuration object for generateContent.
- * @returns {Promise<any>} - The parsed response from the API.
- */
-async function generateContent(prompt, config) {
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-            config: config,
-        });
-
-        const textContent = response.text?.trim();
-        if (!textContent) {
-            throw new Error("Invalid (empty) data received from API.");
-        }
-
-        if (config.responseMimeType === "application/json") {
-            const jsonData = JSON.parse(textContent);
-            if (config.responseSchema.type === Type.ARRAY && (!Array.isArray(jsonData) || jsonData.length === 0)) {
-                throw new Error("Invalid quiz data format received from API.");
-            }
-            return jsonData;
-        }
-
-        return textContent;
-
-    } catch (error) {
-        console.error("Error generating content with Gemini:", error);
-        if (error instanceof Error && error.message.includes('API key not valid')) {
-             throw new Error("The API key is invalid. Please check your configuration.");
-        }
-        throw new Error("Failed to generate content. The topic might be too specific or there was a network issue. Please try again.");
+const handleApiError = (error) => {
+    console.error("Error generating content with Gemini:", error);
+    if (error instanceof Error && error.message.includes('API key not valid')) {
+         throw new Error("The API key is invalid. Please check your configuration.");
     }
-}
-
+    throw new Error("Failed to generate content. The topic might be too specific or there was a network issue. Please try again.");
+};
 
 export const generateQuiz = async (prompt, systemInstruction, performanceHistory = null) => {
     if (performanceHistory && performanceHistory.recentCorrectPercentage > -1) {
@@ -89,20 +58,52 @@ export const generateQuiz = async (prompt, systemInstruction, performanceHistory
         prompt = `${prompt} ${difficultyHint}`;
     }
 
-    const config = {
-        responseMimeType: "application/json",
-        responseSchema: quizSchema,
-        systemInstruction: systemInstruction || "You are a helpful and engaging quiz creator."
-    };
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: quizSchema,
+                systemInstruction: systemInstruction || "You are a helpful and engaging quiz creator."
+            },
+        });
 
-    return generateContent(prompt, config);
+        let jsonData;
+        try {
+            jsonData = JSON.parse(response.text.trim());
+        } catch (parseError) {
+            console.error("Failed to parse JSON response from Gemini:", response.text, parseError);
+            throw new Error("The AI returned an invalid response. Please try again.");
+        }
+        
+        if (!Array.isArray(jsonData) || jsonData.length === 0) {
+            throw new Error("Invalid quiz data format received from API.");
+        }
+        return jsonData;
+
+    } catch (error) {
+        handleApiError(error);
+    }
 };
 
 export const generateStudyGuide = async (prompt, systemInstruction) => {
-    const config = {
-        systemInstruction: systemInstruction || "You are a helpful and concise study guide creator."
-    };
-    return generateContent(prompt, config);
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                systemInstruction: systemInstruction || "You are a helpful and concise study guide creator."
+            },
+        });
+        const textContent = response.text?.trim();
+        if (!textContent) {
+            throw new Error("Invalid (empty) data received from API.");
+        }
+        return textContent;
+    } catch (error) {
+        handleApiError(error);
+    }
 };
 
 /**
@@ -121,7 +122,20 @@ export const generateNemesisQuiz = (topicName, missedConcepts) => {
  * @returns {Promise<string>} - A promise that resolves to the AI coach's feedback.
  */
 export const generateAICoachInsight = async (prompt) => {
-    const systemInstruction = "You are a friendly and encouraging AI Coach for the 'Knowledge Tester' quiz app. Your goal is to provide a brief, positive, and insightful summary of the user's performance. Highlight one area they did well in and one concept they might want to review, based on the questions they got wrong. Keep it concise (2-3 sentences) and use a supportive tone. Do not use markdown.";
-    const config = { systemInstruction };
-    return generateContent(prompt, config);
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                systemInstruction: "You are a friendly and encouraging AI Coach for the 'Knowledge Tester' quiz app. Your goal is to provide a brief, positive, and insightful summary of the user's performance. Highlight one area they did well in and one concept they might want to review, based on the questions they got wrong. Keep it concise (2-3 sentences) and use a supportive tone. Do not use markdown."
+            },
+        });
+        const textContent = response.text?.trim();
+        if (!textContent) {
+            throw new Error("Invalid (empty) data received from API.");
+        }
+        return textContent;
+    } catch (error) {
+        handleApiError(error);
+    }
 };

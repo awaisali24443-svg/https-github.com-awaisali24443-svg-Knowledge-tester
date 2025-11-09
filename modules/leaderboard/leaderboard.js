@@ -52,11 +52,12 @@ async function renderLeaderboard() {
             rankHtml = rank; // '...'
         }
 
+        const playerName = player.isUser ? `${player.name} (You)` : player.name;
 
         html += `
             <tr class="${player.isUser ? 'user-row' : ''}">
                 <td class="rank-cell">${rankHtml}</td>
-                <td class="player-cell">${player.name}</td>
+                <td class="player-cell">${playerName}</td>
                 <td class="xp-cell">${player.weeklyXP.toLocaleString()} XP</td>
             </tr>
         `;

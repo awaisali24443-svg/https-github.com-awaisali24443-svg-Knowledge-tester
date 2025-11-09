@@ -1,6 +1,6 @@
 import { startQuizFlow } from '../../services/navigationService.js';
 import { playSound } from '../../services/soundService.js';
-import { SceneManager } from '../../services/threeManager.js';
+import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
 
 let sceneManager;
 
@@ -28,19 +28,21 @@ function init() {
     if (startBtn) {
         startBtn.addEventListener('click', handleStartChallenge);
     }
-    const canvas = document.querySelector('.background-canvas');
-    if (canvas && window.THREE) {
-        sceneManager = new SceneManager(canvas);
-        sceneManager.init('dataStream');
-    }
+    sceneManager = initModuleScene('.background-canvas', 'dataStream');
 }
 
-window.addEventListener('hashchange', () => {
-    if (sceneManager) {
-        sceneManager.destroy();
-        sceneManager = null;
+function cleanup() {
+    sceneManager = cleanupModuleScene(sceneManager);
+}
+
+// Use MutationObserver for robust cleanup
+const observer = new MutationObserver((mutationsList, obs) => {
+    if (!document.querySelector('.challenge-container')) {
+        cleanup();
+        obs.disconnect();
     }
-}, { once: true });
+});
+observer.observe(document.getElementById('root-container'), { childList: true, subtree: true });
 
 
 init();

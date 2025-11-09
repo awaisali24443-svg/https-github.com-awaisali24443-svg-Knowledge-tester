@@ -155,6 +155,15 @@ export async function recordQuizResult(topic, score, quizData, userAnswers, xpGa
                 }
                 progressData.history[topic] = history;
             }
+            
+             // --- Update Topic Level ---
+            if (quizContext.isLeveled && score >= UNLOCK_SCORE) {
+                const currentLevel = progressData.levels[quizContext.topicName] || 1;
+                if (currentLevel < MAX_LEVEL) {
+                    progressData.levels[quizContext.topicName] = currentLevel + 1;
+                }
+            }
+
 
             // --- Prepare User Doc Updates ---
             const newWeeklyXP = (getWeekId(new Date()) === userData.lastWeekReset) ? (userData.weeklyXP || 0) + xpGained : xpGained;
@@ -169,7 +178,8 @@ export async function recordQuizResult(topic, score, quizData, userAnswers, xpGa
             
             // --- Prepare Progress Doc Updates ---
             transaction.update(progressDocRef, {
-                history: progressData.history
+                history: progressData.history,
+                levels: progressData.levels
             });
         });
 
@@ -182,6 +192,25 @@ export async function recordQuizResult(topic, score, quizData, userAnswers, xpGa
         return null;
     }
 }
+
+/**
+ * Updates data in the user's main progress subdocument.
+ * @param {object} dataToUpdate - An object containing fields to update.
+ */
+export async function updateProgressData(dataToUpdate) {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    try {
+        const progressDocRef = db.collection('users').doc(user.uid).collection('progress').doc('main');
+        await progressDocRef.update(dataToUpdate);
+    } catch (error) {
+        console.error("Error updating progress data:", error);
+        window.showToast("Failed to save updates.", "error");
+        throw error;
+    }
+}
+
 
 /**
  * Updates the user's profile information in Firestore.

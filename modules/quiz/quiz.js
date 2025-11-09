@@ -134,6 +134,9 @@ function handleAnswerSelect(e) {
         nextBtn.addEventListener('click', handleNext);
         document.getElementById('timer-control-btn')?.addEventListener('click', toggleTimer);
 
+        // Accessibility improvement: focus the next action button
+        nextBtn.focus({ preventScroll: true });
+
         if (!isLastQuestion) {
             startAutoAdvance();
         }

@@ -1,5 +1,5 @@
-import { SceneManager } from '../../services/threeManager.js';
 import { signUp } from '../../services/authService.js';
+import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
 
 let sceneManager;
 
@@ -27,6 +27,13 @@ function displayError(message) {
 }
 
 if (signupForm) {
+    // Hide error message when user starts typing again
+    signupForm.addEventListener('input', () => {
+        if (!errorMessageDiv.classList.contains('hidden')) {
+            errorMessageDiv.classList.add('hidden');
+        }
+    });
+
     signupForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -68,18 +75,11 @@ if (signupForm) {
 }
 
 function init() {
-    const canvas = document.querySelector('.background-canvas');
-    if (canvas && window.THREE) {
-        sceneManager = new SceneManager(canvas);
-        sceneManager.init('particleGalaxy');
-    }
+    sceneManager = initModuleScene('.background-canvas', 'particleGalaxy');
 }
 
 function cleanup() {
-    if (sceneManager) {
-        sceneManager.destroy();
-        sceneManager = null;
-    }
+    sceneManager = cleanupModuleScene(sceneManager);
 }
 
 // Use MutationObserver for robust cleanup
