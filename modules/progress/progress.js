@@ -6,10 +6,11 @@ import { ALL_ACHIEVEMENTS } from '../../services/achievementService.js';
 import { generateNemesisQuiz } from '../../services/geminiService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 import { categoryData } from '../../services/topicService.js';
+import { loadChartJS } from '../../services/libraryLoader.js';
 
 let sceneManager;
 let performanceChart, masteryChart;
-let eventListeners = [];
+const eventListeners = [];
 
 function renderAchievements(unlockedAchievements) {
     const grid = document.getElementById('achievements-grid');
@@ -115,7 +116,7 @@ function renderPerformanceChart(history) {
 
     const chartData = last30Days.map(day => {
         const data = dailyScores[day];
-        return data.count > 0 ? (data.total / data.count) * 100 : null;
+        return data.count > 0 ? (data.total / (data.count * 5)) * 100 : null; // Calculate percentage
     });
 
     performanceChart = new Chart(ctx, {
@@ -123,7 +124,7 @@ function renderPerformanceChart(history) {
         data: {
             labels: last30Days.map(d => new Date(d).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})),
             datasets: [{
-                label: 'Average Score',
+                label: 'Average Score %',
                 data: chartData,
                 borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-primary'),
                 backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--color-glow'),
@@ -132,7 +133,7 @@ function renderPerformanceChart(history) {
                 fill: true
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
     });
 }
 
@@ -155,7 +156,7 @@ function renderMasteryChart(levels) {
     const labels = Object.keys(categoryLevels);
     const data = labels.map(label => {
         const cat = categoryLevels[label];
-        return cat.count > 0 ? Math.round(cat.total / cat.count) : 0;
+        return cat.count > 0 ? (cat.total / cat.count) : 0;
     });
 
     masteryChart = new Chart(ctx, {
@@ -186,20 +187,9 @@ async function renderProgress() {
         renderAchievements(achievements);
         renderWeakestConcepts(history);
 
-        // Render charts, now assuming Chart.js is globally available.
-        try {
-            if (typeof Chart === 'undefined') {
-                throw new Error("Chart.js library failed to load.");
-            }
-            renderPerformanceChart(history);
-            renderMasteryChart(levels);
-        } catch (e) {
-            console.error("Chart rendering failed:", e);
-            const pChartContainer = document.getElementById('performance-chart')?.parentElement;
-            if (pChartContainer) pChartContainer.innerHTML = '<p style="text-align:center;color:var(--color-text-muted);">Chart failed to load.</p>';
-            const mChartContainer = document.getElementById('mastery-chart')?.parentElement;
-            if (mChartContainer) mChartContainer.innerHTML = '<p style="text-align:center;color:var(--color-text-muted);">Chart failed to load.</p>';
-        }
+        await loadChartJS();
+        renderPerformanceChart(history);
+        renderMasteryChart(levels);
 
     } catch (error) {
         console.error("Error rendering progress:", error);
@@ -208,14 +198,16 @@ async function renderProgress() {
 }
 
 export async function init() {
-    renderProgress();
+    await renderProgress();
     sceneManager = initModuleScene('.background-canvas', 'nebula');
 }
 
 export function cleanup() {
     eventListeners.forEach(({ element, type, handler }) => element.removeEventListener(type, handler));
-    eventListeners = [];
+    eventListeners.length = 0; // Clear the array
     if (performanceChart) performanceChart.destroy();
     if (masteryChart) masteryChart.destroy();
+    performanceChart = null;
+    masteryChart = null;
     sceneManager = cleanupModuleScene(sceneManager);
 }

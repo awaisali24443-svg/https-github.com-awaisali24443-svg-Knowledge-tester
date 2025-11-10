@@ -1,4 +1,5 @@
 import { SceneManager } from './threeManager.js';
+import { loadThreeJS } from './libraryLoader.js';
 
 /**
  * Initializes a Three.js scene for a module's background canvas.
@@ -6,21 +7,26 @@ import { SceneManager } from './threeManager.js';
  * @param {string} sceneType - The type of scene to create (e.g., 'particleGalaxy').
  * @returns {SceneManager|null} The created scene manager instance or null on failure.
  */
-export function initModuleScene(canvasSelector, sceneType) {
+export async function initModuleScene(canvasSelector, sceneType) {
     const canvas = document.querySelector(canvasSelector);
-    if (canvas && window.THREE) {
-        try {
-            const sceneManager = new SceneManager(canvas);
-            sceneManager.init(sceneType);
-            return sceneManager;
-        } catch (error) {
-            console.error(`Failed to initialize scene on canvas '${canvasSelector}':`, error);
-            return null;
-        }
+    if (!canvas) {
+        console.warn(`Canvas with selector '${canvasSelector}' not found.`);
+        return null;
     }
-    if (!canvas) console.warn(`Canvas with selector '${canvasSelector}' not found.`);
-    if (!window.THREE) console.warn(`THREE.js not loaded, cannot create scene for '${canvasSelector}'.`);
-    return null;
+    
+    try {
+        // Await the loader to guarantee THREE.js is ready.
+        await loadThreeJS();
+        
+        const sceneManager = new SceneManager(canvas);
+        sceneManager.init(sceneType);
+        return sceneManager;
+    } catch (error) {
+        console.error(`Failed to initialize scene on canvas '${canvasSelector}':`, error);
+        // Hide the canvas if its scene fails to load.
+        canvas.style.display = 'none'; 
+        return null;
+    }
 }
 
 /**

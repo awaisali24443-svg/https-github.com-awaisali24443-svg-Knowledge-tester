@@ -2,17 +2,18 @@ import * as auth from '../../services/authService.js';
 import * as progress from '../../services/progressService.js';
 import * as missions from '../../services/missionService.js';
 import * as learning from '../../services/learningPathService.js';
-import * as activity from '../../services/activityFeedService.js';
 import { StellarMap } from '../../services/stellarMap.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 import { categoryData } from '../../services/topicService.js';
-import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
+import { NUM_QUESTIONS } from '../../constants.js';
+import { loadThreeJS } from '../../services/libraryLoader.js';
 
 
 let stellarMap;
 
 async function renderDashboard() {
     const user = auth.getCurrentUser();
+    if (!user) return; // Should not happen if routed correctly, but as a safeguard.
     const userProgress = await progress.getProgress();
     
     document.getElementById('welcome-message').textContent = `Welcome, ${user.displayName || 'Agent'}!`;
@@ -25,55 +26,41 @@ async function renderDashboard() {
     document.getElementById('player-streak').textContent = `${userProgress.streak || 0} Day Streak`;
 
     renderMissions();
-    renderRecommendations();
-    renderStreakCalendar(userProgress.streakDates || []);
     renderLearningPaths();
-
-    if (auth.isGuest()) {
-        const liveChallengeCard = document.querySelector('a[href="#challenge-lobby"]');
-        if (liveChallengeCard) {
-            liveChallengeCard.outerHTML = `<div class="action-card disabled"><span class="action-icon">🤝</span><h3>Live Challenge</h3><p>Sign up to compete!</p></div>`;
-        }
-        document.getElementById('activity-feed-section').innerHTML = `<h2>🛰️ Activity Feed</h2><p>Sign up to see community activity!</p>`;
-    } else {
-        renderActivityFeed();
-    }
+    renderStreakCalendar(userProgress.streakDates || []);
 }
 
 async function renderMissions() {
-    const missionsData = await missions.getMissions();
     const list = document.getElementById('missions-list');
-    list.innerHTML = missionsData.missions.map(m => `
-        <div class="mission-item">${m.text} (${m.progress}/${m.target})</div>
-    `).join('');
-}
-
-async function renderRecommendations() {
-    const list = document.getElementById('recommendations-list');
-    const weakestTopics = await progress.getWeakestTopics(3);
-
-    if (weakestTopics.length === 0) {
-        list.innerHTML = `<p>No specific weaknesses detected. Keep up the great work!</p>`;
-        return;
+    if (!list) return;
+    const missionsData = await missions.getMissions();
+    if (missionsData.missions.length > 0) {
+        list.innerHTML = missionsData.missions.map(m => `
+            <div class="mission-item">${m.text} (${m.progress}/${m.target})</div>
+        `).join('');
+    } else {
+        list.innerHTML = `<p>No missions available right now.</p>`;
     }
-
-    list.innerHTML = weakestTopics.map(topicName => `
-        <div class="recommendation-card">
-            <h4>Focus on: ${topicName}</h4>
-            <div class="recommendation-actions">
-                <button class="btn btn-secondary study-btn" data-topic-name="${topicName}">Study</button>
-                <button class="btn btn-primary quiz-btn" data-topic-name="${topicName}">Quiz</button>
-            </div>
-        </div>
-    `).join('');
-
-    list.querySelectorAll('.quiz-btn').forEach(btn => btn.addEventListener('click', (e) => startRecommendedQuiz(e.target.dataset.topicName)));
-    list.querySelectorAll('.study-btn').forEach(btn => btn.addEventListener('click', (e) => startRecommendedStudy(e.target.dataset.topicName)));
 }
 
+async function renderLearningPaths() {
+    const list = document.getElementById('learning-paths-list');
+    if (!list) return;
+    const paths = await learning.getActiveLearningPaths();
+
+    if (paths.length > 0) {
+        list.innerHTML = paths.map(p => `<div><a href="#learning-path" data-path-id="${p.id}">${p.title}</a></div>`).join('');
+        list.querySelectorAll('a').forEach(a => a.addEventListener('click', (e) => {
+            sessionStorage.setItem('moduleContext', JSON.stringify({ pathId: e.target.dataset.pathId }));
+        }));
+    } else {
+        list.innerHTML = `<p>Use the AI Planner to create a new learning path!</p>`;
+    }
+}
 
 function renderStreakCalendar(streakDates) {
     const calendar = document.getElementById('streak-calendar');
+    if (!calendar) return;
     const today = new Date();
     let calendarHtml = '';
     for (let i = 6; i >= 0; i--) {
@@ -87,44 +74,14 @@ function renderStreakCalendar(streakDates) {
     calendar.innerHTML = calendarHtml;
 }
 
-async function renderLearningPaths() {
-    const paths = await learning.getActiveLearningPaths();
-    // For brevity, we'll just show a count or link to the first one
-    const list = document.getElementById('learning-paths-list');
-    if (paths.length > 0) {
-        list.innerHTML = paths.map(p => `<div><a href="#learning-path" data-path-id="${p.id}">${p.title}</a></div>`).join('');
-        list.querySelectorAll('a').forEach(a => a.addEventListener('click', (e) => {
-            sessionStorage.setItem('moduleContext', JSON.stringify({ pathId: e.target.dataset.pathId }));
-        }));
-    } else {
-        list.innerHTML = `<p>No active learning paths.</p>`;
-    }
-}
-
-async function renderActivityFeed() {
-    const feed = await activity.getRecentActivities();
-    const list = document.getElementById('activity-feed-list');
-    if (feed.length > 0) {
-        list.innerHTML = feed.map(item => `<div class="activity-item">${item.icon} <strong>${item.username}</strong> ${item.text}</div>`).join('');
-    } else {
-        list.innerHTML = `<p>No recent activity.</p>`;
-    }
-}
-
 async function handleRandomChallenge() {
-    let topicName = "a random topic"; // Default
-    const weakestTopics = await progress.getWeakestTopics(1);
-
-    if (weakestTopics.length > 0) {
-        topicName = weakestTopics[0];
-    } else {
-        // Pick a truly random topic if no weak ones
-        const allTopics = Object.values(categoryData).flatMap(cat => cat.topics);
-        if (allTopics.length > 0) {
-            const randomIndex = Math.floor(Math.random() * allTopics.length);
-            topicName = allTopics[randomIndex].name;
-        }
+    const allTopics = Object.values(categoryData).flatMap(cat => cat.topics);
+    if (allTopics.length === 0) {
+        window.showToast("No topics available for a random challenge.", "error");
+        return;
     }
+    const randomIndex = Math.floor(Math.random() * allTopics.length);
+    const topicName = allTopics[randomIndex].name;
     
     startRecommendedQuiz(topicName, `A quiz on a surprise topic: ${topicName}`);
 }
@@ -135,29 +92,18 @@ function startRecommendedQuiz(topicName, customTitle = null) {
     startQuizFlow(quizContext);
 }
 
-function startRecommendedStudy(topicName) {
-    const prompt = `Generate a concise study guide about "${topicName}". The guide should be easy to understand for a beginner, using clear headings, bullet points, and bold text for key terms.`;
-    const quizContext = { topicName, returnHash: '#home', isLeveled: false, prompt, generationType: 'study' };
-    startQuizFlow(quizContext);
-}
-
 export async function init() {
-    // Render the static parts of the dashboard immediately for a fast user experience.
     await renderDashboard();
     document.getElementById('random-challenge-btn')?.addEventListener('click', handleRandomChallenge);
 
-    // Now, progressively enhance with the 3D map.
     const canvas = document.getElementById('stellar-map-canvas');
     const loadingOverlay = document.getElementById('stellar-map-loading');
 
     try {
-        // The libraries are now loaded globally via index.html.
-        // We just need to check if they exist in case they were blocked.
-        if (typeof THREE === 'undefined' || typeof THREE.OrbitControls === 'undefined') {
-            throw new Error("Essential 3D libraries (THREE.js) failed to load.");
-        }
+        // Await the library loader to guarantee THREE and OrbitControls are available.
+        // This completely fixes the race condition bug.
+        await loadThreeJS();
 
-        // Now that scripts are guaranteed to be loaded, initialize the map.
         stellarMap = new StellarMap(canvas);
         await stellarMap.init(); // This method handles its own internal loading state
 

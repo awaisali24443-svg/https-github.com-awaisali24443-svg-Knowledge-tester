@@ -29,46 +29,36 @@
     border-radius: 8px;
     border: 1px solid var(--color-border);
     position: relative;
+    overflow: hidden;
 }
 
 .stat-card h3 {
     font-size: 2.25rem;
     font-weight: 800;
     color: var(--color-primary);
+    position: relative;
+    z-index: 1;
 }
-
 .stat-card p {
+    position: relative;
+    z-index: 1;
     font-size: 0.9rem;
     color: var(--color-text-muted);
 }
 
-/* Skeleton for stats */
+
 .skeleton-h3 {
     position: absolute;
-    top: 1rem;
-    left: 1rem;
-    right: 1rem;
-    height: 2.5rem;
-    background-color: var(--color-border);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.skeleton-h3::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    inset: 0;
     height: 100%;
-    background: linear-gradient(90deg, transparent, var(--color-bg), transparent);
-    animation: shimmer 1.5s infinite;
+    background-color: var(--color-bg-light);
+    transition: opacity 0.5s ease-out;
+    z-index: 2;
 }
+
 .stat-card.loaded .skeleton-h3 {
-    display: none;
-}
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
+    opacity: 0;
+    pointer-events: none;
 }
 
 

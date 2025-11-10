@@ -23,10 +23,28 @@ function hideSplashScreen() {
 // --- HEADER MANAGEMENT ---
 async function updateHeaderUI(user, progress) {
     const headerContainer = document.getElementById('header-container');
-    const navLinks = document.querySelector('.nav-links');
-    const headerUserStats = document.querySelector('.header-user-stats');
+    if (!headerContainer) return;
 
-    if (!headerContainer || !navLinks || !headerUserStats) return;
+    // Fetch the header template if it's not already loaded
+    if (!headerContainer.innerHTML.trim()) {
+        try {
+            const response = await fetch('/global/header.html');
+            if (response.ok) {
+                headerContainer.innerHTML = await response.text();
+            } else {
+                 console.error('Failed to load header HTML.');
+                 return;
+            }
+        } catch (error) {
+            console.error('Error fetching header HTML:', error);
+            return;
+        }
+    }
+    
+    const navLinks = headerContainer.querySelector('.nav-links');
+    const headerUserStats = headerContainer.querySelector('.header-user-stats');
+
+    if (!navLinks || !headerUserStats) return;
 
     // Default to hidden
     headerContainer.classList.add('hidden');
@@ -38,20 +56,10 @@ async function updateHeaderUI(user, progress) {
         headerContainer.classList.remove('hidden');
         navHtml = `
             <li><a href="#home" class="nav-link" data-route="home"><span class="nav-link-text">Dashboard</span></a></li>
-            <li><a href="#progress" class="nav-link" data-route="progress"><span class="nav-link-text">My Progress</span></a></li>
+            <li><a href="#progress" class="nav-link" data-route="progress"><span class="nav-link-text">Analytics</span></a></li>
             <li><a href="#library" class="nav-link" data-route="library"><span class="nav-link-text">My Library</span></a></li>
-            <li><a href="#leaderboard" class="nav-link" data-route="leaderboard"><span class="nav-link-text">Leaderboard</span></a></li>
             <li><a href="#settings" class="nav-link" data-route="settings"><span class="nav-link-text">Settings</span></a></li>
             <li><button id="logout-btn" class="nav-link"><span class="btn-content">Logout</span></button></li>
-        `;
-    } else if (user && user.isGuest) {
-        headerContainer.classList.remove('hidden');
-        navHtml = `
-            <li><a href="#home" class="nav-link" data-route="home">Dashboard</a></li>
-            <li><a href="#progress" class="nav-link" data-route="progress">My Progress</a></li>
-            <li><a href="#library" class="nav-link" data-route="library">My Library</a></li>
-            <li><a href="#settings" class="nav-link" data-route="settings">Settings</a></li>
-            <li><button id="logout-btn" class="nav-link"><span class="btn-content">Exit Guest Mode</span></button></li>
         `;
     }
     
@@ -63,18 +71,18 @@ async function updateHeaderUI(user, progress) {
             headerUserStats.classList.remove('hidden');
             const totalXp = progress.totalXp || 0;
             const level = progressService.calculateLevel(totalXp).level;
-            document.getElementById('header-level').textContent = level;
-            document.getElementById('header-streak').textContent = progress.streak || 0;
+            headerUserStats.querySelector('#header-level').textContent = level;
+            headerUserStats.querySelector('#header-streak').textContent = progress.streak || 0;
         }
     }
     
     // Hamburger menu for mobile
-    const hamburger = document.querySelector('.nav-hamburger');
+    const hamburger = headerContainer.querySelector('.nav-hamburger');
     if(hamburger) {
-        hamburger.addEventListener('click', () => {
+        hamburger.onclick = () => {
             hamburger.classList.toggle('active');
             navLinks.classList.toggle('active');
-        });
+        };
     }
 }
 
@@ -90,7 +98,7 @@ async function handleLogout() {
     try {
         await authService.logOut();
         // The session state change listener will handle routing.
-        showToast('You have successfully signed out.', 'success');
+        showToast('You have been successfully signed out.', 'success');
     } catch (error) {
         showToast('Logout failed. Please try again.', 'error');
         btnContent.textContent = authService.isGuest() ? 'Exit Guest Mode' : 'Logout';
@@ -114,16 +122,22 @@ const loadModule = async (moduleName, context = {}) => {
     
     try {
         const response = await fetch(`/modules/${moduleName}/${moduleName}.html`);
-        if (!response.ok) throw new Error(`Module HTML not found: ${moduleName}`);
+        if (!response.ok) throw new Error(`Module '${moduleName}' not found.`);
         rootContainer.innerHTML = await response.text();
         
         currentModule = await import(`../modules/${moduleName}/${moduleName}.js`);
         if (currentModule.init) {
-            await currentModule.init(); // Ensure init completes if it's async
+            await currentModule.init();
         }
     } catch (error) {
         console.error(`Failed to load module ${moduleName}:`, error);
-        rootContainer.innerHTML = `<h2>Error loading page</h2><p>Could not load the requested content. Please try again.</p><a href="#home" class="btn">Go Home</a>`;
+        rootContainer.innerHTML = `
+            <div class="card" style="text-align: center;">
+                <h2>Error Loading Page</h2>
+                <p style="margin: 1rem 0;">Could not load the requested content. It might be an issue with your connection or the application.</p>
+                <a href="#home" class="btn btn-primary">Return to Dashboard</a>
+            </div>
+        `;
     } finally {
         rootContainer.classList.remove('module-exit');
         rootContainer.classList.add('module-enter');
@@ -171,7 +185,7 @@ function updateActiveNavLink() {
 // --- INITIALIZATION ---
 function applyInitialTheme() {
     const settings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
-    const theme = settings.theme || 'dark';
+    const theme = settings.theme || 'cyber'; // Default to cyber theme
     document.documentElement.setAttribute('data-theme', theme);
 }
 
@@ -179,7 +193,7 @@ function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js')
-                .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+                .then(registration => console.log('ServiceWorker registration successful.'))
                 .catch(err => console.error('ServiceWorker registration failed: ', err));
         });
     }
@@ -189,18 +203,17 @@ async function initializeApp() {
     applyInitialTheme();
     registerServiceWorker();
     initUIEffects();
-
-    // Attach the Firebase listener for login/logout events.
-    authService.attachFirebaseListener();
     
     authService.onSessionStateChange(async (user) => {
         currentUser = user;
         
         if (user) {
             userProgress = await progressService.getProgress();
-            if (!user.isGuest && userProgress && userProgress.isNewUser) {
+            // Check for isNewUser is now handled inside authService to avoid race conditions
+            if (!user.isGuest && user.isNewUser) {
                 showWelcomeModal();
-                await progressService.updateUserProfile({ isNewUser: false });
+                // Mark user as not new anymore
+                await authService.updateUserAccount({ isNewUser: false });
             }
         } else {
             userProgress = null;
@@ -210,9 +223,12 @@ async function initializeApp() {
         router();
     });
 
+    // Initial check
+    authService.initializeSession();
+
     window.addEventListener('hashchange', router);
     
-    // The splash screen will now be hidden by the first module that loads successfully.
+    // The splash screen will be hidden by the first module that loads successfully.
     document.addEventListener('moduleReady', hideSplashScreen, { once: true });
 }
 

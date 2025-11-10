@@ -11,11 +11,6 @@ import { startQuizFlow } from '../../services/navigationService.js';
 let sceneManager;
 let eventListeners = [];
 
-const topicCategories = Object.values(categoryData).reduce((acc, category) => {
-    acc[category.categoryTitle] = category.topics.map(topic => topic.name);
-    return acc;
-}, {});
-
 function renderAchievements(unlockedAchievements) {
     const grid = document.getElementById('achievements-grid');
     if (!grid) return;
@@ -51,7 +46,7 @@ async function handleNemesisQuiz(e) {
         topicName: `Nemesis: ${topicName}`,
         isLeveled: false,
         prompt: prompt,
-        returnHash: '#screen',
+        returnHash: '#progress',
         generationType: 'quiz'
     };
 
@@ -71,13 +66,15 @@ async function renderProgress() {
         const { achievements, history, levels } = progress;
         renderAchievements(achievements || []);
 
-        const totalQuizzes = Object.values(history || {}).reduce((sum, item) => sum + item.correct + item.incorrect, 0) / 5;
+        const totalSessions = Object.values(history || {}).reduce((sum, item) => sum + (item.sessions?.length || 0), 0);
         const totalCorrect = Object.values(history || {}).reduce((sum, item) => sum + item.correct, 0);
-        const totalPossibleScore = totalQuizzes * 5;
-        const avg = totalPossibleScore > 0 ? Math.round((totalCorrect / totalPossibleScore) * 100) : 0;
+        const totalIncorrect = Object.values(history || {}).reduce((sum, item) => sum + item.incorrect, 0);
+        const totalQuestions = totalCorrect + totalIncorrect;
+
+        const avg = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
         const totalLevelsUnlocked = Object.values(levels || {}).reduce((sum, level) => sum + (level - 1), 0);
         
-        document.getElementById('total-quizzes').textContent = Math.floor(totalQuizzes);
+        document.getElementById('total-quizzes').textContent = totalSessions;
         document.getElementById('average-score').textContent = `${avg}%`;
         document.getElementById('levels-unlocked').textContent = totalLevelsUnlocked;
         statCards.forEach(card => card.classList.add('loaded'));
@@ -147,6 +144,6 @@ export function cleanup() {
     eventListeners.forEach(({ element, type, handler }) => {
         element.removeEventListener(type, handler);
     });
-    eventListeners = [];
+    eventListeners.length = 0;
     sceneManager = cleanupModuleScene(sceneManager);
 }

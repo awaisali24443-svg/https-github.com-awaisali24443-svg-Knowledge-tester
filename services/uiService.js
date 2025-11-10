@@ -27,8 +27,8 @@ export function initUIEffects() {
         document.body.removeEventListener('click', resumeAudio);
         document.body.removeEventListener('keydown', resumeAudio);
     };
-    document.body.addEventListener('click', resumeAudio);
-    document.body.addEventListener('keydown', resumeAudio);
+    document.body.addEventListener('click', resumeAudio, { once: true });
+    document.body.addEventListener('keydown', resumeAudio, { once: true });
 }
 
 export function showToast(message, type = 'success') {
@@ -41,7 +41,7 @@ export function showToast(message, type = 'success') {
     setTimeout(() => toast.classList.add('show'), 10);
     setTimeout(() => {
         toast.classList.remove('show');
-        toast.addEventListener('transitionend', () => toast.remove());
+        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
     }, 4000);
 }
 window.showToast = showToast;
@@ -57,39 +57,35 @@ export function showWelcomeModal() {
 }
 
 export function showConfirmationModal({ title, text, confirmText = 'Confirm', isAlert = false, isPrompt = false, promptValue = '' }) {
-    const container = document.getElementById('modal-container');
-    if (!container) return Promise.resolve(false);
-
-    document.getElementById('modal-title').textContent = title;
-    document.getElementById('modal-text').textContent = text;
-    document.getElementById('modal-confirm-btn').textContent = confirmText;
-    document.getElementById('modal-cancel-btn').style.display = isAlert ? 'none' : 'inline-block';
-    
-    const inputContainer = document.getElementById('modal-input-container');
-    const input = document.getElementById('modal-input');
-    
-    if (isPrompt) {
-        inputContainer.classList.remove('hidden');
-        input.value = promptValue;
-    } else {
-        inputContainer.classList.add('hidden');
-    }
-    
-    container.classList.remove('hidden');
-    
     return new Promise((resolve) => {
+        const container = document.getElementById('modal-container');
+        if (!container) return resolve(isPrompt ? null : false);
+
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-text').textContent = text;
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
+        confirmBtn.textContent = confirmText;
+        cancelBtn.style.display = isAlert ? 'none' : 'inline-block';
+        
+        const inputContainer = document.getElementById('modal-input-container');
+        const input = document.getElementById('modal-input');
+        inputContainer.classList.toggle('hidden', !isPrompt);
+        if (isPrompt) input.value = promptValue;
+        
+        container.classList.remove('hidden');
+
+        const controller = new AbortController();
+        const signal = controller.signal;
+        
         const closeHandler = (value) => {
             container.classList.add('hidden');
-            // Clone and replace buttons to remove all old event listeners
-            confirmBtn.replaceWith(confirmBtn.cloneNode(true));
-            cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+            controller.abort(); // Remove both event listeners
             resolve(value);
         };
         
-        document.getElementById('modal-confirm-btn').onclick = () => closeHandler(isPrompt ? input.value : true);
-        document.getElementById('modal-cancel-btn').onclick = () => closeHandler(isPrompt ? null : false);
+        confirmBtn.addEventListener('click', () => closeHandler(isPrompt ? input.value : true), { signal });
+        cancelBtn.addEventListener('click', () => closeHandler(isPrompt ? null : false), { signal });
     });
 }
 window.showConfirmationModal = showConfirmationModal;
@@ -102,7 +98,6 @@ export function showLevelUpModal(newLevel) {
     container.classList.remove('hidden');
 
     const continueBtn = document.getElementById('level-up-continue-btn');
-    const closeHandler = () => container.classList.add('hidden');
-    continueBtn.addEventListener('click', closeHandler, { once: true });
+    continueBtn.addEventListener('click', () => container.classList.add('hidden'), { once: true });
 }
 window.showLevelUpModal = showLevelUpModal;
