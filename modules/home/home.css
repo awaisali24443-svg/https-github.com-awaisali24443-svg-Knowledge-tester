@@ -1,1 +1,132 @@
-full contents of modules/home/home.css
+/* Stellar Map Canvas and Overlay */
+.dashboard-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    color: white; /* Text on top of the 3D map should be white */
+}
+#stellar-map-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+#stellar-map-loading {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: #000;
+}
+.dashboard-overlay {
+    position: relative;
+    z-index: 2;
+    padding: 2rem;
+    height: 100%;
+    overflow-y: auto;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.5) 50%, transparent);
+}
+
+/* Dashboard Header */
+.dashboard-header { margin-bottom: 2rem; }
+#welcome-message {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+.player-stats-card {
+    background: rgba(26, 28, 45, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+.level-progress { flex-grow: 1; }
+.level-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+.xp-text { font-size: 0.9rem; color: var(--color-text-muted); margin-top: 0.5rem; }
+.streak-info { text-align: center; }
+.streak-icon { font-size: 2.5rem; }
+#player-streak { font-weight: 700; font-size: 1.1rem; }
+
+/* Dashboard Sections */
+.dashboard-section { margin-bottom: 2.5rem; }
+.dashboard-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+}
+.action-card {
+    background: rgba(26, 28, 45, 0.7);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-text);
+    transition: all 0.2s ease;
+}
+.action-card:hover { transform: translateY(-5px); border-color: var(--color-primary); }
+.action-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.action-card h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
+.action-card p { font-size: 0.9rem; color: var(--color-text-muted); }
+.action-card.disabled { opacity: 0.5; pointer-events: none; }
+
+/* Missions & Streak */
+#missions-list .mission-item {
+    background: rgba(26, 28, 45, 0.7);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+#weekly-streak-container { margin-top: 2rem; }
+#streak-calendar { display: flex; gap: 0.5rem; }
+.streak-day {
+    flex: 1; aspect-ratio: 1;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+}
+.streak-day.active { background: var(--color-success); border-color: var(--color-success); }
+
+/* Learning Paths & Activity Feed */
+#learning-path-form { display: flex; gap: 1rem; margin-bottom: 1rem; }
+#learning-goal-input { flex-grow: 1; }
+#activity-feed-list .activity-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Stellar Map Info Panel */
+#stellar-map-info-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 28, 45, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 400px;
+    z-index: 10;
+    animation: popIn 0.3s ease-out;
+}
+#info-panel-title { font-size: 1.5rem; }
+#info-panel-level { color: var(--color-secondary); font-weight: 700; }
+#info-panel-desc { color: var(--color-text-muted); margin: 0.5rem 0 1.5rem; }
+.info-panel-actions { display: flex; gap: 1rem; }
+.info-panel-actions .btn { flex: 1; }

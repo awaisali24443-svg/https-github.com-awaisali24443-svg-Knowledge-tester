@@ -33,7 +33,8 @@ async function fetchFromProxy(type, payload) {
  */
 export async function generateQuiz(prompt) {
     try {
-        const quizData = await fetchFromProxy('quiz', { prompt });
+        const response = await fetchFromProxy('quiz', { prompt });
+        const quizData = response.questions; // Updated to match new server schema
         if (!Array.isArray(quizData) || quizData.length === 0) {
             throw new Error("Generated quiz data is not a valid array.");
         }
@@ -55,9 +56,9 @@ export async function* generateStudyGuideStream(prompt) {
         body: JSON.stringify({ type: 'study', payload: { prompt } })
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to generate study guide.');
+    if (!response.ok || !response.body) {
+        const error = await response.json().catch(() => ({ message: 'Failed to generate study guide.' }));
+        throw new Error(error.message);
     }
 
     const reader = response.body.getReader();
@@ -66,7 +67,7 @@ export async function* generateStudyGuideStream(prompt) {
     while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        yield decoder.decode(value);
+        yield decoder.decode(value, { stream: true });
     }
 }
 
@@ -77,7 +78,8 @@ export async function* generateStudyGuideStream(prompt) {
  */
 export async function generateFlashcardsFromGuide(guideContent) {
     try {
-        const flashcards = await fetchFromProxy('flashcards', { guideContent });
+        const response = await fetchFromProxy('flashcards', { guideContent });
+        const flashcards = response.flashcards; // Updated to match new server schema
         if (!Array.isArray(flashcards)) {
             throw new Error("Generated flashcard data is not a valid array.");
         }

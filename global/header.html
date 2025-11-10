@@ -1,1 +1,28 @@
-full contents of global/header.html
+<nav class="site-nav">
+    <a href="#home" class="logo">
+        <svg viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:var(--color-primary)" />
+                    <stop offset="100%" style="stop-color:var(--color-secondary)" />
+                </linearGradient>
+            </defs>
+            <text x="50%" y="40" class="logo-text" text-anchor="middle">KNOWLEDGE TESTER</text>
+        </svg>
+    </a>
+
+    <div class="header-user-stats">
+        <div class="stat-item">LVL <span id="header-level">1</span></div>
+        <div class="stat-item">🔥 <span id="header-streak">0</span></div>
+    </div>
+    
+    <ul class="nav-links">
+        <!-- Links are dynamically inserted by global.js -->
+    </ul>
+
+    <button class="nav-hamburger" aria-label="Toggle navigation menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
