@@ -1,3 +1,4 @@
+
 import * as auth from '../../services/authService.js';
 import * as progress from '../../services/progressService.js';
 import * as missions from '../../services/missionService.js';
@@ -100,18 +101,19 @@ export async function init() {
     const loadingOverlay = document.getElementById('stellar-map-loading');
 
     try {
-        // Await the library loader to guarantee THREE and OrbitControls are available.
-        // This completely fixes the race condition bug.
         await loadThreeJS();
-
         stellarMap = new StellarMap(canvas);
         await stellarMap.init(); // This method handles its own internal loading state
 
     } catch(error) {
         console.error("Failed to initialize StellarMap:", error);
-        if (canvas) canvas.style.display = 'none';
+        // Graceful fallback to a static background
+        const dashboardContainer = document.querySelector('.dashboard-container');
+        if (dashboardContainer) {
+            dashboardContainer.classList.add('map-failed');
+        }
         if (loadingOverlay) {
-            loadingOverlay.innerHTML = `<p style="color:var(--color-warning); text-align:center;">3D map component failed to load.<br>The dashboard remains fully functional.</p>`;
+            loadingOverlay.innerHTML = `<p style="color:var(--color-warning); text-align:center;">3D map component failed to load.<br>Displaying static background.</p>`;
         }
     }
     

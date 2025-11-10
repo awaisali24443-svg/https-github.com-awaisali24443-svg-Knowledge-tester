@@ -1,3 +1,4 @@
+
 // sw.js
 
 const CACHE_NAME = 'knowledge-tester-v2.0'; // Major version bump for new strategy
@@ -14,7 +15,6 @@ const urlsToCache = [
   '/themes/theme-dark-cyber.css',
   // Third-party libraries (from CDN, will be cached on first fetch)
   'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/js/controls/OrbitControls.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js',
   // All Modules
   '/modules/home/home.html', '/modules/home/home.css', '/modules/home/home.js',
