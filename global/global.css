@@ -37,8 +37,8 @@ body {
     min-height: calc(100vh - 80px); /* Adjust based on header height */
 }
 
-/* --- Typography --- */
-h1, h2, h3, h4 {
+/* FIX #23: Scope generic element selectors to the main app container to avoid conflicts */
+.main-container h1, .main-container h2, .main-container h3, .main-container h4 {
     font-family: var(--font-display);
     font-weight: 800;
     line-height: 1.2;
@@ -46,12 +46,12 @@ h1, h2, h3, h4 {
     color: var(--color-text);
     text-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); }
-h2 { font-size: clamp(2rem, 4vw, 2.75rem); }
-h3 { font-size: clamp(1.5rem, 3vw, 1.75rem); }
-p { margin-bottom: 1.25rem; color: var(--color-text-muted); }
-a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-fast); }
-a:hover { color: var(--color-secondary); }
+.main-container h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); }
+.main-container h2 { font-size: clamp(2rem, 4vw, 2.75rem); }
+.main-container h3 { font-size: clamp(1.5rem, 3vw, 1.75rem); }
+.main-container p { margin-bottom: 1.25rem; color: var(--color-text-muted); }
+.main-container a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-fast); }
+.main-container a:hover { color: var(--color-secondary); }
 
 
 /* --- Components --- */
@@ -113,6 +113,9 @@ a:hover { color: var(--color-secondary); }
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-glow);
 }
+.form-control.invalid {
+    border-color: var(--color-danger);
+}
 
 /* --- Header --- */
 .site-nav {
@@ -145,9 +148,35 @@ a:hover { color: var(--color-secondary); }
     gap: 0.5rem;
 }
 
+.nav-hamburger {
+    display: none; /* Hidden by default on desktop */
+    flex-direction: column;
+    justify-content: space-around;
+    width: 2rem;
+    height: 2rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 10;
+}
+.nav-hamburger span {
+    width: 2rem;
+    height: 0.25rem;
+    background: var(--color-text);
+    border-radius: 10px;
+    transition: all 0.3s linear;
+    position: relative;
+    transform-origin: 1px;
+}
+
 /* --- Animations --- */
 .fade-in {
     animation: fadeInAnimation 0.6s ease-out forwards;
+}
+.module-loading {
+    opacity: 0.5;
+    transition: opacity 0.2s ease-in-out;
 }
 
 @keyframes fadeInAnimation {
@@ -163,7 +192,21 @@ a:hover { color: var(--color-secondary); }
 
 /* --- Responsive --- */
 @media (max-width: 768px) {
-    .site-nav {
-        /* Add mobile nav styles later */
+    .header-user-stats, .nav-links {
+        display: none;
+    }
+    .nav-hamburger {
+        display: flex;
+    }
+
+    .site-nav.nav-open .nav-links {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--color-bg-light);
+        border-bottom: 1px solid var(--color-border);
     }
 }

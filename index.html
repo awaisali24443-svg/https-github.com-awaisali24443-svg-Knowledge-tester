@@ -9,11 +9,15 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff007f">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/assets/icon-192.png">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@800&display=swap" rel="stylesheet">
+    <!-- FIX: Preload accessibility font to avoid render-blocking @import -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Dyslexic&display=swap">
+
 
     <!-- Core & Theme Stylesheets -->
     <link rel="stylesheet" href="/global/global.css">
@@ -21,14 +25,21 @@
     <link rel="stylesheet" href="/global/accessibility.css">
     <link rel="stylesheet" href="/global/splash.css">
 
+<!-- 
+  NOTE on importmap and SRI (Subresource Integrity):
+  The importmap simplifies referencing JS modules. However, for a production
+  environment, it is critical to add `integrity` hashes to all third-party
+  resources to prevent supply-chain attacks if the CDN is compromised.
+  e.g., <script src="url" integrity="sha384-hash..."></script>
+-->
 <script type="importmap">
 {
   "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/",
     "express": "https://aistudiocdn.com/express@^5.1.0",
     "path": "https://aistudiocdn.com/path@^0.12.7",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
-    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js",
-    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0"
   }
 }
 </script>
@@ -38,7 +49,7 @@
     <!-- Splash Screen -->
     <div id="splash-screen">
         <div class="splash-content">
-            <svg class="splash-logo" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+            <svg class="splash-logo" viewBox="0 0 400 60" xmlns="http://www.w3.0/2000/svg">
                 <defs>
                     <linearGradient id="splash-logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style="stop-color:var(--color-primary)" />

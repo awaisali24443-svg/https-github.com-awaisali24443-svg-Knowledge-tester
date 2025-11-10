@@ -15,12 +15,12 @@ export function init(appState) {
             console.log("Initializing 3D background...");
             threeManager.init(container);
             canvas.classList.add('visible');
-            is3DInitialized = true;
+            // FIX #16: Only set flag on full success
+            is3DInitialized = true; 
         } catch (error) {
             console.error("Failed to initialize 3D background. Falling back to static.", error);
-            // Ensure canvas is hidden if initialization fails
             if(canvas) canvas.style.display = 'none';
-            is3DInitialized = false;
+            is3DInitialized = false; // Ensure flag is false on failure
         }
     } else {
         console.log("3D background is disabled or elements not found.");

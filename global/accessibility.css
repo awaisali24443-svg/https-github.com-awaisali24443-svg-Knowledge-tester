@@ -4,9 +4,6 @@
     These classes are applied to the <body> tag via JavaScript.
 */
 
-/* Link to dyslexia-friendly font */
-@import url('https://fonts.googleapis.com/css2?family=Open+Dyslexic&display=swap');
-
 /* --- Large Text Mode --- */
 body.large-text {
     font-size: 115%;

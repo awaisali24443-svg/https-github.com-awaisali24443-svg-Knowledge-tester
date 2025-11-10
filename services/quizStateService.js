@@ -28,7 +28,7 @@ export const quizStateService = {
     },
 
     /**
-     * Submits an answer for the current question and advances the state.
+     * Submits an answer for the current question.
      * @param {number} answerIndex - The index of the user's selected option.
      * @returns {{isCorrect: boolean, correctAnswerIndex: number}} Feedback for the answer.
      */
@@ -60,11 +60,12 @@ export const quizStateService = {
     },
 
     /**
-     * Checks if the quiz is complete.
+     * FIX #27: Checks if the quiz is over. This is true when the user is ON the last question.
      * @returns {boolean}
      */
-    isQuizOver() {
-        return _currentQuestionIndex >= _quizData.questions.length -1;
+    isQuizOverAfterAnswer() {
+        if (!_quizData) return true;
+        return _currentQuestionIndex >= _quizData.questions.length - 1;
     },
 
     /**
@@ -84,6 +85,7 @@ export const quizStateService = {
      * @returns {{score: number, totalQuestions: number, quizData: object, userAnswers: Array<number>}}
      */
     getResults() {
+        if (!_quizData) return null;
         return {
             score: _score,
             totalQuestions: _quizData.questions.length,
@@ -93,12 +95,13 @@ export const quizStateService = {
     },
 
     /**
-     * Resets the quiz state.
+     * FIX #3: Resets the quiz state. Called by destroy() methods.
      */
     endQuiz() {
         _quizData = null;
         _userAnswers = [];
         _currentQuestionIndex = 0;
         _score = 0;
+        console.log("Quiz state has been reset.");
     }
 };

@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v2.1'; // Version bump to clear old caches
+const CACHE_NAME = 'knowledge-tester-v2.2'; // Version bump to clear old caches
 const urlsToCache = [
   '/',
   '/index.html',
@@ -13,53 +13,14 @@ const urlsToCache = [
   // Themes
   '/themes/theme-dark-cyber.css',
   // Third-party libraries (from CDN, will be cached on first fetch)
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.min.js',
-  'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/js/controls/OrbitControls.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js',
+  'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js',
-  // All Modules
-  '/modules/home/home.html', '/modules/home/home.css', '/modules/home/home.js',
-  '/modules/welcome/welcome.html', '/modules/welcome/welcome.css', '/modules/welcome/welcome.js',
-  '/modules/login/login.html', '/modules/login/login.css', '/modules/login/login.js',
-  '/modules/signup/signup.html', '/modules/signup/signup.css', '/modules/signup/signup.js',
-  '/modules/explore-topics/explore-topics.html', '/modules/explore-topics/explore-topics.css', '/modules/explore-topics/explore-topics.js',
-  '/modules/topic-list/topic-list.html', '/modules/topic-list/topic-list.css', '/modules/topic-list/topic-list.js',
-  '/modules/optional-quiz-generator/optional-quiz-generator.html', '/modules/optional-quiz-generator/optional-quiz-generator.css', '/modules/optional-quiz-generator/optional-quiz-generator.js',
-  '/modules/loading/loading.html', '/modules/loading/loading.css', '/modules/loading/loading.js',
-  '/modules/quiz/quiz.html', '/modules/quiz/quiz.css', '/modules/quiz/quiz.js',
-  '/modules/results/results.html', '/modules/results/results.css', '/modules/results/results.js',
-  '/modules/study/study.html', '/modules/study/study.css', '/modules/study/study.js',
-  '/modules/screen/screen.html', '/modules/screen/screen.css', '/modules/screen/screen.js',
-  '/modules/settings/settings.html', '/modules/settings/settings.css', '/modules/settings/settings.js',
-  '/modules/library/library.html', '/modules/library/library.css', '/modules/library/library.js',
-  '/modules/leaderboard/leaderboard.html', '/modules/leaderboard/leaderboard.css', '/modules/leaderboard/leaderboard.js',
-  '/modules/learning-path/learning-path.html', '/modules/learning-path/learning-path.css', '/modules/learning-path/learning-path.js',
-  '/modules/challenge-setup/challenge-setup.html', '/modules/challenge-setup/challenge-setup.css', '/modules/challenge-setup/challenge-setup.js',
-  '/modules/challenge-results/challenge-results.html', '/modules/challenge-results/challenge-results.css', '/modules/challenge-results/challenge-results.js',
-  // Placeholder modules
-  '/modules/challenge-lobby/challenge-lobby.html', '/modules/challenge-lobby/challenge-lobby.css', '/modules/challenge-lobby/challenge-lobby.js',
-  '/modules/live-quiz/live-quiz.html', '/modules/live-quiz/live-quiz.css', '/modules/live-quiz/live-quiz.js',
-  '/modules/live-results/live-results.html', '/modules/live-results/live-results.css', '/modules/live-results/live-results.js',
-  // All Services
-  '/constants.js',
-  '/services/authService.js',
-  '/services/geminiService.js',
-  '/services/moduleHelper.js',
-  '/services/progressService.js',
-  '/services/quizStateService.js',
-  '/services/soundService.js',
-  '/services/stellarMap.js',
-  '/services/threeManager.js',
-  '/services/topicService.js',
-  '/services/uiService.js',
-  '/services/achievementService.js',
-  '/services/activityFeedService.js',
-  '/services/leaderboardService.js',
-  '/services/learningPathService.js',
-  '/services/libraryService.js',
-  '/services/missionService.js',
-  '/services/libraryLoader.js',
+  // All Modules & Services are cached via network-first strategy now
   // Assets
   '/icon.svg',
+  '/assets/icon-192.png',
+  '/assets/icon-512.png',
   'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@800&display=swap',
   'https://fonts.gstatic.com/s/exo2/v21/7cH1v4okm5zmbvwk_QED-Vk-PA.woff2'
 ];
@@ -79,43 +40,32 @@ self.addEventListener('install', event => {
   );
 });
 
-// Serve cached content when offline
+// FIX #4, #5: Implement a Network first, then cache strategy.
+// This prevents serving stale index.html or API data.
 self.addEventListener('fetch', event => {
-    // We only want to cache GET requests.
+    // We only want to handle GET requests.
     if (event.request.method !== 'GET') {
+        return;
+    }
+    
+    // Specifically ignore API calls from being cached.
+    if (event.request.url.includes('/api/')) {
         return;
     }
 
     event.respondWith(
-        caches.match(event.request)
-            .then(cachedResponse => {
-                // Cache hit - return response
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-
-                // Not in cache - fetch from network, then cache it for future use
-                return fetch(event.request).then(
-                    networkResponse => {
-                        // Check if we received a valid response
-                        if (!networkResponse || networkResponse.status !== 200) {
-                            return networkResponse;
-                        }
-                        
-                        // We need to clone the response because it's a stream and can only be consumed once.
-                        const responseToCache = networkResponse.clone();
-                        
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return networkResponse;
-                    }
-                ).catch(err => {
-                    console.error('Fetch failed; network request error.', err);
-                    // Optional: return a fallback offline page if a crucial asset fails and isn't cached
+        fetch(event.request)
+            .then(networkResponse => {
+                // If the fetch is successful, clone it and cache it.
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(event.request, responseToCache);
                 });
+                return networkResponse;
+            })
+            .catch(() => {
+                // If the network fails, try to serve from the cache.
+                return caches.match(event.request);
             })
     );
 });
@@ -123,6 +73,9 @@ self.addEventListener('fetch', event => {
 
 // Clean up old caches on activation
 self.addEventListener('activate', event => {
+  // FIX #24: Ensure the new service worker takes control immediately.
+  self.clients.claim(); 
+  
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {

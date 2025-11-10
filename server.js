@@ -26,30 +26,48 @@ const modelConfig = {
 app.post('/api/generate', async (req, res) => {
     try {
         const { prompt, schema } = req.body;
-        if (!prompt || !schema) {
+
+        // FIX: #28 - Basic input validation and sanitization
+        if (!prompt || typeof prompt !== 'string' || !schema) {
             return res.status(400).json({ error: 'Prompt and schema are required' });
+        }
+        const sanitizedPrompt = prompt.trim();
+        if (sanitizedPrompt.length === 0 || sanitizedPrompt.length > 200) {
+            return res.status(400).json({ error: 'Prompt must be between 1 and 200 characters.' });
         }
 
         const response = await ai.models.generateContent({
             model: modelConfig.model,
-            contents: prompt,
+            contents: sanitizedPrompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: schema,
             }
         });
         
-        // Let's add more robust error checking from the API response itself
+        // FIX: #13 - More robust error checking from the API response itself
         if (!response.text) {
              console.error('API Error: No text in response', response);
-             let errorMessage = 'The AI returned an empty response.';
-             if (response?.candidates?.[0]?.finishReason === 'SAFETY') {
-                 errorMessage = 'The request was blocked due to safety concerns. Please try a different topic.';
+             let errorMessage = 'The AI returned an empty or invalid response.';
+             const finishReason = response?.candidates?.[0]?.finishReason;
+             switch(finishReason) {
+                case 'SAFETY':
+                    errorMessage = 'The request was blocked for safety reasons. Please try a different topic.';
+                    break;
+                case 'MAX_TOKENS':
+                    errorMessage = 'The AI response was too long and was cut off. This is an issue with the model.';
+                    break;
+                case 'RECITATION':
+                     errorMessage = 'The request was blocked due to potential recitation issues.';
+                     break;
              }
              return res.status(500).json({ error: errorMessage });
         }
-
-        res.json({ text: response.text });
+        
+        // FIX: #1 - Send the raw JSON string from Gemini, don't re-wrap it.
+        // The client expects a JSON string, so set content type appropriately.
+        res.setHeader('Content-Type', 'application/json');
+        res.send(response.text);
 
     } catch (error) {
         console.error('API Error:', error);
