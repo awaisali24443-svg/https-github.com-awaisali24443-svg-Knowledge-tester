@@ -383,6 +383,11 @@ body.loading-splash .site-footer {
     display: block;
 }
 
+/* Hide canvas if 3D is disabled by user setting */
+body.no-3d-backgrounds .background-canvas {
+    display: none !important;
+}
+
 
 /* Cursor Aura */
 #cursor-aura {

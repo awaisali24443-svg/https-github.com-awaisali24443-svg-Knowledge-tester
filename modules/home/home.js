@@ -99,25 +99,40 @@ export async function init() {
 
     const canvas = document.getElementById('stellar-map-canvas');
     const loadingOverlay = document.getElementById('stellar-map-loading');
+    
+    // Check user setting for 3D backgrounds
+    const settings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
+    const enable3d = settings['enable-3d'] !== false; // default to true if not set
 
-    try {
-        await loadThreeJS();
-        stellarMap = new StellarMap(canvas);
-        await stellarMap.init();
+    if (enable3d) {
+        try {
+            await loadThreeJS();
+            stellarMap = new StellarMap(canvas);
+            await stellarMap.init();
 
-    } catch(error) {
-        console.error("Failed to initialize StellarMap:", error);
-        if (canvas) canvas.style.display = 'none';
-        if (loadingOverlay) {
-            loadingOverlay.classList.add('hidden');
+        } catch(error) {
+            console.error("Failed to initialize StellarMap:", error);
+            if (canvas) canvas.style.display = 'none';
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('hidden');
+            }
+            
+            const dashboardContainer = document.querySelector('.dashboard-container');
+            if (dashboardContainer) {
+                dashboardContainer.classList.add('map-failed');
+            }
+
+            showToast('3D map component failed to load. Displaying static background.', 'warning');
         }
-        
+    } else {
+        // 3D is disabled, apply fallback styles immediately
+        console.log('StellarMap disabled by user setting.');
+        if (canvas) canvas.style.display = 'none';
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
         const dashboardContainer = document.querySelector('.dashboard-container');
         if (dashboardContainer) {
             dashboardContainer.classList.add('map-failed');
         }
-
-        showToast('3D map component failed to load. Displaying static background.', 'warning');
     }
     
     // Signal that the module is fully loaded and ready to be displayed.

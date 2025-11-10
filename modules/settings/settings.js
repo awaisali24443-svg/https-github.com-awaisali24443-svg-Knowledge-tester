@@ -7,6 +7,7 @@ let sceneManager;
 const settings = {
     theme: 'cyber',
     soundEnabled: true,
+    'enable-3d': true,
     'large-text': false,
     'high-contrast': false,
     'dyslexia-font': false,
@@ -15,11 +16,15 @@ const settings = {
 
 function loadSettings() {
     const savedSettings = JSON.parse(localStorage.getItem('generalSettings') || '{}');
+    if (savedSettings['enable-3d'] === undefined) {
+        savedSettings['enable-3d'] = true;
+    }
     Object.assign(settings, savedSettings);
 
     // Apply settings to UI elements
     document.getElementById('theme-select').value = settings.theme;
     document.getElementById('sound-toggle').checked = settings.soundEnabled;
+    document.getElementById('3d-toggle').checked = settings['enable-3d'];
     document.getElementById('large-text-toggle').checked = settings['large-text'];
     document.getElementById('high-contrast-toggle').checked = settings['high-contrast'];
     document.getElementById('dyslexia-font-toggle').checked = settings['dyslexia-font'];
@@ -36,17 +41,18 @@ function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
 }
 
-function applyAccessibilityClasses() {
+function applyBodyClasses() {
     const body = document.body;
     body.classList.toggle('large-text', settings['large-text']);
     body.classList.toggle('high-contrast', settings['high-contrast']);
     body.classList.toggle('dyslexia-font', settings['dyslexia-font']);
     body.classList.toggle('reduce-motion', settings['reduce-motion']);
+    body.classList.toggle('no-3d-backgrounds', !settings['enable-3d']);
 }
 
 function applyAllSettings() {
     applyTheme(settings.theme);
-    applyAccessibilityClasses();
+    applyBodyClasses();
 }
 
 function handleThemeChange(e) {
@@ -59,9 +65,26 @@ function handleThemeChange(e) {
 
 function handleToggleChange(e) {
     const key = e.target.id.replace('-toggle', '');
-    settings[key] = e.target.checked;
+    const isChecked = e.target.checked;
+    settings[key] = isChecked;
+
+    // Handle dependencies between 'reduce-motion' and '3d'
+    if (key === 'reduce-motion' && isChecked) {
+        if (settings['enable-3d']) {
+            settings['enable-3d'] = false;
+            document.getElementById('3d-toggle').checked = false;
+            showToast('3D backgrounds disabled to reduce motion.', 'success');
+        }
+    } else if (key === 'enable-3d' && isChecked) {
+        if (settings['reduce-motion']) {
+            settings['reduce-motion'] = false;
+            document.getElementById('reduce-motion-toggle').checked = false;
+            showToast('Reduce motion disabled for 3D backgrounds.', 'success');
+        }
+    }
+    
     saveSettings();
-    applyAccessibilityClasses();
+    applyBodyClasses();
 }
 
 async function handleResetProgress() {
@@ -104,9 +127,12 @@ function addEventListeners() {
         settings.soundEnabled = e.target.checked;
         saveSettings();
     });
+    
+    document.getElementById('3d-toggle')?.addEventListener('change', handleToggleChange);
     document.querySelectorAll('.accessibility-options .toggle-switch').forEach(toggle => {
         toggle.addEventListener('change', handleToggleChange);
     });
+    
     document.getElementById('reset-progress-btn')?.addEventListener('click', handleResetProgress);
     document.getElementById('delete-account-btn')?.addEventListener('click', handleDeleteAccount);
 }
