@@ -1,13 +1,17 @@
 // firebase-config.js
 
+// IMPORTANT: This file is currently NOT USED by the application.
+// Firebase integration has been temporarily removed to focus on guest-only functionality.
+// To re-enable user accounts, you must:
+// 1. Fill in your Firebase project credentials below.
+// 2. Restore the Firebase logic in /services/authService.js.
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
 // You can get this from your project's settings in the Firebase console.
-// IMPORTANT: For this app to work with user accounts, you must replace
-// these placeholder values with your actual Firebase project credentials.
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_AUTH_DOMAIN",
@@ -26,9 +30,8 @@ export const initializeFirebase = () => {
         return { firebaseApp, auth, db };
     }
 
-    // A simple check to see if the user has replaced the placeholder config.
     if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-        console.warn("Firebase is not configured. Please add your project credentials in firebase-config.js. Login/Signup for registered users will not work, but Guest Mode is available.");
+        console.warn("Firebase is not configured. User accounts are disabled.");
         return { firebaseApp: null, auth: null, db: null };
     }
 
@@ -38,7 +41,6 @@ export const initializeFirebase = () => {
         db = getFirestore(firebaseApp);
     } catch (error) {
         console.error("Firebase initialization failed:", error);
-        // Return nulls so the app knows initialization failed
         return { firebaseApp: null, auth: null, db: null };
     }
     

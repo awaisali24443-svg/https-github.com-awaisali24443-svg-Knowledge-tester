@@ -26,7 +26,6 @@ async function updateHeaderUI(user, progress) {
     const headerContainer = document.getElementById('header-container');
     if (!headerContainer) return;
 
-    // Fetch the header template only if it hasn't been fetched before
     if (!headerHTMLTemplate) {
         try {
             const response = await fetch('/global/header.html');
@@ -47,36 +46,34 @@ async function updateHeaderUI(user, progress) {
     const navLinks = headerContainer.querySelector('.nav-links');
     const headerUserStats = headerContainer.querySelector('.header-user-stats');
 
-    if (!navLinks || !headerUserStats) return;
-
-    // Default to hidden
-    headerContainer.classList.add('hidden');
-    headerUserStats.classList.add('hidden');
-
-    let navHtml = '';
-
-    if (user && !user.isGuest) {
+    if (user) { // This now applies to GUESTS as well
         headerContainer.classList.remove('hidden');
-        navHtml = `
+        
+        const logoutText = user.isGuest ? 'Exit Guest Mode' : 'Logout';
+
+        navLinks.innerHTML = `
             <li><a href="#home" class="nav-link" data-route="home"><span class="nav-link-text">Dashboard</span></a></li>
             <li><a href="#progress" class="nav-link" data-route="progress"><span class="nav-link-text">Analytics</span></a></li>
             <li><a href="#library" class="nav-link" data-route="library"><span class="nav-link-text">My Library</span></a></li>
             <li><a href="#settings" class="nav-link" data-route="settings"><span class="nav-link-text">Settings</span></a></li>
-            <li><button id="logout-btn" class="nav-link"><span class="btn-content">Logout</span></button></li>
+            <li><button id="logout-btn" class="nav-link"><span class="btn-content">${logoutText}</span></button></li>
         `;
-    }
-    
-    navLinks.innerHTML = navHtml;
+        document.getElementById('logout-btn').addEventListener('click', handleLogout);
 
-    if (user) {
-        document.getElementById('logout-btn')?.addEventListener('click', handleLogout);
         if (progress) {
             headerUserStats.classList.remove('hidden');
             const totalXp = progress.totalXp || 0;
             const level = progressService.calculateLevel(totalXp).level;
             headerUserStats.querySelector('#header-level').textContent = level;
             headerUserStats.querySelector('#header-streak').textContent = progress.streak || 0;
+        } else {
+             headerUserStats.classList.add('hidden');
         }
+
+    } else { // No user, not even a guest
+        headerContainer.classList.add('hidden');
+        navLinks.innerHTML = '';
+        headerUserStats.classList.add('hidden');
     }
     
     // Hamburger menu for mobile
@@ -101,9 +98,9 @@ async function handleLogout() {
     try {
         await authService.logOut();
         // The session state change listener will handle routing.
-        showToast('You have been successfully signed out.', 'success');
+        showToast('You have exited guest mode.', 'success');
     } catch (error) {
-        showToast('Logout failed. Please try again.', 'error');
+        showToast('Failed to exit. Please try again.', 'error');
         btnContent.textContent = authService.isGuest() ? 'Exit Guest Mode' : 'Logout';
     } finally {
         logoutBtn.disabled = false;
@@ -212,12 +209,7 @@ async function initializeApp() {
         
         if (user) {
             userProgress = await progressService.getProgress();
-            // Check for isNewUser is now handled inside authService to avoid race conditions
-            if (!user.isGuest && user.isNewUser) {
-                showWelcomeModal();
-                // Mark user as not new anymore
-                await authService.updateUserAccount({ isNewUser: false });
-            }
+            // isNewUser modal is disabled as it requires Firebase
         } else {
             userProgress = null;
         }

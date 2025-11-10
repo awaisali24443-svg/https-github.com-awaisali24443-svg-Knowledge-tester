@@ -58,11 +58,6 @@ const urlsToCache = [
   '/services/libraryService.js',
   '/services/missionService.js',
   '/services/libraryLoader.js', // New service
-  // Firebase
-  '/firebase-config.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js',
-  'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js',
   // Assets
   '/icon.svg',
   'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@800&display=swap',
