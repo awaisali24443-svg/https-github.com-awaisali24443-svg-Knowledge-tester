@@ -53,7 +53,7 @@ async function updateHeaderUI(user, progress) {
 
         navLinks.innerHTML = `
             <li><a href="#home" class="nav-link" data-route="home"><span class="nav-link-text">Dashboard</span></a></li>
-            <li><a href="#progress" class="nav-link" data-route="progress"><span class="nav-link-text">Analytics</span></a></li>
+            <li><a href="#progress" class="nav-link" data-route="progress"><span class="nav-link-text">My Progress</span></a></li>
             <li><a href="#library" class="nav-link" data-route="library"><span class="nav-link-text">My Library</span></a></li>
             <li><a href="#settings" class="nav-link" data-route="settings"><span class="nav-link-text">Settings</span></a></li>
             <li><button id="logout-btn" class="nav-link"><span class="btn-content">${logoutText}</span></button></li>

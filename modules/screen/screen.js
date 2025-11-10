@@ -81,23 +81,27 @@ async function renderProgress() {
 
         const progressListContainer = document.getElementById('progress-list-container');
         let allProgressHtml = '';
-
-        for (const category in topicCategories) {
-            const topicsInCategory = topicCategories[category];
-            const categoryProgressHtml = topicsInCategory
-                .filter(topic => levels && levels[topic] > 1)
-                .map(topic => createProgressItemHtml(topic, levels[topic], history[topic]))
+        
+        // --- BUG FIX START ---
+        // Correctly iterate over imported categoryData and its topics
+        for (const categoryKey in categoryData) {
+            const category = categoryData[categoryKey];
+            const categoryProgressHtml = category.topics
+                .map(topic => topic.name) // Get topic names from topic objects
+                .filter(topicName => levels && levels[topicName] > 1)
+                .map(topicName => createProgressItemHtml(topicName, levels[topicName], history[topicName]))
                 .join('');
 
             if (categoryProgressHtml.trim() !== '') {
                 allProgressHtml += `
                     <div class="progress-category">
-                        <h2>${category}</h2>
+                        <h2>${category.title}</h2>
                         <div class="progress-list">${categoryProgressHtml}</div>
                     </div>
                 `;
             }
         }
+        // --- BUG FIX END ---
 
         if (Object.keys(levels || {}).length === 0) {
             progressListContainer.innerHTML = '<p class="no-progress-message">You haven\'t started any leveled quizzes yet. Launch a mission from the Topic Universe to begin!</p>';

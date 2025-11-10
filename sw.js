@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v2.0'; // Major version bump for new strategy
+const CACHE_NAME = 'knowledge-tester-v2.1'; // Version bump to clear old caches
 const urlsToCache = [
   '/',
   '/index.html',
@@ -28,7 +28,7 @@ const urlsToCache = [
   '/modules/quiz/quiz.html', '/modules/quiz/quiz.css', '/modules/quiz/quiz.js',
   '/modules/results/results.html', '/modules/results/results.css', '/modules/results/results.js',
   '/modules/study/study.html', '/modules/study/study.css', '/modules/study/study.js',
-  '/modules/progress/progress.html', '/modules/progress/progress.css', '/modules/progress/progress.js',
+  '/modules/screen/screen.html', '/modules/screen/screen.css', '/modules/screen/screen.js',
   '/modules/settings/settings.html', '/modules/settings/settings.css', '/modules/settings/settings.js',
   '/modules/library/library.html', '/modules/library/library.css', '/modules/library/library.js',
   '/modules/leaderboard/leaderboard.html', '/modules/leaderboard/leaderboard.css', '/modules/leaderboard/leaderboard.js',
@@ -57,7 +57,7 @@ const urlsToCache = [
   '/services/learningPathService.js',
   '/services/libraryService.js',
   '/services/missionService.js',
-  '/services/libraryLoader.js', // New service
+  '/services/libraryLoader.js',
   // Assets
   '/icon.svg',
   'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@800&display=swap',
