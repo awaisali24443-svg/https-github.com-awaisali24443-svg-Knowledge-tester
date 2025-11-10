@@ -34,10 +34,30 @@ async function fetchFromProxy(type, payload) {
 export async function generateQuiz(prompt) {
     try {
         const response = await fetchFromProxy('quiz', { prompt });
-        const quizData = response.questions; // Updated to match new server schema
+        const quizData = response.questions; 
+        
+        // --- Robust Validation ---
         if (!Array.isArray(quizData) || quizData.length === 0) {
             throw new Error("Generated quiz data is not a valid array.");
         }
+
+        const isValid = quizData.every(q => 
+            q &&
+            typeof q.question === 'string' &&
+            Array.isArray(q.options) &&
+            q.options.length > 1 &&
+            typeof q.correctAnswerIndex === 'number' &&
+            q.correctAnswerIndex >= 0 &&
+            q.correctAnswerIndex < q.options.length &&
+            typeof q.explanation === 'string'
+        );
+
+        if (!isValid) {
+            console.error("Malformed quiz data received:", quizData);
+            throw new Error("Received malformed quiz data from the AI.");
+        }
+        // --- End Validation ---
+
         return quizData;
     } catch (error) {
         throw new Error("Failed to generate quiz. The AI might be busy or the topic is restricted. Please try again later.");

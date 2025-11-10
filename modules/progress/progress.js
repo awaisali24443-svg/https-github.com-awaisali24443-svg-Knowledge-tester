@@ -90,7 +90,12 @@ function renderWeakestConcepts(history) {
 
 function renderPerformanceChart(history) {
     const ctx = document.getElementById('performance-chart')?.getContext('2d');
-    if (!ctx || !window.Chart) return;
+    if (!ctx) return;
+    if (!window.Chart) {
+        console.warn("Chart.js not loaded, cannot render performance chart.");
+        ctx.canvas.parentElement.innerHTML = '<p style="text-align:center; color: var(--color-text-muted);">Chart could not be loaded.</p>';
+        return;
+    }
 
     const last30Days = Array.from({ length: 30 }, (_, i) => {
         const d = new Date();
@@ -138,7 +143,12 @@ function renderPerformanceChart(history) {
 
 function renderMasteryChart(levels) {
     const ctx = document.getElementById('mastery-chart')?.getContext('2d');
-    if (!ctx || !window.Chart) return;
+    if (!ctx) return;
+    if (!window.Chart) {
+        console.warn("Chart.js not loaded, cannot render mastery chart.");
+        ctx.canvas.parentElement.innerHTML = '<p style="text-align:center; color: var(--color-text-muted);">Chart could not be loaded.</p>';
+        return;
+    }
 
     const categoryLevels = {};
     for (const categoryKey in categoryData) {

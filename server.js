@@ -32,7 +32,7 @@ app.post('/api/gemini/generate', async (req, res) => {
         
         // This is a common model config
         const modelConfig = {
-            model: "gemini-1.5-flash-latest",
+            model: "gemini-2.5-flash",
             config: { safetySettings }
         };
 

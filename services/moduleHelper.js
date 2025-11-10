@@ -19,6 +19,7 @@ export function initModuleScene(canvasSelector, sceneType) {
         }
     }
     if (!canvas) console.warn(`Canvas with selector '${canvasSelector}' not found.`);
+    if (!window.THREE) console.warn(`THREE.js not loaded, cannot create scene for '${canvasSelector}'.`);
     return null;
 }
 

@@ -15,6 +15,11 @@ function renderQuizUI() {
 
     let timerHTML = state.quizContext.isChallenge ? `<div id="challenge-timer" class="challenge-timer">90s</div>` : '';
 
+    // Defensive rendering
+    const questionText = question?.question || "Question failed to load.";
+    const options = Array.isArray(question?.options) ? question.options : [];
+    const explanation = question?.explanation || "No explanation available.";
+
     quizContainer.innerHTML = `
         <div class="quiz-header">
             ${timerHTML}
@@ -25,9 +30,9 @@ function renderQuizUI() {
             <div class="quiz-progress-text">Question ${currentQuestionIndex + 1} of ${quizData.length}</div>
         </div>
         <div class="quiz-body">
-            <h2 class="quiz-question">${question.question}</h2>
+            <h2 class="quiz-question">${questionText}</h2>
             <div class="quiz-options">
-                ${question.options.map((option, index) => `<button class="quiz-option-btn" data-index="${index}">${option}</button>`).join('')}
+                ${options.map((option, index) => `<button class="quiz-option-btn" data-index="${index}">${option || 'Option not available'}</button>`).join('')}
             </div>
             <div id="quiz-feedback" class="quiz-feedback hidden">
                 <p id="feedback-explanation"></p>
@@ -59,7 +64,7 @@ function handleAnswerSelection(e) {
     });
 
     const feedbackEl = document.getElementById('quiz-feedback');
-    document.getElementById('feedback-explanation').textContent = question.explanation;
+    document.getElementById('feedback-explanation').textContent = question.explanation || "No explanation provided.";
     feedbackEl.classList.remove('hidden');
     
     const nextBtn = document.getElementById('next-question-btn');
@@ -85,11 +90,15 @@ function renderNextQuestion() {
     document.querySelector('.quiz-progress-bar').style.width = `${progress}%`;
     document.querySelector('.quiz-progress-text').textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
     
+    // Defensive rendering
+    const questionText = question?.question || "Question failed to load.";
+    const options = Array.isArray(question?.options) ? question.options : [];
+
     const quizBody = document.querySelector('.quiz-body');
     quizBody.innerHTML = `
-        <h2 class="quiz-question">${question.question}</h2>
+        <h2 class="quiz-question">${questionText}</h2>
         <div class="quiz-options">
-            ${question.options.map((option, index) => `<button class="quiz-option-btn" data-index="${index}">${option}</button>`).join('')}
+            ${options.map((option, index) => `<button class="quiz-option-btn" data-index="${index}">${option || 'Option not available'}</button>`).join('')}
         </div>
         <div id="quiz-feedback" class="quiz-feedback hidden">
             <p id="feedback-explanation"></p>
