@@ -1,0 +1,63 @@
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: calc(100vh - 120px);
+}
+
+.loading-text h2 {
+    color: var(--color-primary);
+}
+
+#loading-status {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    min-height: 2em; /* Prevent layout shift */
+}
+
+/* --- Cube Animation --- */
+.loading-visual {
+    margin-bottom: 3rem;
+    perspective: 800px;
+}
+
+.cube {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    transform-style: preserve-3d;
+    animation: rotate-cube 8s infinite linear;
+}
+
+@keyframes rotate-cube {
+    from { transform: rotateX(0deg) rotateY(0deg); }
+    to { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+.face {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--color-secondary);
+    background-color: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 20px var(--color-secondary);
+}
+
+.front  { transform: translateZ(40px); }
+.back   { transform: rotateY(180deg) translateZ(40px); }
+.right  { transform: rotateY(90deg) translateZ(40px); }
+.left   { transform: rotateY(-90deg) translateZ(40px); }
+.top    { transform: rotateX(90deg) translateZ(40px); }
+.bottom { transform: rotateX(-90deg) translateZ(40px); }
+
+/* --- Error State --- */
+#error-message-container {
+    margin-top: 2rem;
+}
+.error-text {
+    color: var(--color-danger);
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+}
