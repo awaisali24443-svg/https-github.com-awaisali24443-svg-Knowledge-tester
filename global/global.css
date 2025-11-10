@@ -163,7 +163,6 @@ body.loading-splash .site-footer {
     align-items: center;
     gap: 0.5rem;
 }
-.nav-link .nav-link-text { display: none; }
 .nav-link:hover, .nav-link.active { color: var(--color-primary); background-color: var(--color-glow); }
 
 .nav-hamburger { display: none; } /* Hidden on desktop */
