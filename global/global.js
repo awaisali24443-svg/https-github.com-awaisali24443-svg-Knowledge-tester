@@ -155,12 +155,14 @@ const router = async () => {
     const publicRoutes = ['welcome', 'login', 'signup'];
 
     if (!user && !publicRoutes.includes(cleanPath)) {
-        window.location.hash = '#welcome';
+        // Use replace to avoid polluting browser history with redirects
+        window.location.replace('#welcome');
         return;
     }
     
     if (user && publicRoutes.includes(cleanPath)) {
-        window.location.hash = '#home';
+        // Use replace to avoid polluting browser history with redirects
+        window.location.replace('#home');
         return;
     }
 
