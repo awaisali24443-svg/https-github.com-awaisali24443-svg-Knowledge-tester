@@ -306,6 +306,7 @@ body.loading-splash .site-footer {
 
 .btn:active:not(:disabled) {
     transform: scale(0.98);
+    filter: brightness(0.9);
 }
 
 .btn:disabled {

@@ -76,12 +76,43 @@
     text-decoration: none;
     color: var(--color-text);
     transition: all 0.2s ease;
+    font-family: inherit;
+    font-size: inherit;
 }
 .action-card:hover { transform: translateY(-5px); border-color: var(--color-primary); }
 .action-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
 .action-card h3 { font-size: 1.1rem; margin-bottom: 0.25rem; }
 .action-card p { font-size: 0.9rem; color: var(--color-text-muted); }
 .action-card.disabled { opacity: 0.5; pointer-events: none; }
+
+/* Recommendations Section */
+#recommendations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.recommendation-card {
+    background: rgba(26, 28, 45, 0.7);
+    border-left: 4px solid var(--color-warning);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.recommendation-card h4 {
+    font-size: 1.1rem;
+}
+.recommendation-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+.recommendation-actions .btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+}
 
 /* Missions & Streak */
 #missions-list .mission-item {

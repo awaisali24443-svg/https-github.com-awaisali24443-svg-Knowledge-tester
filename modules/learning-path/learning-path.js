@@ -2,6 +2,7 @@ import { getLearningPathById } from '../../services/learningPathService.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 import { NUM_QUESTIONS, UNLOCK_SCORE, MODULE_CONTEXT_KEY } from '../../constants.js';
 import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
+import { checkAndUnlockAchievements } from '../../services/achievementService.js';
 
 let sceneManager;
 let currentPathData = null;
@@ -17,6 +18,12 @@ function renderPath(pathData) {
     if (currentStep >= steps.length) {
          document.getElementById('path-progress-text').textContent = `Path Complete!`;
          document.getElementById('path-progress-bar').style.width = `100%`;
+         
+         // Check for achievement on completion
+         checkAndUnlockAchievements('learning_path_completed').then(newAchievements => {
+            newAchievements.forEach(ach => window.showToast(`🏆 Achievement Unlocked: ${ach.name}`, 'success'));
+         });
+
     } else {
          document.getElementById('path-progress-text').textContent = `Step ${currentStep + 1} of ${steps.length}`;
     }

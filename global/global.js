@@ -11,6 +11,15 @@ let currentModule = null;
 let currentUser = null;
 let userProgress = null;
 
+// --- SPLASH SCREEN MANAGEMENT ---
+function hideSplashScreen() {
+    const splash = document.getElementById('splash-screen');
+    if (splash) {
+        splash.classList.add('fade-out');
+        document.body.classList.remove('loading-splash');
+    }
+}
+
 // --- HEADER MANAGEMENT ---
 async function updateHeaderUI(user, progress) {
     const headerContainer = document.getElementById('header-container');
@@ -110,7 +119,7 @@ const loadModule = async (moduleName, context = {}) => {
         
         currentModule = await import(`../modules/${moduleName}/${moduleName}.js`);
         if (currentModule.init) {
-            currentModule.init();
+            await currentModule.init(); // Ensure init completes if it's async
         }
     } catch (error) {
         console.error(`Failed to load module ${moduleName}:`, error);
@@ -203,13 +212,8 @@ async function initializeApp() {
 
     window.addEventListener('hashchange', router);
     
-    const splash = document.getElementById('splash-screen');
-    if (splash) {
-        setTimeout(() => {
-            splash.classList.add('fade-out');
-            document.body.classList.remove('loading-splash');
-        }, 4000);
-    }
+    // The splash screen will now be hidden by the first module that loads successfully.
+    document.addEventListener('moduleReady', hideSplashScreen, { once: true });
 }
 
 // Start the application

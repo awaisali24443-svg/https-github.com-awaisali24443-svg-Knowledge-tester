@@ -82,12 +82,17 @@ export class StellarMap {
             this.#canvas.addEventListener('mousemove', this.#onMouseMove);
             this.#canvas.addEventListener('click', this.#onClick);
 
-            this.#loadingOverlay.classList.add('hidden');
             this.#animate();
         } catch (error) {
             console.error("StellarMap initialization failed:", error);
             if (this.#loadingOverlay) {
-                this.#loadingOverlay.innerHTML = `<p style="color:red; text-align:center;">Error initializing 3D map.<br>Please try refreshing the page.</p>`;
+                this.#loadingOverlay.innerHTML = `<p style="color:var(--color-danger); text-align:center;">3D map failed to load.<br>The dashboard is still available.</p>`;
+            }
+        } finally {
+            // This block is crucial. It guarantees the loading overlay is hidden,
+            // preventing the app from getting stuck, even if an error occurred.
+            if (this.#loadingOverlay) {
+                this.#loadingOverlay.classList.add('hidden');
             }
         }
     }

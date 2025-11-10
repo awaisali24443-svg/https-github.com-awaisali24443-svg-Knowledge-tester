@@ -40,13 +40,11 @@
                     <h3>Challenge Mode</h3>
                     <p>Test your speed and accuracy.</p>
                 </a>
-                <div id="live-challenge-card-container">
-                     <a href="#challenge-lobby" class="action-card">
-                        <span class="action-icon">🤝</span>
-                        <h3>Live Challenge</h3>
-                        <p>Compete in real-time.</p>
-                    </a>
-                </div>
+                <button id="random-challenge-btn" class="action-card">
+                    <span class="action-icon">🎲</span>
+                    <h3>Random Challenge</h3>
+                    <p>A surprise quiz topic!</p>
+                </button>
                 <a href="#custom-quiz" class="action-card">
                     <span class="action-icon">🔥</span>
                     <h3>AI Quiz Forge</h3>
@@ -55,8 +53,15 @@
             </div>
         </div>
 
+        <div id="recommendations-section" class="dashboard-section">
+            <h2>🎯 Recommended For You</h2>
+            <div id="recommendations-list">
+                <p class="loading-text">Analyzing your performance...</p>
+            </div>
+        </div>
+
         <div class="dashboard-section">
-            <h2>🎯 Daily Missions</h2>
+            <h2>🗓️ Daily Missions</h2>
             <div id="missions-list">
                 <p class="loading-text">Loading missions...</p>
             </div>

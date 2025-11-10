@@ -11,6 +11,9 @@ const handleGuestLogin = () => {
 export function init() {
     document.getElementById('guest-btn')?.addEventListener('click', handleGuestLogin);
     sceneManager = initModuleScene('.background-canvas', 'subtleParticles');
+    
+    // Signal that the module is fully loaded and ready to be displayed.
+    document.dispatchEvent(new CustomEvent('moduleReady'));
 }
 
 export function cleanup() {

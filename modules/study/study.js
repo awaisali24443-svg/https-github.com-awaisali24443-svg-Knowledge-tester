@@ -2,6 +2,7 @@ import { generateStudyGuideStream, generateFlashcardsFromGuide } from '../../ser
 import { NUM_QUESTIONS, UNLOCK_SCORE } from '../../constants.js';
 import { startQuizFlow } from '../../services/navigationService.js';
 import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
+import { checkAndUnlockAchievements } from '../../services/achievementService.js';
 
 let sceneManager;
 let quizContext = null;
@@ -21,6 +22,11 @@ async function streamStudyGuide() {
         fullStudyGuideContent = contentEl.innerText;
         document.getElementById('start-quiz-btn').disabled = false;
         document.getElementById('study-tools-section').classList.remove('hidden');
+        
+        // Check for achievement after successful generation
+        const newAchievements = await checkAndUnlockAchievements('study_guide_generated');
+        newAchievements.forEach(ach => window.showToast(`🏆 Achievement Unlocked: ${ach.name}`, 'success'));
+
     } catch (error) {
         contentEl.innerHTML = `<p style="color: var(--color-danger);">Error generating guide: ${error.message}</p>`;
     }

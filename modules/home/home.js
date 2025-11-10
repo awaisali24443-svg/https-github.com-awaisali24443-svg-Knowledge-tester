@@ -4,6 +4,10 @@ import * as missions from '../../services/missionService.js';
 import * as learning from '../../services/learningPathService.js';
 import * as activity from '../../services/activityFeedService.js';
 import { StellarMap } from '../../services/stellarMap.js';
+import { startQuizFlow } from '../../services/navigationService.js';
+import { categoryData } from '../../services/topicService.js';
+import { NUM_QUESTIONS, MAX_LEVEL } from '../../constants.js';
+
 
 let stellarMap;
 
@@ -21,11 +25,15 @@ async function renderDashboard() {
     document.getElementById('player-streak').textContent = `${userProgress.streak || 0} Day Streak`;
 
     renderMissions();
+    renderRecommendations();
     renderStreakCalendar(userProgress.streakDates || []);
     renderLearningPaths();
 
     if (auth.isGuest()) {
-        document.getElementById('live-challenge-card-container').innerHTML = `<div class="action-card disabled"><span class="action-icon">🤝</span><h3>Live Challenge</h3><p>Sign up to compete!</p></div>`;
+        const liveChallengeCard = document.querySelector('a[href="#challenge-lobby"]');
+        if (liveChallengeCard) {
+            liveChallengeCard.outerHTML = `<div class="action-card disabled"><span class="action-icon">🤝</span><h3>Live Challenge</h3><p>Sign up to compete!</p></div>`;
+        }
         document.getElementById('activity-feed-section').innerHTML = `<h2>🛰️ Activity Feed</h2><p>Sign up to see community activity!</p>`;
     } else {
         renderActivityFeed();
@@ -39,6 +47,30 @@ async function renderMissions() {
         <div class="mission-item">${m.text} (${m.progress}/${m.target})</div>
     `).join('');
 }
+
+async function renderRecommendations() {
+    const list = document.getElementById('recommendations-list');
+    const weakestTopics = await progress.getWeakestTopics(3);
+
+    if (weakestTopics.length === 0) {
+        list.innerHTML = `<p>No specific weaknesses detected. Keep up the great work!</p>`;
+        return;
+    }
+
+    list.innerHTML = weakestTopics.map(topicName => `
+        <div class="recommendation-card">
+            <h4>Focus on: ${topicName}</h4>
+            <div class="recommendation-actions">
+                <button class="btn btn-secondary study-btn" data-topic-name="${topicName}">Study</button>
+                <button class="btn btn-primary quiz-btn" data-topic-name="${topicName}">Quiz</button>
+            </div>
+        </div>
+    `).join('');
+
+    list.querySelectorAll('.quiz-btn').forEach(btn => btn.addEventListener('click', (e) => startRecommendedQuiz(e.target.dataset.topicName)));
+    list.querySelectorAll('.study-btn').forEach(btn => btn.addEventListener('click', (e) => startRecommendedStudy(e.target.dataset.topicName)));
+}
+
 
 function renderStreakCalendar(streakDates) {
     const calendar = document.getElementById('streak-calendar');
@@ -79,13 +111,49 @@ async function renderActivityFeed() {
     }
 }
 
+async function handleRandomChallenge() {
+    let topicName = "a random topic"; // Default
+    const weakestTopics = await progress.getWeakestTopics(1);
+
+    if (weakestTopics.length > 0) {
+        topicName = weakestTopics[0];
+    } else {
+        // Pick a truly random topic if no weak ones
+        const allTopics = Object.values(categoryData).flatMap(cat => cat.topics);
+        if (allTopics.length > 0) {
+            const randomIndex = Math.floor(Math.random() * allTopics.length);
+            topicName = allTopics[randomIndex].name;
+        }
+    }
+    
+    startRecommendedQuiz(topicName, `A quiz on a surprise topic: ${topicName}`);
+}
+
+function startRecommendedQuiz(topicName, customTitle = null) {
+    const prompt = `Generate a quiz with ${NUM_QUESTIONS} multiple-choice questions about "${topicName}". The difficulty should be Medium.`;
+    const quizContext = { topicName: customTitle || topicName, isLeveled: false, prompt, returnHash: '#home', generationType: 'quiz' };
+    startQuizFlow(quizContext);
+}
+
+function startRecommendedStudy(topicName) {
+    const prompt = `Generate a concise study guide about "${topicName}". The guide should be easy to understand for a beginner, using clear headings, bullet points, and bold text for key terms.`;
+    const quizContext = { topicName, returnHash: '#home', isLeveled: false, prompt, generationType: 'study' };
+    startQuizFlow(quizContext);
+}
+
 export async function init() {
     await renderDashboard();
+    
+    document.getElementById('random-challenge-btn')?.addEventListener('click', handleRandomChallenge);
+
     const canvas = document.getElementById('stellar-map-canvas');
     if(canvas && window.THREE) {
         stellarMap = new StellarMap(canvas);
         await stellarMap.init();
     }
+    
+    // Signal that the module is fully loaded and ready to be displayed.
+    document.dispatchEvent(new CustomEvent('moduleReady'));
 }
 
 export function cleanup() {

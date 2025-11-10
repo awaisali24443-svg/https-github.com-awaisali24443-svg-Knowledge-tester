@@ -3,6 +3,7 @@ import * as progressService from '../../services/progressService.js';
 import { playSound } from '../../services/soundService.js';
 import { initModuleScene, cleanupModuleScene } from '../../services/moduleHelper.js';
 import { createActivity } from '../../services/activityFeedService.js';
+import { checkAndUnlockAchievements } from '../../services/achievementService.js';
 
 let sceneManager;
 
@@ -33,6 +34,11 @@ async function renderChallengeResults() {
         await progressService.updateUserProfile({ challengeHighScore: score });
         createActivity({ type: 'high_score', text: `set a new high score of ${score} in Challenge Mode!`, icon: '🔥' });
     }
+
+    // Check for achievements related to challenge mode
+    const newAchievements = await checkAndUnlockAchievements('challenge_score_recorded', { score });
+    newAchievements.forEach(ach => window.showToast(`🏆 Achievement Unlocked: ${ach.name}`, 'success'));
+
 
     let highScoreHTML = newBest
         ? `<h3 class="new-high-score-banner">🔥 New High Score! 🔥</h3>`

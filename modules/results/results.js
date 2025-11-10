@@ -45,7 +45,7 @@ async function renderResults() {
     
     // Save progress and check for level-ups/achievements
     const missedConcepts = quizData.filter((q,i) => userAnswers[i] !== q.correctAnswerIndex).map(q => q.explanation.split('.')[0]);
-    const { xpGained } = await progress.recordQuizResult(quizContext.topicName, score, quizData.length, quizContext.isLeveled, missedConcepts);
+    const { xpGained, newLevel } = await progress.recordQuizResult(quizContext.topicName, score, quizData.length, quizContext.isLeveled, missedConcepts);
     
     // Handle learning path progression
     if (quizContext.learningPathInfo && score >= 3) {
@@ -54,12 +54,17 @@ async function renderResults() {
     
     // Update missions and check for achievements
     await missions.updateMissionProgress('quiz_completed', { score });
-    const newAchievements = await achievements.checkAndUnlockAchievements('quiz_completed', { score, totalQuestions: quizData.length });
+    let newAchievements = await achievements.checkAndUnlockAchievements('quiz_completed', { score, totalQuestions: quizData.length });
+    if (newLevel !== -1) {
+        const levelAchievements = await achievements.checkAndUnlockAchievements('level_up', { newLevel });
+        newAchievements = newAchievements.concat(levelAchievements);
+    }
+
     newAchievements.forEach(ach => window.showToast(`🏆 Achievement Unlocked: ${ach.name}`, 'success'));
 
 
     renderReviewSection();
-    setupActionButtons();
+    setupActionButtons(score, quizData.length, quizContext.topicName);
     playSound('complete');
 }
 
@@ -83,10 +88,23 @@ function renderReviewSection() {
     }).join('');
 }
 
-function setupActionButtons() {
+function setupActionButtons(score, total, topic) {
     document.getElementById('retry-quiz-btn').addEventListener('click', () => {
         sessionStorage.setItem('quizContext', JSON.stringify(state.quizContext));
         window.location.hash = '#loading';
+    });
+
+    document.getElementById('share-results-btn').addEventListener('click', () => {
+        const shareData = {
+            title: 'Knowledge Tester Results',
+            text: `I scored ${score}/${total} on the ${topic} quiz! Can you beat my score?`,
+            url: window.location.href,
+        };
+        if (navigator.share) {
+            navigator.share(shareData).catch(err => console.error("Share failed:", err));
+        } else {
+            window.showToast("Share feature not available on this browser.", "warning");
+        }
     });
     
     const saveBtnContainer = document.getElementById('save-library-btn-container');

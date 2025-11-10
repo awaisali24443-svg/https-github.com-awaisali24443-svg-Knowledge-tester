@@ -54,10 +54,12 @@ export const recordQuizResult = async (topicName, score, totalQuestions, isLevel
     const xpGained = score * XP_PER_QUESTION;
     progress.totalXp += xpGained;
 
+    let newLevelReached = -1;
     if (isLeveled) {
         progress.levels[topicName] = progress.levels[topicName] || 1;
         if (score >= 3 && progress.levels[topicName] < MAX_LEVEL) {
             progress.levels[topicName]++;
+            newLevelReached = progress.levels[topicName];
         }
     }
 
@@ -93,5 +95,27 @@ export const recordQuizResult = async (topicName, score, totalQuestions, isLevel
     }
 
     await saveProgress(progress);
-    return { xpGained, newLevel: progress.levels[topicName] };
+    return { xpGained, newLevel: newLevelReached };
+};
+
+export const getWeakestTopics = async (limit = 3) => {
+    const progress = await getProgress();
+    if (!progress.history) {
+        return [];
+    }
+
+    const topicsWithStats = Object.entries(progress.history).map(([topicName, data]) => {
+        const total = data.correct + data.incorrect;
+        if (total === 0 || data.incorrect === 0) {
+            return { topicName, ratio: 0 };
+        }
+        const ratio = data.incorrect / total;
+        return { topicName, ratio };
+    });
+
+    return topicsWithStats
+        .sort((a, b) => b.ratio - a.ratio)
+        .slice(0, limit)
+        .filter(t => t.ratio > 0) // Only return topics with incorrect answers
+        .map(t => t.topicName);
 };
