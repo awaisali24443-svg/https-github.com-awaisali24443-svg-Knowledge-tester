@@ -1,3 +1,4 @@
+
 import { categoryData } from './topicService.js';
 import { getProgress } from './progressService.js';
 import { NUM_QUESTIONS, MAX_LEVEL } from '../constants.js';
@@ -40,6 +41,21 @@ export class StellarMap {
     }
 
     async init() {
+        return new Promise((resolve, reject) => {
+            // Use a ResizeObserver to ensure the canvas has dimensions before initializing Three.js
+            const resizeObserver = new ResizeObserver(entries => {
+                const entry = entries[0];
+                if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+                    resizeObserver.disconnect(); // We only need it to fire once at the start.
+                    this.#initializeScene().then(resolve).catch(reject);
+                }
+            });
+
+            resizeObserver.observe(this.#canvas);
+        });
+    }
+    
+    async #initializeScene() {
         try {
             // Fetch user progress first
             const progress = await getProgress();
@@ -77,11 +93,10 @@ export class StellarMap {
             }
         } catch (error) {
             console.error("StellarMap initialization failed:", error);
-            if (this.#loadingOverlay) {
-                this.#loadingOverlay.innerHTML = `<p style="color:var(--color-danger); text-align:center;">3D map failed to load.<br>The dashboard is still available.</p>`;
-            }
+            throw error; // Re-throw to be caught by the calling module (home.js)
         }
     }
+
 
     #createBackground() {
         const vertices = [];
