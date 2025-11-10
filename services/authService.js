@@ -18,10 +18,16 @@ const notifyStateChange = () => {
 
 export const initializeSession = () => {
     // In this simplified version, we only check for a guest session.
-    const guestSession = localStorage.getItem(GUEST_SESSION_KEY);
-    if (guestSession) {
-        currentUserState = JSON.parse(guestSession);
-    } else {
+    try {
+        const guestSession = localStorage.getItem(GUEST_SESSION_KEY);
+        if (guestSession) {
+            currentUserState = JSON.parse(guestSession);
+        } else {
+            currentUserState = null;
+        }
+    } catch (error) {
+        console.error("Failed to parse guest session, clearing corrupted data.", error);
+        localStorage.removeItem(GUEST_SESSION_KEY);
         currentUserState = null;
     }
     notifyStateChange();

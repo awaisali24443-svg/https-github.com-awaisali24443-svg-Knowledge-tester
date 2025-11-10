@@ -46,6 +46,7 @@ async function handleReplay(e) {
     const quizId = e.target.dataset.quizId;
     const quiz = await libraryService.getQuizFromLibrary(quizId);
     if (quiz) {
+        // Pass both context and the saved data to startQuizFlow
         await startQuizFlow({
             ...quiz.quizContext,
             returnHash: '#library'
