@@ -148,10 +148,11 @@ function init(canvas, clickCallback) {
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(4, 32, 32), sunMaterial);
     scene.add(sunMesh);
 
-    // NEW: Lens Flare
+    // NEW: Lens Flare with local assets
     const textureLoader = new THREE.TextureLoader();
-    const textureFlare0 = textureLoader.load( 'https://threejs.org/examples/textures/lensflare/lensflare0.png' );
-    const textureFlare3 = textureLoader.load( 'https://threejs.org/examples/textures/lensflare/lensflare3.png' );
+    // FIX: Load textures from local assets for reliability
+    const textureFlare0 = textureLoader.load( '/assets/textures/lensflare0.png' );
+    const textureFlare3 = textureLoader.load( '/assets/textures/lensflare3.png' );
     const lensflare = new Lensflare();
     lensflare.addElement( new LensflareElement( textureFlare0, 700, 0, sunLight.color ) );
     lensflare.addElement( new LensflareElement( textureFlare3, 60, 0.6 ) );

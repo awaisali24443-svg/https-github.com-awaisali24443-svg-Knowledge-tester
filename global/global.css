@@ -37,7 +37,7 @@ body {
     overflow: hidden; /* Control scrolling within main-container */
 }
 
-/* --- NEW App Layout --- */
+/* --- App Layout --- */
 .app-layout {
     display: flex;
     height: 100%;
@@ -47,22 +47,25 @@ body {
     flex-grow: 1;
     margin-left: var(--sidebar-width);
     max-width: calc(100% - var(--sidebar-width));
-    padding: 2rem 1.5rem;
-    transition: margin-left var(--transition-med);
+    transition: margin-left var(--transition-med), padding var(--transition-med);
     overflow-y: auto; /* Allow scrolling for content that overflows */
     height: 100%; /* Ensure it fills parent height */
+    padding: 2rem 1.5rem;
 }
 .sidebar-nav:hover ~ .main-container {
     margin-left: var(--sidebar-width-expanded);
 }
 
-/* --- Styles for 3D Galaxy View (Handled by home.js) --- */
-/* The body class is now only for hiding the sidebar */
+/* --- Styles for 3D Galaxy View --- */
+/* This is the definitive fix. It adapts the entire layout for the galaxy. */
 body.galaxy-view .sidebar-nav {
     display: none;
 }
 body.galaxy-view .main-container {
-    margin-left: 0; /* Still need to collapse margin when sidebar is hidden */
+    margin-left: 0;
+    max-width: 100%;
+    padding: 0; /* Remove padding for full-screen canvas */
+    overflow: hidden; /* Prevent any scrollbars */
 }
 
 
@@ -132,7 +135,7 @@ body.galaxy-view .main-container {
     box-shadow: 0 0 0 3px var(--color-glow);
 }
 
-/* --- NEW Sidebar Navigation --- */
+/* --- Sidebar Navigation --- */
 .sidebar-nav {
     position: fixed;
     top: 0;
@@ -238,7 +241,7 @@ body.galaxy-view .main-container {
     opacity: 1;
 }
 
-/* --- NEW: Module Overlay System --- */
+/* --- Module Overlay System --- */
 #module-overlay {
     position: fixed;
     inset: 0;
@@ -318,7 +321,7 @@ body.galaxy-view .main-container {
     background-color: var(--color-glow);
 }
 
-/* --- NEW: In-Module Floating Action Buttons --- */
+/* --- In-Module Floating Action Buttons --- */
 .module-fab-container {
     position: absolute;
     bottom: 20px;
@@ -443,8 +446,9 @@ body.galaxy-view .main-container {
         margin-left: 0;
         max-width: 100%;
         padding: 1rem 1rem 70px 1rem; /* Space for bottom nav */
-        height: auto;
-        min-height: calc(100% - 60px); /* Fill space above nav */
+        /* Definitive fix: ensure container takes up full available height, respecting the bottom nav */
+        height: calc(100% - 60px);
+        min-height: auto; /* Override previous value */
         overflow-y: auto;
     }
     .sidebar-nav:hover ~ .main-container {

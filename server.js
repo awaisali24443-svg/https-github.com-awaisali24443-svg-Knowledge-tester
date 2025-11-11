@@ -1,4 +1,5 @@
 
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -148,6 +149,7 @@ For each question, provide:
             },
         });
 
+        // CRITICAL FIX: Use optional chaining to prevent crash on unexpected AI response.
         const finishReason = response.candidates?.[0]?.finishReason;
         const text = response.text;
         

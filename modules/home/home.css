@@ -1,17 +1,14 @@
 
+
 .galaxy-container {
-    /* FIX: This is a bulletproof rule to ensure the container always fills the viewport, overriding any possible layout conflicts. */
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    overflow: hidden !important;
+    /* The layout is now correctly handled by the global CSS when body.galaxy-view is active. */
+    /* This ensures the container fills the main-content area perfectly. */
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
     background-color: #000;
+    position: relative; /* Use relative positioning within the flow of main-container */
     z-index: 1;
-    margin: 0 !important;
-    padding: 0 !important;
-    max-width: none !important;
 }
 
 #galaxy-canvas {

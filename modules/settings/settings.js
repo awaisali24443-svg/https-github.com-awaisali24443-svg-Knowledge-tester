@@ -2,6 +2,7 @@
 import { getSetting, setSetting, getAllSettings } from '../../services/configService.js';
 import { LIBRARY_KEY_GUEST, LEARNING_PATH_PROGRESS_GUEST } from '../../constants.js';
 import { modalService } from '../../services/modalService.js';
+import { toastService } from '../../services/toastService.js'; // Import toast service
 
 let themeSelect, soundToggle;
 let largeTextToggle, highContrastToggle, dyslexiaFontToggle;
@@ -30,11 +31,11 @@ const handleClearData = async () => {
             localStorage.removeItem(LEARNING_PATH_PROGRESS_GUEST);
             // Optionally, clear other guest-related keys here
             
-            // Provide feedback to the user
-            alert("Your guest data has been cleared.");
+            // Provide better feedback to the user using toast notifications
+            toastService.show("Your guest data has been cleared.");
         } catch (error) {
             console.error("Failed to clear guest data:", error);
-            alert("There was an error clearing your data.");
+            toastService.show("There was an error clearing your data.");
         }
     }
 };
