@@ -1,52 +1,76 @@
 // services/threeManager.js
 import * as THREE from 'three';
 
-let camera, scene, renderer, stars;
+let camera, scene, renderer, particles;
 let animationFrameId;
 let resizeListener;
 let mouse = new THREE.Vector2(0, 0);
 
-const init = (container) => {
+const PARTICLE_COUNT = 8000;
+const Z_SPEED = 3;
+
+const init = () => {
     // Scene setup
     scene = new THREE.Scene();
     
     // Camera setup
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-    camera.position.z = 1;
-    camera.rotation.x = Math.PI / 2;
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.position.z = 500;
 
     // Renderer setup
+    const canvas = document.getElementById('bg-canvas');
+    if (!canvas) {
+        console.error("Background canvas not found!");
+        return;
+    }
     renderer = new THREE.WebGLRenderer({
-        canvas: document.getElementById('bg-canvas'),
+        canvas: canvas,
         antialias: true,
         alpha: true
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    
-    // Starfield
-    const starGeo = new THREE.BufferGeometry();
-    const starVertices = [];
-    for (let i = 0; i < 6000; i++) {
-        const x = (Math.random() - 0.5) * 2000;
-        const y = (Math.random() - 0.5) * 2000;
-        const z = (Math.random() - 0.5) * 2000;
-        starVertices.push(x, y, z);
-    }
-    starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    let starMaterial = new THREE.PointsMaterial({
-        color: 0xaaaaaa,
-        size: 0.7
+    // Particle Geometry
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(PARTICLE_COUNT * 3);
+    const colors = new Float32Array(PARTICLE_COUNT * 3);
+
+    const color1 = new THREE.Color('#a855f7'); // Aurora primary
+    const color2 = new THREE.Color('#2dd4bf'); // Aurora secondary
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * 2000; // x
+        positions[i3 + 1] = (Math.random() - 0.5) * 2000; // y
+        positions[i3 + 2] = (Math.random() - 1) * 1500; // z
+
+        const color = Math.random() > 0.5 ? color1 : color2;
+        colors[i3] = color.r;
+        colors[i3 + 1] = color.g;
+        colors[i3 + 2] = color.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+        size: 1.2,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false, // For better blending
     });
 
-    stars = new THREE.Points(starGeo, starMaterial);
-    scene.add(stars);
+    particles = new THREE.Points(geometry, material);
+    scene.add(particles);
 
     // Resize listener
     resizeListener = () => {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     };
     window.addEventListener('resize', resizeListener);
 
@@ -55,9 +79,24 @@ const init = (container) => {
 
 const animate = () => {
     // Parallax effect based on mouse position
-    stars.position.x += (mouse.x * 0.5 - stars.position.x) * 0.02;
-    stars.position.y += (-mouse.y * 0.5 - stars.position.y) * 0.02;
-    stars.rotation.y += 0.0002;
+    const targetX = mouse.x * -100;
+    const targetY = mouse.y * 100;
+    if (particles) {
+        particles.rotation.y += 0.02 * (targetX - particles.rotation.y);
+        particles.rotation.x += 0.02 * (targetY - particles.rotation.x);
+    
+        // Animate particles
+        const positions = particles.geometry.attributes.position.array;
+        for (let i = 0; i < PARTICLE_COUNT; i++) {
+            const i3 = i * 3;
+            positions[i3 + 2] += Z_SPEED; // move along z-axis
+
+            if (positions[i3 + 2] > camera.position.z) {
+                positions[i3 + 2] = -1500; // Reset to the back
+            }
+        }
+        particles.geometry.attributes.position.needsUpdate = true;
+    }
 
     renderer.render(scene, camera);
     animationFrameId = requestAnimationFrame(animate);
@@ -94,10 +133,11 @@ const destroy = () => {
     
     if (renderer) {
         renderer.dispose();
+        renderer.domElement = null;
         renderer = null;
     }
     
-    stars = null;
+    particles = null;
     camera = null;
 };
 

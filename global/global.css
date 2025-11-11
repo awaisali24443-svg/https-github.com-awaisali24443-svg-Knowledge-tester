@@ -169,14 +169,33 @@ body {
     animation: fadeIn 0.5s ease-out forwards;
 }
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .main-container.fade-out {
     opacity: 0;
-    transition: opacity 0.2s ease-in;
+    transform: scale(0.98);
+    transition: opacity 0.2s ease-in, transform 0.2s ease-in;
 }
+
+/* --- 3D Background Canvas --- */
+#bg-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    background-color: var(--color-bg);
+}
+
+#bg-canvas.visible {
+    opacity: 1;
+}
+
 
 /* --- Mobile & Responsive --- */
 @media (max-width: 768px) {

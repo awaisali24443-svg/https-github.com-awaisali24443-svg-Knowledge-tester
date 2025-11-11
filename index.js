@@ -1,7 +1,3 @@
-
-
-
-
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
@@ -11,6 +7,7 @@ import { createIndex as createSearchIndex } from './services/searchService.js';
 const app = document.getElementById('app');
 const headerContainer = document.getElementById('header-container');
 const splashScreen = document.getElementById('splash-screen');
+const bgCanvas = document.getElementById('bg-canvas');
 
 const moduleCache = new Map();
 
@@ -106,6 +103,17 @@ async function loadModule(moduleConfig, params = {}) {
 // FIX #2: New dynamic router
 async function handleRouteChange() {
     const hash = window.location.hash.slice(1) || 'home';
+    
+    // Manage background canvas visibility
+    if (bgCanvas) {
+        const settings = getAllSettings();
+        if (hash.startsWith('home') && settings.enable3DBackground) {
+            bgCanvas.classList.add('visible');
+        } else {
+            bgCanvas.classList.remove('visible');
+        }
+    }
+
     const [path, ...params] = hash.split('/');
     
     let matchedRoute = null;

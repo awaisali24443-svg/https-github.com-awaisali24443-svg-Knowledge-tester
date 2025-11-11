@@ -3,7 +3,7 @@ import { GENERAL_SETTINGS_KEY } from '../constants.js';
 const defaultSettings = {
     theme: 'aurora',
     enableSound: true,
-    enable3DBackground: false,
+    enable3DBackground: true,
     largeText: false,
     highContrast: false,
     dyslexiaFont: false,

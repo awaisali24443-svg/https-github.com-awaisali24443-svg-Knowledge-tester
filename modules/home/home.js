@@ -1,7 +1,10 @@
 import { isFeatureEnabled } from '../../services/featureService.js';
 import { getCategories } from '../../services/topicService.js';
+import { threeManager } from '../../services/threeManager.js';
+import { getSetting } from '../../services/configService.js';
 
 let appStateRef;
+let mouseMoveHandler;
 
 // --- UI Rendering ---
 
@@ -111,6 +114,20 @@ export async function init(appState) {
         // Stagger the animation for a nice effect
         card.style.animationDelay = `${index * 100}ms`;
     });
+
+    // Initialize 3D background if enabled
+    if (getSetting('enable3DBackground')) {
+        const container = document.querySelector('.home-container');
+        if (container) {
+            threeManager.init(container);
+            mouseMoveHandler = (event) => {
+                const x = (event.clientX / window.innerWidth) * 2 - 1;
+                const y = -(event.clientY / window.innerHeight) * 2 + 1;
+                threeManager.updateMousePosition(x, y);
+            };
+            window.addEventListener('mousemove', mouseMoveHandler);
+        }
+    }
 }
 
 export function destroy() {
@@ -118,6 +135,15 @@ export function destroy() {
     if (heroForm) {
         heroForm.removeEventListener('submit', handleHeroFormSubmit);
     }
+
+    // Clean up 3D background
+    if (getSetting('enable3DBackground')) {
+        threeManager.destroy();
+        if (mouseMoveHandler) {
+            window.removeEventListener('mousemove', mouseMoveHandler);
+        }
+    }
+
     appStateRef = null;
     console.log("Home module destroyed.");
 }
