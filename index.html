@@ -45,8 +45,15 @@
 <body data-theme="dark">
 
     <div id="splash-screen">
+        <div class="splash-grid-lines"></div>
+        <div class="splash-scan-lines"></div>
+        <div class="splash-hud-corner top-left"></div>
+        <div class="splash-hud-corner top-right"></div>
+        <div class="splash-hud-corner bottom-left"></div>
+        <div class="splash-hud-corner bottom-right"></div>
+
         <div class="splash-content">
-            <svg class="splash-logo" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+            <svg class="splash-logo" viewBox="0 0 400 60" xmlns="http://www.w.org/2000/svg">
                 <defs>
                     <linearGradient id="splash-logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
                         <stop offset="0%" style="stop-color:var(--color-primary)" />
@@ -55,7 +62,7 @@
                 </defs>
                 <text x="50%" y="40" class="splash-logo-text" text-anchor="middle">KNOWLEDGE TESTER</text>
             </svg>
-            <div class="splash-loader"></div>
+            <div class="splash-status-text">INITIALIZING...</div>
         </div>
     </div>
 
