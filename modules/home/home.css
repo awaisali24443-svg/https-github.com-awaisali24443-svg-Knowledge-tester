@@ -1,9 +1,14 @@
+
 .galaxy-container {
-    width: 100%;
-    height: 100%;
+    /* FIX: Ensure the container fills the entire viewport, overriding parent layout constraints. */
+    position: fixed; /* Use fixed to guarantee it's relative to the viewport. */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
-    position: relative;
     background-color: #000;
+    z-index: 1; /* Sit above the standard layout but below overlays */
 }
 
 #galaxy-canvas {
@@ -92,6 +97,7 @@
     pointer-events: none;
     opacity: 0;
     animation: fadeInHint 1s ease-out 6s forwards;
+    z-index: 5; /* Ensure it's above the canvas */
 }
 
 @keyframes fadeInHint {
