@@ -1,22 +1,92 @@
+
 // services/threeManager.js
 import * as THREE from 'three';
 
-let camera, scene, renderer, particles;
+let camera, scene, renderer, planeMesh;
 let animationFrameId;
 let resizeListener;
 let mouse = new THREE.Vector2(0, 0);
-const clock = new THREE.Clock(); // Add a clock for smooth animation
+const clock = new THREE.Clock();
 
-// --- Galaxy Parameters ---
-const GALAXY_PARAMS = {
-    count: 100000,
-    size: 0.01,
-    radius: 5,
-    branches: 5,
-    spin: 1,
-    randomness: 0.5,
-    randomnessPower: 3,
-};
+// --- Shaders ---
+
+const vertexShader = `
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+const fragmentShader = `
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform vec2 uMouse;
+    uniform vec3 uColor1;
+    uniform vec3 uColor2;
+    uniform vec3 uColor3;
+    varying vec2 vUv;
+
+    // 2D Random function
+    float random(vec2 st) {
+        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    }
+
+    // 2D Noise function
+    float noise(vec2 st) {
+        vec2 i = floor(st);
+        vec2 f = fract(st);
+
+        float a = random(i);
+        float b = random(i + vec2(1.0, 0.0));
+        float c = random(i + vec2(0.0, 1.0));
+        float d = random(i + vec2(1.0, 1.0));
+
+        vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.y * u.x;
+    }
+
+    // Fractional Brownian Motion
+    float fbm(vec2 st) {
+        float value = 0.0;
+        float amplitude = 0.5;
+        float frequency = 0.0;
+        for (int i = 0; i < 6; i++) {
+            value += amplitude * noise(st);
+            st *= 2.0;
+            amplitude *= 0.5;
+        }
+        return value;
+    }
+
+    void main() {
+        vec2 st = gl_FragCoord.xy / uResolution.xy;
+        st.x *= uResolution.x / uResolution.y;
+
+        // Animate and warp coordinates
+        vec2 q = vec2(0.);
+        q.x = fbm(st + 0.00 * uTime);
+        q.y = fbm(st + vec2(1.0));
+
+        vec2 r = vec2(0.);
+        r.x = fbm(st + 1.0 * q + vec2(1.7, 9.2) + 0.15 * uTime);
+        r.y = fbm(st + 1.0 * q + vec2(8.3, 2.8) + 0.126 * uTime);
+        
+        // Add mouse interaction
+        vec2 mouseOffset = (uMouse - 0.5) * 0.2;
+        r += mouseOffset;
+
+        float f = fbm(st + r);
+
+        // Mix colors
+        vec3 color = mix(uColor1, uColor2, clamp((f*f)*4.0, 0.0, 1.0));
+        color = mix(color, uColor3, clamp(length(q), 0.0, 1.0));
+        color = mix(color, mix(uColor1, uColor2, st.y), clamp(length(r.x), 0.0, 1.0));
+
+        gl_FragColor = vec4((f*f*f + .6*f*f + .5*f) * color, 1.0);
+    }
+`;
+
 
 const init = () => {
     // Scene setup
@@ -24,7 +94,7 @@ const init = () => {
     
     // Camera setup
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 1.5, 6); // Adjusted camera position for a better view
+    camera.position.z = 1;
 
     // Renderer setup
     const canvas = document.getElementById('bg-canvas');
@@ -40,93 +110,29 @@ const init = () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    // --- Generate Galaxy Geometry ---
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(GALAXY_PARAMS.count * 3);
-    const colors = new Float32Array(GALAXY_PARAMS.count * 3);
-    const scales = new Float32Array(GALAXY_PARAMS.count * 1);
+    // --- Get colors from CSS theme ---
+    const computedStyle = getComputedStyle(document.body);
+    const color1 = new THREE.Color(computedStyle.getPropertyValue('--color-primary').trim());
+    const color2 = new THREE.Color(computedStyle.getPropertyValue('--color-secondary').trim());
+    const color3 = new THREE.Color(computedStyle.getPropertyValue('--color-accent') || computedStyle.getPropertyValue('--color-primary').trim());
 
-    const insideColor = new THREE.Color('#a855f7'); // Aurora primary
-    const outsideColor = new THREE.Color('#2dd4bf'); // Aurora secondary
-
-    for (let i = 0; i < GALAXY_PARAMS.count; i++) {
-        const i3 = i * 3;
-        
-        // Position
-        const radius = Math.random() * GALAXY_PARAMS.radius;
-        const spinAngle = radius * GALAXY_PARAMS.spin;
-        const branchAngle = (i % GALAXY_PARAMS.branches) / GALAXY_PARAMS.branches * Math.PI * 2;
-
-        const randomX = Math.pow(Math.random(), GALAXY_PARAMS.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * GALAXY_PARAMS.randomness * radius;
-        const randomY = Math.pow(Math.random(), GALAXY_PARAMS.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * GALAXY_PARAMS.randomness * radius;
-        const randomZ = Math.pow(Math.random(), GALAXY_PARAMS.randomnessPower) * (Math.random() < 0.5 ? 1 : -1) * GALAXY_PARAMS.randomness * radius;
-
-        positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
-        positions[i3 + 1] = randomY;
-        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
-
-        // Color
-        const mixedColor = insideColor.clone();
-        mixedColor.lerp(outsideColor, radius / GALAXY_PARAMS.radius);
-
-        colors[i3] = mixedColor.r;
-        colors[i3 + 1] = mixedColor.g;
-        colors[i3 + 2] = mixedColor.b;
-
-        // Scale
-        scales[i] = Math.random();
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('aScale', new THREE.BufferAttribute(scales, 1));
-
-
-    // --- Custom Shader Material ---
+    // --- Fullscreen Plane with Shader Material ---
+    const geometry = new THREE.PlaneGeometry(2, 2);
     const material = new THREE.ShaderMaterial({
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        vertexColors: true,
+        vertexShader,
+        fragmentShader,
         uniforms: {
             uTime: { value: 0 },
-            uSize: { value: 30 * renderer.getPixelRatio() }
-        },
-        vertexShader: `
-            uniform float uTime;
-            uniform float uSize;
-            attribute float aScale;
-            varying vec3 vColor;
-            void main() {
-                vColor = color;
-                vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-                
-                // Spin animation
-                float angle = atan(modelPosition.x, modelPosition.z);
-                float distance = length(modelPosition.xz);
-                angle += distance * 0.1 * uTime;
-                modelPosition.x = cos(angle) * distance;
-                modelPosition.z = sin(angle) * distance;
-                
-                vec4 viewPosition = viewMatrix * modelPosition;
-                vec4 projectedPosition = projectionMatrix * viewPosition;
-                gl_Position = projectedPosition;
-                gl_PointSize = uSize * aScale * (1.0 / -viewPosition.z);
-            }
-        `,
-        fragmentShader: `
-            varying vec3 vColor;
-            void main() {
-                float strength = distance(gl_PointCoord, vec2(0.5));
-                strength = 1.0 - strength;
-                strength = pow(strength, 3.0);
-                
-                gl_FragColor = vec4(vColor * strength, strength * 0.8);
-            }
-        `
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            uMouse: { value: new THREE.Vector2(0.5, 0.5) }, // Center mouse initially
+            uColor1: { value: color1 },
+            uColor2: { value: color2 },
+            uColor3: { value: color3 },
+        }
     });
 
-    particles = new THREE.Points(geometry, material);
-    scene.add(particles);
+    planeMesh = new THREE.Mesh(geometry, material);
+    scene.add(planeMesh);
 
     // Resize listener
     resizeListener = () => {
@@ -134,7 +140,11 @@ const init = () => {
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        material.uniforms.uSize.value = 30 * renderer.getPixelRatio();
+        
+        // Update shader resolution uniform
+        if (planeMesh) {
+            planeMesh.material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+        }
     };
     window.addEventListener('resize', resizeListener);
 
@@ -144,23 +154,23 @@ const init = () => {
 const animate = () => {
     const elapsedTime = clock.getElapsedTime();
     
-    // Update material time uniform
-    if (particles) {
-        particles.material.uniforms.uTime.value = elapsedTime * 0.1;
+    if (planeMesh) {
+        planeMesh.material.uniforms.uTime.value = elapsedTime;
+        
+        // Smoother mouse follow
+        let uniformMouse = planeMesh.material.uniforms.uMouse.value;
+        uniformMouse.x += (mouse.x - uniformMouse.x) * 0.05;
+        uniformMouse.y += (mouse.y - uniformMouse.y) * 0.05;
     }
-
-    // Smoother camera parallax effect
-    camera.position.x += (mouse.x * 0.5 - camera.position.x) * 0.02;
-    camera.position.y += (-mouse.y * 0.5 - camera.position.y) * 0.02;
-    camera.lookAt(scene.position);
 
     renderer.render(scene, camera);
     animationFrameId = requestAnimationFrame(animate);
 };
 
 const updateMousePosition = (x, y) => {
-    mouse.x = x;
-    mouse.y = y;
+    // Convert from [-1, 1] range to [0, 1] range for the shader
+    mouse.x = (x + 1) / 2;
+    mouse.y = (y + 1) / 2;
 };
 
 const destroy = () => {
@@ -193,7 +203,7 @@ const destroy = () => {
         renderer = null;
     }
     
-    particles = null;
+    planeMesh = null;
     camera = null;
 };
 
