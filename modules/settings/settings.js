@@ -3,7 +3,7 @@ import { getSetting, setSetting, getAllSettings } from '../../services/configSer
 import { LIBRARY_KEY_GUEST, LEARNING_PATH_PROGRESS_GUEST } from '../../constants.js';
 import { modalService } from '../../services/modalService.js';
 
-let themeSelect, soundToggle, backgroundToggle;
+let themeSelect, soundToggle;
 let largeTextToggle, highContrastToggle, dyslexiaFontToggle;
 let clearDataBtn;
 
@@ -53,7 +53,6 @@ export function init() {
     // --- Query elements ---
     themeSelect = document.getElementById('theme-select');
     soundToggle = document.getElementById('sound-toggle');
-    backgroundToggle = document.getElementById('background-toggle');
     largeTextToggle = document.getElementById('large-text-toggle');
     highContrastToggle = document.getElementById('high-contrast-toggle');
     dyslexiaFontToggle = document.getElementById('dyslexia-font-toggle');
@@ -61,7 +60,6 @@ export function init() {
 
     // Assign data-keys for the generic toggle handler
     soundToggle.dataset.key = 'enableSound';
-    backgroundToggle.dataset.key = 'enable3DBackground';
     largeTextToggle.dataset.key = 'largeText';
     highContrastToggle.dataset.key = 'highContrast';
     dyslexiaFontToggle.dataset.key = 'dyslexiaFont';
@@ -70,7 +68,6 @@ export function init() {
     const settings = getAllSettings();
     themeSelect.value = settings.theme;
     soundToggle.checked = settings.enableSound;
-    backgroundToggle.checked = settings.enable3DBackground;
     largeTextToggle.checked = settings.largeText;
     highContrastToggle.checked = settings.highContrast;
     dyslexiaFontToggle.checked = settings.dyslexiaFont;
@@ -78,7 +75,6 @@ export function init() {
     // --- Attach event listeners ---
     themeSelect.addEventListener('change', handleThemeChange);
     soundToggle.addEventListener('change', handleToggleChange);
-    backgroundToggle.addEventListener('change', handleToggleChange);
     largeTextToggle.addEventListener('change', handleToggleChange);
     highContrastToggle.addEventListener('change', handleToggleChange);
     dyslexiaFontToggle.addEventListener('change', handleToggleChange);
@@ -92,7 +88,6 @@ export function destroy() {
     // FIX #8, #22: Properly remove all event listeners on cleanup
     if (themeSelect) themeSelect.removeEventListener('change', handleThemeChange);
     if (soundToggle) soundToggle.removeEventListener('change', handleToggleChange);
-    if (backgroundToggle) backgroundToggle.removeEventListener('change', handleToggleChange);
     if (largeTextToggle) largeTextToggle.removeEventListener('change', handleToggleChange);
     if (highContrastToggle) highContrastToggle.removeEventListener('change', handleToggleChange);
     if (dyslexiaFontToggle) dyslexiaFontToggle.removeEventListener('change', handleToggleChange);

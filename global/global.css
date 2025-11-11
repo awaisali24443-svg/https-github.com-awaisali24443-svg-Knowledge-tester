@@ -49,6 +49,17 @@ body {
     margin-left: var(--sidebar-width-expanded);
 }
 
+/* --- Styles for 3D Galaxy View --- */
+body.galaxy-view .main-container {
+    padding: 0;
+    max-width: 100vw;
+    height: 100vh;
+    margin-left: 0; /* Override sidebar margin */
+}
+body.galaxy-view .sidebar-nav {
+    display: none; /* Hide sidebar on 3D view */
+}
+
 
 /* FIX #23: Scope typography to avoid conflicts */
 .main-container h1, .main-container h2, .main-container h3 {
@@ -251,24 +262,11 @@ body {
     }
 }
 
-
-/* --- 3D Background Canvas --- */
-#bg-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    opacity: 0;
-    transition: opacity 0.8s ease-in-out;
-    background-color: var(--color-bg);
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
 }
-
-#bg-canvas.visible {
-    opacity: 1;
-}
-
 
 /* --- Mobile & Responsive --- */
 @media (max-width: 768px) {
@@ -338,6 +336,13 @@ body {
         max-width: 100%;
         padding: 1rem;
         padding-bottom: 80px; /* Space for bottom nav */
+    }
+
+    body.galaxy-view .sidebar-nav {
+        display: none; /* Hide bottom nav on mobile too */
+    }
+    body.galaxy-view .main-container {
+        padding-bottom: 0;
     }
 }
 

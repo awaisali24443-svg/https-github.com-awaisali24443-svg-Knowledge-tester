@@ -7,7 +7,6 @@ import { createIndex as createSearchIndex } from './services/searchService.js';
 const app = document.getElementById('app');
 const sidebarContainer = document.getElementById('sidebar-container');
 const splashScreen = document.getElementById('splash-screen');
-const bgCanvas = document.getElementById('bg-canvas');
 
 const moduleCache = new Map();
 
@@ -105,16 +104,6 @@ async function loadModule(moduleConfig, params = {}) {
 async function handleRouteChange() {
     const hash = window.location.hash.slice(1) || 'home';
     
-    // Manage background canvas visibility
-    if (bgCanvas) {
-        const settings = getAllSettings();
-        if (hash.startsWith('home') && settings.enable3DBackground) {
-            bgCanvas.classList.add('visible');
-        } else {
-            bgCanvas.classList.remove('visible');
-        }
-    }
-
     const [path, ...params] = hash.split('/');
     
     let matchedRoute = null;

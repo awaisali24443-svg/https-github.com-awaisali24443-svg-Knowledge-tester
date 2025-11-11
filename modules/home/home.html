@@ -1,37 +1,11 @@
-<div class="home-container fade-in">
-    <div class="hub-grid">
-        <!-- Main Panel: Quiz Generator -->
-        <div class="hub-panel hub-main-panel card">
-            <h1>Command Hub</h1>
-            <p class="subtitle">Generate a custom quiz on any topic, or explore other modules.</p>
-            <form id="hub-quiz-form" class="hub-form">
-                <input type="text" id="hub-topic-input" class="form-control" placeholder="e.g., 'The Renaissance' or 'Astrophysics'">
-                <button type="submit" class="btn btn-primary">
-                    <span>Generate Quiz</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"></path></svg>
-                </button>
-            </form>
-        </div>
-
-        <!-- Widget: Explore Topics -->
-        <div id="hub-explore-widget" class="hub-panel hub-widget card">
-            <h3>Explore Topics 🧭</h3>
-            <p>Browse curated categories and discover new quizzes.</p>
-            <a href="#explore" class="widget-link">Go to Explore →</a>
-        </div>
-
-        <!-- Widget: My Library -->
-        <div id="hub-library-widget" class="hub-panel hub-widget card">
-            <h3>My Library 📚</h3>
-            <p>Review your saved questions and prepare for tests.</p>
-            <a href="#library" class="widget-link">Open Library →</a>
-        </div>
-
-        <!-- Widget: Learning Paths (Conditional) -->
-        <div id="hub-paths-widget" class="hub-panel hub-widget card" style="display: none;">
-            <h3>Learning Paths 🗺️</h3>
-            <p>Follow a structured journey to master a new subject.</p>
-            <a href="#paths" class="widget-link">View Paths →</a>
-        </div>
+<div class="galaxy-container">
+    <canvas id="galaxy-canvas"></canvas>
+    <div id="intro-overlay">
+        <h1 id="intro-title-main">KNOWLEDGE GALAXY</h1>
+        <p id="intro-subtitle">Where Learning Revolves Around You</p>
+        <p id="intro-voiceover">Welcome, Explorer.</p>
+    </div>
+    <div id="controls-hint">
+        <p>Swipe or Drag to Explore</p>
     </div>
 </div>
