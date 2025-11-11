@@ -5,7 +5,7 @@ import { updateMetaTags } from './services/seoService.js';
 import { createIndex as createSearchIndex } from './services/searchService.js';
 
 const app = document.getElementById('app');
-const headerContainer = document.getElementById('header-container');
+const sidebarContainer = document.getElementById('sidebar-container');
 const splashScreen = document.getElementById('splash-screen');
 const bgCanvas = document.getElementById('bg-canvas');
 
@@ -64,20 +64,21 @@ async function loadModule(moduleConfig, params = {}) {
 
     // --- Load new module ---
     try {
-        if (!moduleCache.has(moduleConfig.path)) {
+        const path = moduleConfig.path || moduleConfig.module;
+        if (!moduleCache.has(path)) {
             const [html, css, js] = await Promise.all([
-                fetch(`/modules/${moduleConfig.path}/${moduleConfig.path}.html`).then(res => res.text()),
-                fetch(`/modules/${moduleConfig.path}/${moduleConfig.path}.css`).then(res => res.text()),
-                import(`./modules/${moduleConfig.path}/${moduleConfig.path}.js`)
+                fetch(`/modules/${path}/${path}.html`).then(res => res.text()),
+                fetch(`/modules/${path}/${path}.css`).then(res => res.text()),
+                import(`./modules/${path}/${path}.js`)
             ]);
-            moduleCache.set(moduleConfig.path, { html, css, js });
+            moduleCache.set(path, { html, css, js });
         }
 
-        const { html, css, js } = moduleCache.get(moduleConfig.path);
+        const { html, css, js } = moduleCache.get(path);
 
         const style = document.createElement('style');
         style.textContent = css;
-        style.setAttribute('data-module-id', moduleConfig.path);
+        style.setAttribute('data-module-id', path);
         document.head.appendChild(style);
 
         app.innerHTML = html;
@@ -146,7 +147,8 @@ async function handleRouteChange() {
     }
 
     if (matchedRoute) {
-        await loadModule({ path: matchedRoute.module, name: matchedRoute.name }, routeParams);
+        await loadModule(matchedRoute, routeParams);
+        updateActiveNavLink(matchedRoute.hash);
         await updateMetaTags(matchedRoute.name, routeParams);
     } else {
         // Fallback to a 'not found' module or redirect to home
@@ -161,65 +163,43 @@ function applyBodyClasses() {
     document.body.classList.toggle('large-text', settings.largeText);
     document.body.classList.toggle('high-contrast', settings.highContrast);
     document.body.classList.toggle('dyslexia-font', settings.dyslexiaFont);
-    document.body.setAttribute('data-theme', settings.theme || 'aurora');
+    document.body.setAttribute('data-theme', settings.theme || 'cyber');
 }
 
-async function loadHeader() {
+async function loadSidebar() {
     try {
-        const response = await fetch('/global/header.html');
-        const headerHtml = await response.text();
-        headerContainer.innerHTML = headerHtml;
-        setupHeaderListeners();
+        const response = await fetch('/global/sidebar.html');
+        const sidebarHtml = await response.text();
+        sidebarContainer.innerHTML = sidebarHtml;
         populateNavLinks();
-
-        // --- Header Scroll Effect Listener ---
-        const headerEl = headerContainer.querySelector('.site-nav');
-        if (headerEl) {
-            const handleScroll = () => {
-                if (window.scrollY > 10) {
-                    headerEl.classList.add('scrolled');
-                } else {
-                    headerEl.classList.remove('scrolled');
-                }
-            };
-            // Set initial state
-            handleScroll();
-            // Add listener
-            window.addEventListener('scroll', handleScroll, { passive: true });
-        }
     } catch (error) {
-        console.error("Failed to load header:", error);
+        console.error("Failed to load sidebar:", error);
     }
 }
 
 function populateNavLinks() {
-    const navLinksContainer = headerContainer.querySelector('.nav-links');
+    const navLinksContainer = sidebarContainer.querySelector('.nav-links');
     if (!navLinksContainer) return;
     navLinksContainer.innerHTML = ROUTES
         .filter(route => route.inNav)
-        .map(route => `<li><a href="#${route.hash.split('/')[0]}" class="nav-link">${route.name}</a></li>`)
+        .map(route => `
+            <li>
+                <a href="#${route.hash.split('/')[0]}" class="nav-link" data-hash="${route.hash.split('/')[0]}">
+                    <span class="nav-icon">${route.icon}</span>
+                    <span class="nav-text">${route.name}</span>
+                </a>
+            </li>
+        `)
         .join('');
 }
 
-// FIX #10, #25: Functional mobile navigation
-function setupHeaderListeners() {
-    const hamburger = headerContainer.querySelector('.nav-hamburger');
-    const navLinks = headerContainer.querySelector('.nav-links');
-
-    if (hamburger && navLinks) {
-        hamburger.addEventListener('click', () => {
-            headerContainer.classList.toggle('nav-open');
-        });
-        
-        // Close nav when a link is clicked
-        navLinks.addEventListener('click', (e) => {
-             if (e.target.classList.contains('nav-link')) {
-                 headerContainer.classList.remove('nav-open');
-             }
-        });
-    }
+function updateActiveNavLink(currentHash) {
+    const hashBase = currentHash.split('/')[0];
+    const navLinks = sidebarContainer.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+        link.classList.toggle('active', link.dataset.hash === hashBase);
+    });
 }
-
 
 function init() {
     // FIX #2: Restore state from sessionStorage on load
@@ -239,8 +219,8 @@ function init() {
     // Build the search index for the explore page
     createSearchIndex();
     
-    // FIX #15: Ensure header is loaded before routing
-    loadHeader().then(() => {
+    // FIX #15: Ensure sidebar is loaded before routing
+    loadSidebar().then(() => {
         window.addEventListener('hashchange', handleRouteChange);
         handleRouteChange(); // Initial route
     });

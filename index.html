@@ -52,11 +52,6 @@
   }
 }
 </script>
-    <!-- 
-      NOTE on FIX #4: For production, SRI hashes should be added to the script tags above 
-      to enhance security against CDN compromises. This is a crucial step before public deployment.
-    -->
-
 </head>
 <body data-theme="cyber">
 
@@ -77,14 +72,16 @@
         </div>
     </div>
 
-    <header id="header-container"></header>
-    
-    <main id="app" class="main-container"></main>
+    <div class="app-layout">
+        <aside id="sidebar-container" class="sidebar-nav"></aside>
+
+        <main id="app" class="main-container"></main>
+    </div>
 
     <!-- Toast Notification Container -->
     <div id="toast-container"></div>
 
-    <!-- FIX #25: Reusable Confirmation Modal Structure -->
+    <!-- Reusable Confirmation Modal Structure -->
     <div id="confirmation-modal" class="modal-overlay">
         <div class="modal-content">
             <h3 id="modal-title">Confirm Action</h3>
