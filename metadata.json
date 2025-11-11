@@ -1,5 +1,7 @@
 {
   "name": "Knowledge Tester",
   "description": "A streamlined, AI-powered quiz application rebuilt from the ground up with vanilla JavaScript for performance and reliability. Generate quizzes on any topic instantly.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }

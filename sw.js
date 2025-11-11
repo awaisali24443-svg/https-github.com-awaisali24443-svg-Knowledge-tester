@@ -15,6 +15,10 @@ const STATIC_ASSETS = [
     '/modules/home/home.js',
     '/modules/home/home.html',
     '/modules/home/home.css',
+    // NEW: Pre-cache Aural module
+    '/modules/aural/aural.js',
+    '/modules/aural/aural.html',
+    '/modules/aural/aural.css',
     // Fonts and assets
     'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;500;700&display=swap',
     'https://fonts.gstatic.com/s/orbitron/v31/yMJRMIlzdpvBhQQL_Qq7dy0.woff2',
