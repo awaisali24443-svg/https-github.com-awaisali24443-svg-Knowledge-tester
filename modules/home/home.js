@@ -3,6 +3,17 @@ import { threeManager } from '../../services/threeManager.js';
 import { isFeatureEnabled } from '../../services/featureService.js';
 
 let is3DInitialized = false;
+let homeContainer;
+
+const handleMouseMove = (event) => {
+    if (is3DInitialized) {
+        // Normalize mouse position to a -1 to 1 range
+        const x = (event.clientX / window.innerWidth) * 2 - 1;
+        const y = -(event.clientY / window.innerHeight) * 2 + 1;
+        threeManager.updateMousePosition(x, y);
+    }
+};
+
 
 // Centralized dashboard configuration
 const dashboardItems = [
@@ -55,10 +66,8 @@ function renderDashboard() {
     const cardsHtml = dashboardItems.map(item => {
         const isEnabled = !item.feature || isFeatureEnabled(item.feature);
         
-        // A special case to show a "Coming Soon" message for a disabled feature, enhancing UX.
         const isComingSoon = item.feature === 'learningPaths' && !isEnabled;
 
-        // If a feature is disabled and it's not our special "coming soon" case, don't render it.
         if (!isEnabled && !isComingSoon) {
             return '';
         }
@@ -91,24 +100,31 @@ function renderDashboard() {
     }).join('');
 
     gridContainer.innerHTML = cardsHtml;
+    
+    // Apply staggered animation delay
+    const cards = gridContainer.querySelectorAll('.dashboard-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 100}ms`;
+    });
 }
 
 
 export function init(appState) {
     console.log("Home module initialized.");
+    homeContainer = document.querySelector('.home-container');
 
     renderDashboard();
 
     const use3DBackground = getSetting('enable3DBackground');
-    const container = document.querySelector('.home-container');
     const canvas = document.getElementById('bg-canvas');
 
-    if (use3DBackground && container && canvas) {
+    if (use3DBackground && homeContainer && canvas) {
         try {
             console.log("Initializing 3D background...");
-            threeManager.init(container);
+            threeManager.init(homeContainer);
             canvas.classList.add('visible');
-            is3DInitialized = true; 
+            is3DInitialized = true;
+            homeContainer.addEventListener('mousemove', handleMouseMove);
         } catch (error) {
             console.error("Failed to initialize 3D background. Falling back to static.", error);
             if(canvas) canvas.style.display = 'none';
@@ -120,6 +136,9 @@ export function init(appState) {
 }
 
 export function destroy() {
+    if (homeContainer) {
+        homeContainer.removeEventListener('mousemove', handleMouseMove);
+    }
     if (is3DInitialized) {
         console.log("Destroying 3D background from Home module.");
         const canvas = document.getElementById('bg-canvas');

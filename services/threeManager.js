@@ -3,7 +3,8 @@ import * as THREE from 'three';
 
 let camera, scene, renderer, stars;
 let animationFrameId;
-let resizeListener; // To hold a reference to the event listener
+let resizeListener;
+let mouse = new THREE.Vector2(0, 0);
 
 const init = (container) => {
     // Scene setup
@@ -53,10 +54,18 @@ const init = (container) => {
 };
 
 const animate = () => {
+    // Parallax effect based on mouse position
+    stars.position.x += (mouse.x * 0.5 - stars.position.x) * 0.02;
+    stars.position.y += (-mouse.y * 0.5 - stars.position.y) * 0.02;
     stars.rotation.y += 0.0002;
 
     renderer.render(scene, camera);
     animationFrameId = requestAnimationFrame(animate);
+};
+
+const updateMousePosition = (x, y) => {
+    mouse.x = x;
+    mouse.y = y;
 };
 
 const destroy = () => {
@@ -64,14 +73,12 @@ const destroy = () => {
         cancelAnimationFrame(animationFrameId);
     }
     
-    // FIX #8: Properly remove the event listener to prevent memory leaks
     if (resizeListener) {
         window.removeEventListener('resize', resizeListener);
         resizeListener = null;
     }
     
     if (scene) {
-        // Dispose of geometries and materials
         scene.traverse(object => {
             if (object.geometry) object.geometry.dispose();
             if (object.material) {
@@ -97,4 +104,5 @@ const destroy = () => {
 export const threeManager = {
     init,
     destroy,
+    updateMousePosition,
 };

@@ -11,14 +11,13 @@ const messages = [
 ];
 
 let messageInterval;
-let quizGeneration; // To hold the promise and abort controller
+let isCancelled = false;
 
 async function startQuizGeneration(appState) {
     const statusEl = document.getElementById('loading-status');
     const errorContainer = document.getElementById('error-message-container');
     const errorText = errorContainer.querySelector('.error-text');
     const loadingText = document.querySelector('.loading-text');
-    const tryAgainBtn = errorContainer.querySelector('.btn');
     const cancelBtn = document.getElementById('cancel-btn');
 
     // Show cancel button after a delay
@@ -35,28 +34,30 @@ async function startQuizGeneration(appState) {
 
     try {
         const topic = appState.context?.topic || "a random interesting topic";
-        quizGeneration = generateQuiz(topic, NUM_QUESTIONS);
-        const quizData = await quizGeneration.promise;
+        const quizData = await generateQuiz(topic, NUM_QUESTIONS);
+        
+        if (isCancelled) return; // Don't navigate if user cancelled while waiting
 
         // Pass the generated data to the next module
         appState.context = { quizData };
         window.location.hash = '#quiz';
 
     } catch (error) {
+        if (isCancelled) return;
+        
         console.error("Failed to generate quiz:", error);
         loadingText.style.display = 'none';
         cancelBtn.style.display = 'none';
 
-        // FIX #21: Provide more specific error messages
         let userFriendlyError = "An unexpected error occurred.";
-        if (error.name === 'AbortError') {
-             userFriendlyError = "The request was cancelled."
-        } else if (error.message.toLowerCase().includes('safety')) {
+        if (error.message.toLowerCase().includes('safety')) {
             userFriendlyError = "The topic was blocked for safety reasons. Please choose another one.";
-        } else if (error.message.toLowerCase().includes('failed to fetch')) {
-            userFriendlyError = "Could not connect to the server. Please check your network connection.";
+        } else if (error.message.toLowerCase().includes('network') || error.message.toLowerCase().includes('fetch')) {
+            userFriendlyError = "Could not connect to the AI service. Please check your network connection.";
         } else if (error.message.includes("malformed question")){
             userFriendlyError = "The AI generated an invalid quiz. Please try a slightly different topic."
+        } else if (error.message) {
+            userFriendlyError = error.message;
         }
         
         errorText.textContent = userFriendlyError;
@@ -67,13 +68,12 @@ async function startQuizGeneration(appState) {
 }
 
 function handleCancel() {
-    if (quizGeneration && quizGeneration.abort) {
-        quizGeneration.abort();
-    }
+    isCancelled = true;
     window.location.hash = '#custom-quiz';
 }
 
 export function init(appState) {
+    isCancelled = false;
     document.getElementById('cancel-btn').addEventListener('click', handleCancel);
     startQuizGeneration(appState);
     console.log("Loading module initialized.");
@@ -81,10 +81,7 @@ export function init(appState) {
 
 export function destroy() {
     clearInterval(messageInterval);
-    // If the user navigates away, cancel the ongoing request.
-    if (quizGeneration && quizGeneration.abort) {
-        quizGeneration.abort();
-    }
+    isCancelled = true; // Mark as cancelled on navigation
     const cancelBtn = document.getElementById('cancel-btn');
     if(cancelBtn) {
         cancelBtn.removeEventListener('click', handleCancel);

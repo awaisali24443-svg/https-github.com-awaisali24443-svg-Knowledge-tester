@@ -1,7 +1,6 @@
-import { Type } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 
 export async function generateQuiz(topic, numQuestions, difficulty = 'Medium') {
-    // FIX #10: Use the difficulty parameter in the prompt.
     const prompt = `Generate a quiz with ${numQuestions} multiple-choice questions about "${topic}". The difficulty should be ${difficulty}. For each question, provide 4 options, the index of the correct answer, and a brief explanation for why it's correct.`;
     
     const schema = {
@@ -23,29 +22,46 @@ export async function generateQuiz(topic, numQuestions, difficulty = 'Medium') {
         },
         required: ["questions"]
     };
-    
-    let abortController = new AbortController();
-    const signal = abortController.signal;
 
-    const promise = fetch('/api/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, schema }),
-        signal
-    }).then(async response => {
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: 'An unknown server error occurred.' }));
-            throw new Error(errorData.error || `Request failed with status ${response.status}`);
+    try {
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            throw new Error('API_KEY is not configured in the environment.');
+        }
+        const ai = new GoogleGenAI({ apiKey });
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+            },
+        });
+        
+        const finishReason = response.candidates?.[0]?.finishReason;
+        const text = response.text;
+
+        if (finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
+             let errorMessage = "The AI response was stopped for an unexpected reason.";
+             if(finishReason === 'SAFETY') {
+                 errorMessage = "The request was blocked due to safety concerns. Please try a different topic.";
+             } else if (finishReason === 'RECITATION') {
+                 errorMessage = "The request was blocked due to recitation concerns.";
+             }
+             throw new Error(errorMessage);
         }
         
-        // FIX #1: The server now sends a raw JSON string, so we parse it here.
-        const parsedData = await response.json(); 
+        if (!text) {
+            throw new Error("The AI returned an empty response.");
+        }
 
-        // FIX #14: Basic validation of the returned data
+        const parsedData = JSON.parse(text);
+
         if (!parsedData.questions || !Array.isArray(parsedData.questions) || parsedData.questions.length === 0) {
             throw new Error("AI returned invalid or empty quiz data.");
         }
-        // Further validation on each question
+
         for(const q of parsedData.questions) {
             if(!q.question || !Array.isArray(q.options) || q.options.length < 2 || typeof q.correctAnswerIndex !== 'number' || !q.explanation) {
                  throw new Error("AI returned a malformed question object.");
@@ -54,15 +70,8 @@ export async function generateQuiz(topic, numQuestions, difficulty = 'Medium') {
 
         return parsedData;
 
-    }).catch (error => {
-        if (error.name === 'AbortError') {
-          console.log('Fetch aborted');
-        } else {
-          console.error("Error in generateQuiz service:", error);
-        }
-        // Re-throw the error so the calling module can handle it
+    } catch (error) {
+        console.error("Error in generateQuiz service:", error);
         throw error;
-    });
-
-    return { promise, abort: () => abortController.abort() };
+    }
 }
