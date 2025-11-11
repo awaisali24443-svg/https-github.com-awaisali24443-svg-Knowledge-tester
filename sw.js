@@ -1,15 +1,16 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v1.3';
+const CACHE_NAME = 'knowledge-tester-v1.4';
 const STATIC_ASSETS = [
     '/global/global.css',
     '/global/splash.css',
     '/themes/theme-dark-cyber.css',
     '/global/accessibility.css',
-    '/global/global.js',
+    '/index.js',
     '/constants.js',
     // Pre-cache core services and home module for fast initial load
     '/services/configService.js',
+    '/services/featureService.js',
     '/modules/home/home.js',
     '/modules/home/home.html',
     '/modules/home/home.css',
