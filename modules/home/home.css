@@ -23,93 +23,173 @@
 }
 
 .home-content {
-    padding: 2rem 1.5rem; /* Add padding back to content wrapper */
+    padding: 0 1.5rem 2rem 1.5rem;
     position: relative;
     z-index: 2;
-    /* Removed solid background to let the canvas show through */
     min-height: calc(100vh - 80px);
 }
 
 .hero-section {
-    margin-bottom: 4rem;
+    padding: 3rem 0;
+    text-align: center;
+}
+
+.hero-section h1 {
+    font-size: clamp(2.5rem, 6vw, 3.5rem);
+    text-shadow: 0 0 20px var(--color-glow);
 }
 
 .hero-section .subtitle {
     font-size: 1.2rem;
-    max-width: 700px;
-    margin: 0 auto;
+    max-width: 600px;
+    margin: 1rem auto 2.5rem auto;
     color: var(--color-text-muted);
+}
+
+.hero-form {
+    display: flex;
+    max-width: 650px;
+    margin: 0 auto;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--color-border);
+    transition: box-shadow var(--transition-fast);
+}
+.hero-form:focus-within {
+     box-shadow: 0 0 0 3px var(--color-glow);
+}
+
+#hero-topic-input {
+    flex-grow: 1;
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    padding: 0 1rem;
+    color: var(--color-text);
+    min-width: 100px;
+}
+#hero-topic-input:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.hero-form .btn {
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+.home-section {
+    margin-top: 4rem;
+    text-align: left;
+}
+
+.home-section h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    position: relative;
+    display: inline-block;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.home-section h2::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background-image: linear-gradient(to right, var(--color-primary), var(--color-secondary));
 }
 
 .dashboard-grid {
     display: grid;
     gap: 1.5rem;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    perspective: 1500px; /* Add perspective for 3D effect */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    perspective: 1500px;
 }
 
-.topic-sections-container {
-    margin-top: 4rem;
+/* --- Category Carousel --- */
+.category-carousel-container {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding-bottom: 1.5rem; /* Space for scrollbar */
+    scrollbar-color: var(--color-primary) var(--color-bg-light);
 }
 
-/* --- Accordion Styles for Topic Categories --- */
-.topic-category-section {
-    margin-bottom: 1.5rem;
+.category-carousel-container::-webkit-scrollbar {
+    height: 8px;
+}
+.category-carousel-container::-webkit-scrollbar-track {
+    background: var(--color-bg-light);
+    border-radius: 4px;
+}
+.category-carousel-container::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 4px;
+}
+.category-carousel-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-primary);
+}
+
+.category-card {
+    flex: 0 0 250px;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--color-text);
+    background: var(--color-bg-light);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
-    background: rgba(255, 255, 255, 0.03);
-    transition: background-color var(--transition-fast);
+    padding: 1.5rem;
+    transition: all var(--transition-fast);
 }
 
-.topic-category-section.active {
-    background: rgba(255, 255, 255, 0.05);
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-primary);
 }
 
-.category-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    padding: 1.5rem 2rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    color: var(--color-text);
+.category-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
 }
 
-.category-title {
-    font-size: 1.75rem;
-    font-family: var(--font-display);
-    margin: 0;
+.category-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
 }
 
-.category-icon {
-    font-size: 1.5rem;
-    transition: transform var(--transition-med);
+.category-card p {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    flex-grow: 1;
+    margin-bottom: 1rem;
 }
 
-.topic-category-section.active .category-icon {
-    transform: rotate(180deg);
+.category-card-footer {
+    font-weight: 600;
+    color: var(--color-primary);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
 }
 
-.category-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.5s ease-out, padding 0.5s ease-out;
-    padding: 0 2rem;
-}
-
-.topic-category-section.active .category-content {
-    /* A large value to accommodate any number of topics */
-    max-height: 2000px; 
-    padding: 0 2rem 2rem 2rem;
+.category-card:hover .category-card-footer {
+    opacity: 1;
 }
 
 
-/* --- NEW "Glassmorphism" Card Style --- */
+/* --- "Glassmorphism" Card Style --- */
 .dashboard-card {
-    /* The --x and --y properties will be updated by JS for the glow effect */
     --x: 50%;
     --y: 50%;
     background: rgba(255, 255, 255, 0.05);
@@ -131,43 +211,26 @@
     overflow: hidden;
 }
 
-/* Interactive glow effect */
 .dashboard-card:before {
     content: '';
     position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    background: radial-gradient(
-        circle 300px at var(--x) var(--y),
-        rgba(255, 255, 255, 0.15),
-        transparent
-    );
+    left: 0; right: 0; top: 0; bottom: 0;
+    background: radial-gradient(circle 300px at var(--x) var(--y), rgba(255, 255, 255, 0.15), transparent);
     opacity: 0;
     transition: opacity 0.4s ease-out;
 }
-
 .dashboard-card:hover:before {
     opacity: 1;
 }
 
-/* Ensure content is above all pseudo-element effects */
 .dashboard-card > * {
     position: relative;
     z-index: 2;
 }
 
-
 @keyframes card-fade-in {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .dashboard-card:hover {
@@ -175,81 +238,38 @@
     border-color: rgba(255, 255, 255, 0.3);
 }
 
-.dashboard-card.large {
-    padding-top: 2.5rem;
-    padding-bottom: 2.5rem;
-}
-
-@media (min-width: 900px) {
-    .dashboard-grid {
-         grid-template-columns: repeat(3, 1fr);
-    }
-    .dashboard-card.large {
-        grid-column: span 2;
-        display: grid;
-        grid-template-columns: 80px 1fr;
-        align-items: center;
-        gap: 1.5rem;
-    }
-    .dashboard-card.large .card-content {
-        text-align: left;
-    }
-    .dashboard-card.large .card-icon {
-        margin-bottom: 0;
-        font-size: 3.5rem;
-    }
-}
-
-@media (min-width: 1200px) {
-    .dashboard-grid {
-         grid-template-columns: repeat(4, 1fr);
-    }
-    .dashboard-card.large {
-        grid-column: span 2;
-    }
-}
-
-
 .dashboard-card.coming-soon {
     opacity: 0.6;
     cursor: not-allowed;
     border-style: dashed;
 }
-
 .dashboard-card.coming-soon:hover {
     transform: none;
     box-shadow: none;
     border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.08);
 }
-.dashboard-card.coming-soon:before {
-    display: none;
-}
-
+.dashboard-card.coming-soon:before { display: none; }
 
 .card-icon {
     font-size: 2.5rem;
     margin-bottom: 1rem;
     line-height: 1;
 }
-
 .dashboard-card h3 {
     font-family: var(--font-display);
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
 }
-
 .dashboard-card p {
     color: var(--color-text-muted);
     font-size: 0.95rem;
     margin-bottom: 0;
     flex-grow: 1;
 }
-
 .card-footer {
     margin-top: 1rem;
 }
-
 .coming-soon-tag {
     display: inline-block;
     background: var(--color-border);
@@ -258,4 +278,10 @@
     font-weight: bold;
     padding: 0.25rem 0.75rem;
     border-radius: var(--border-radius-sm);
+}
+
+@media (max-width: 480px) {
+    .hero-form {
+        flex-direction: column;
+    }
 }
