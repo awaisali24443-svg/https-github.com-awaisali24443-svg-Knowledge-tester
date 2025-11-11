@@ -1,109 +1,124 @@
-import { quizStateService } from '../../services/quizStateService.js';
+import { startQuiz, getCurrentQuestion, answerQuestion, nextQuestion, isLastQuestion } from '../../services/quizStateService.js';
 
-let questionTextEl, optionsContainerEl, explanationContainerEl, explanationTextEl, nextButtonEl, progressBarEl, progressTextEl;
-let appStateRef; // To hold a reference to appState
+let appStateRef;
+let elements;
+let hasAnswered = false;
 
 function renderQuestion() {
-    const question = quizStateService.getCurrentQuestion();
+    const question = getCurrentQuestion();
     if (!question) {
-        endQuiz();
+        // Handle case where quiz ends or data is missing
+        window.location.hash = '#home'; 
         return;
     }
-
-    const progress = quizStateService.getProgress();
-    progressBarEl.style.width = `${(progress.current / progress.total) * 100}%`;
-    progressTextEl.textContent = `Question ${progress.current}/${progress.total}`;
-
-    questionTextEl.textContent = question.question;
-    optionsContainerEl.innerHTML = '';
-    explanationContainerEl.style.display = 'none';
-    nextButtonEl.style.display = 'none';
+    
+    hasAnswered = false;
+    elements.questionText.textContent = question.question;
+    elements.optionsContainer.innerHTML = '';
 
     question.options.forEach((option, index) => {
         const button = document.createElement('button');
         button.className = 'option-btn';
         button.textContent = option;
         button.dataset.index = index;
-        button.addEventListener('click', handleOptionClick);
-        optionsContainerEl.appendChild(button);
+        elements.optionsContainer.appendChild(button);
     });
+
+    updateProgress();
+    
+    // Hide explanation and next button
+    elements.explanationContainer.style.display = 'none';
+    elements.nextButton.style.display = 'none';
 }
 
-function handleOptionClick(event) {
-    const selectedButton = event.target;
-    const selectedAnswerIndex = parseInt(selectedButton.dataset.index, 10);
-    const { isCorrect, correctAnswerIndex } = quizStateService.submitAnswer(selectedAnswerIndex);
+function handleOptionClick(e) {
+    if (hasAnswered || !e.target.classList.contains('option-btn')) return;
 
-    const allOptionButtons = optionsContainerEl.querySelectorAll('.option-btn');
-    allOptionButtons.forEach(btn => btn.disabled = true);
+    hasAnswered = true;
+    const selectedIndex = parseInt(e.target.dataset.index);
+    answerQuestion(selectedIndex);
 
-    if (isCorrect) {
-        selectedButton.classList.add('correct');
-    } else {
-        selectedButton.classList.add('incorrect');
-        allOptionButtons[correctAnswerIndex].classList.add('correct');
-    }
-    
-    const question = quizStateService.getCurrentQuestion();
-    explanationTextEl.textContent = question.explanation;
-    explanationContainerEl.style.display = 'block';
+    const question = getCurrentQuestion();
+    const isCorrect = selectedIndex === question.correctAnswerIndex;
 
-    // FIX #27: Check if the quiz is over *after* answering the last question
-    if (quizStateService.isQuizOverAfterAnswer()) {
-        nextButtonEl.textContent = 'Finish';
-    } else {
-        nextButtonEl.textContent = 'Next';
-    }
-    nextButtonEl.style.display = 'inline-flex';
+    // Provide visual feedback
+    const optionButtons = elements.optionsContainer.querySelectorAll('.option-btn');
+    optionButtons.forEach((btn, index) => {
+        if (index === question.correctAnswerIndex) {
+            btn.classList.add('correct');
+        } else if (index === selectedIndex) {
+            btn.classList.add('incorrect');
+        }
+        btn.disabled = true;
+    });
+
+    // FIX #15: Provide screen reader feedback
+    elements.srFeedback.textContent = isCorrect ? 'Correct!' : 'Incorrect.';
+
+    // Show explanation
+    elements.explanationText.textContent = question.explanation;
+    elements.explanationContainer.style.display = 'block';
+
+    // Show next button
+    elements.nextButton.textContent = isLastQuestion() ? 'Finish Quiz' : 'Next Question';
+    elements.nextButton.style.display = 'inline-flex';
 }
 
 function handleNextClick() {
-    if (quizStateService.isQuizOverAfterAnswer()) {
-        endQuiz();
+    if (isLastQuestion()) {
+        // Navigate to results page
+        window.location.hash = '#results';
     } else {
-        quizStateService.nextQuestion();
+        nextQuestion();
         renderQuestion();
     }
 }
 
-function endQuiz() {
-    const results = quizStateService.getResults();
-    // FIX #12: Pass results to the next module via appState context, which is now session-managed
-    appStateRef.context = { results }; 
-    window.location.hash = '#results';
+function updateProgress() {
+    const state = appStateRef.context.quizState;
+    const progressPercent = ((state.currentQuestionIndex + 1) / state.questions.length) * 100;
+    elements.progressBar.style.width = `${progressPercent}%`;
+    elements.progressText.textContent = `Question ${state.currentQuestionIndex + 1} / ${state.questions.length}`;
 }
 
 export function init(appState) {
-    appStateRef = appState; // Store reference
+    appStateRef = appState;
+    const quizData = appStateRef.context.quizData;
 
-    const quizData = appState.context?.quizData;
-    if (!quizData) {
-        console.error("No quiz data found!");
+    if (!quizData || !quizData.questions || quizData.questions.length === 0) {
+        console.error("Quiz data is missing or invalid. Redirecting home.");
         window.location.hash = '#home';
         return;
     }
-    
-    quizStateService.startQuiz(quizData);
 
-    questionTextEl = document.getElementById('question-text');
-    optionsContainerEl = document.getElementById('options-container');
-    explanationContainerEl = document.getElementById('explanation-container');
-    explanationTextEl = document.getElementById('explanation-text');
-    nextButtonEl = document.getElementById('next-question-btn');
-    progressBarEl = document.getElementById('progress-bar');
-    progressTextEl = document.getElementById('progress-text');
+    startQuiz(quizData);
+    appStateRef.context.quizState = { // For progress update
+        questions: quizData.questions,
+        currentQuestionIndex: 0
+    };
 
-    nextButtonEl.addEventListener('click', handleNextClick);
+    elements = {
+        progressBar: document.getElementById('progress-bar'),
+        progressText: document.getElementById('progress-text'),
+        questionText: document.getElementById('question-text'),
+        optionsContainer: document.getElementById('options-container'),
+        explanationContainer: document.getElementById('explanation-container'),
+        explanationText: document.getElementById('explanation-text'),
+        nextButton: document.getElementById('next-question-btn'),
+        srFeedback: document.getElementById('sr-feedback')
+    };
+
+    elements.optionsContainer.addEventListener('click', handleOptionClick);
+    elements.nextButton.addEventListener('click', handleNextClick);
 
     renderQuestion();
     console.log("Quiz module initialized.");
 }
 
 export function destroy() {
-    quizStateService.endQuiz();
-    if(nextButtonEl) {
-        nextButtonEl.removeEventListener('click', handleNextClick);
+    if (elements) {
+        elements.optionsContainer.removeEventListener('click', handleOptionClick);
+        elements.nextButton.removeEventListener('click', handleNextClick);
     }
-    appStateRef = null; // Clear reference
     console.log("Quiz module destroyed.");
 }

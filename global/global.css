@@ -1,22 +1,26 @@
-/* --- Core Variables & Resets --- */
+
+/* --- CSS Variables & Base Styles --- */
 :root {
-    --font-sans: 'Exo 2', sans-serif;
+    --font-sans: 'Roboto', sans-serif;
     --font-display: 'Orbitron', sans-serif;
     --border-radius-sm: 4px;
     --border-radius-md: 8px;
-    --border-radius-lg: 16px;
-    --transition-fast: 0.2s ease;
-    --max-width: 1200px;
+    --border-radius-lg: 12px;
+    --transition-fast: 0.2s ease-out;
+    --transition-med: 0.4s ease-out;
+    --container-width: 1200px;
 }
 
-*, *::before, *::after {
+/* FIX #17: Add transitions for smooth theme changes */
+body, .btn, .card, input, select, .modal-content, .site-nav {
+    transition: background-color var(--transition-med), color var(--transition-med), border-color var(--transition-med);
+}
+
+
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-}
-
-html {
-    scroll-behavior: smooth;
 }
 
 body {
@@ -25,188 +29,271 @@ body {
     color: var(--color-text);
     line-height: 1.6;
     overflow-x: hidden;
-    transition: background-color var(--transition-fast), color var(--transition-fast);
 }
 
-/* --- Layout --- */
 .main-container {
-    width: 100%;
-    max-width: var(--max-width);
+    max-width: var(--container-width);
     margin: 0 auto;
     padding: 2rem 1.5rem;
-    min-height: calc(100vh - 80px); /* Adjust based on header height */
 }
 
-/* FIX #23: Scope generic element selectors to the main app container to avoid conflicts */
-.main-container h1, .main-container h2, .main-container h3, .main-container h4 {
+/* FIX #23: Scope typography to avoid conflicts */
+.main-container h1, .main-container h2, .main-container h3 {
     font-family: var(--font-display);
-    font-weight: 800;
+    font-weight: 700;
     line-height: 1.2;
     margin-bottom: 1rem;
-    color: var(--color-text);
-    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
-.main-container h1 { font-size: clamp(2.5rem, 5vw, 3.5rem); }
-.main-container h2 { font-size: clamp(2rem, 4vw, 2.75rem); }
-.main-container h3 { font-size: clamp(1.5rem, 3vw, 1.75rem); }
-.main-container p { margin-bottom: 1.25rem; color: var(--color-text-muted); }
-.main-container a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-fast); }
-.main-container a:hover { color: var(--color-secondary); }
-
+.main-container h1 { font-size: 3rem; }
+.main-container h2 { font-size: 2.5rem; }
+.main-container h3 { font-size: 1.75rem; }
+.main-container p { margin-bottom: 1rem; }
+.main-container a { color: var(--color-primary); text-decoration: none; transition: opacity var(--transition-fast); }
+.main-container a:hover { opacity: 0.8; }
 
 /* --- Components --- */
-.btn {
+/* FIX #24: Increase specificity for global components */
+.main-container .btn, .btn {
     display: inline-flex;
-    justify-content: center;
     align-items: center;
+    justify-content: center;
     padding: 0.75rem 1.5rem;
-    font-family: var(--font-sans);
-    font-weight: 700;
     font-size: 1rem;
+    font-weight: 600;
     border-radius: var(--border-radius-md);
     border: 2px solid transparent;
     cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    text-decoration: none;
     transition: all var(--transition-fast);
-    white-space: nowrap;
 }
 
 .btn-primary {
-    background: var(--color-primary);
+    background-color: var(--color-primary);
     color: #fff;
-    border-color: var(--color-primary);
 }
 .btn-primary:hover {
-    background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
-    transform: translateY(-3px);
-    box-shadow: 0 4px 15px var(--color-glow);
+    opacity: 0.9;
+    transform: translateY(-2px);
 }
 
-.card {
+.main-container .card {
     background-color: var(--color-bg-light);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
     padding: 2rem;
     box-shadow: var(--shadow-md);
-    transition: all var(--transition-fast);
 }
 
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-lg);
-}
-
-/* --- Forms --- */
 .form-control {
     width: 100%;
-    padding: 0.8rem 1rem;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-md);
     color: var(--color-text);
-    font-size: 1rem;
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px var(--color-glow);
 }
-.form-control.invalid {
-    border-color: var(--color-danger);
-}
 
-/* --- Header --- */
+/* --- Header & Navigation --- */
 .site-nav {
+    background: var(--color-bg-light);
+    padding: 0 1.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
-    background-color: rgba(13, 15, 26, 0.8);
-    backdrop-filter: blur(10px);
+    height: 80px;
     border-bottom: 1px solid var(--color-border);
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    height: 100%;
 }
 .logo-text {
     font-family: var(--font-display);
+    font-weight: 900;
     font-size: 24px;
     fill: url(#logo-gradient);
-    font-weight: 800;
+    letter-spacing: 1px;
 }
+
 .header-user-stats {
+    display: none; /* Hidden for now, for future implementation */
+    align-items: center;
+    gap: 1rem;
+    font-weight: 600;
+}
+
+.nav-links {
     display: flex;
     gap: 1.5rem;
+    list-style: none;
+}
+.nav-link {
     font-weight: 600;
-    color: var(--color-text-muted);
-}
-.header-user-stats .stat-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.nav-hamburger {
-    display: none; /* Hidden by default on desktop */
-    flex-direction: column;
-    justify-content: space-around;
-    width: 2rem;
-    height: 2rem;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    z-index: 10;
-}
-.nav-hamburger span {
-    width: 2rem;
-    height: 0.25rem;
-    background: var(--color-text);
-    border-radius: 10px;
-    transition: all 0.3s linear;
+    color: var(--color-text);
+    text-decoration: none;
     position: relative;
-    transform-origin: 1px;
+    padding: 0.5rem 0;
+}
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform var(--transition-fast);
+}
+.nav-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
 }
 
-/* --- Animations --- */
+.nav-hamburger { display: none; }
+
+/* --- Utility & Animation --- */
 .fade-in {
-    animation: fadeInAnimation 0.6s ease-out forwards;
+    animation: fadeIn 0.5s ease-out forwards;
 }
-.module-loading {
-    opacity: 0.5;
-    transition: opacity 0.2s ease-in-out;
-}
-
-@keyframes fadeInAnimation {
-    from { opacity: 0; transform: translateY(20px); }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- Error State --- */
-.error-container {
-    text-align: center;
-    padding: 4rem 1rem;
+.main-container.fade-out {
+    opacity: 0;
+    transition: opacity 0.2s ease-in;
 }
 
-/* --- Responsive --- */
+/* --- Mobile & Responsive --- */
 @media (max-width: 768px) {
-    .header-user-stats, .nav-links {
-        display: none;
-    }
-    .nav-hamburger {
-        display: flex;
-    }
-
-    .site-nav.nav-open .nav-links {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        top: 100%;
+    .nav-links {
+        position: fixed;
+        top: 80px;
         left: 0;
         width: 100%;
+        height: calc(100vh - 80px);
         background-color: var(--color-bg-light);
-        border-bottom: 1px solid var(--color-border);
+        flex-direction: column;
+        align-items: center;
+        padding-top: 3rem;
+        transform: translateX(100%);
+        transition: transform var(--transition-med);
+        z-index: 100;
     }
+
+    #header-container.nav-open .nav-links {
+        transform: translateX(0);
+    }
+    
+    /* FIX #18: Add mobile nav overlay */
+    #header-container::after {
+        content: '';
+        position: fixed;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        height: calc(100vh - 80px);
+        background: rgba(0,0,0,0.5);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--transition-med);
+        z-index: 99;
+    }
+     #header-container.nav-open::after {
+        opacity: 1;
+        pointer-events: all;
+    }
+
+
+    .nav-hamburger {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        width: 30px;
+        height: 24px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        z-index: 101;
+    }
+    .nav-hamburger span {
+        width: 30px;
+        height: 3px;
+        background-color: var(--color-text);
+        border-radius: 2px;
+        transition: all var(--transition-med);
+    }
+    
+    #header-container.nav-open .nav-hamburger span:nth-child(1) {
+        transform: translateY(10.5px) rotate(45deg);
+    }
+    #header-container.nav-open .nav-hamburger span:nth-child(2) {
+        opacity: 0;
+    }
+    #header-container.nav-open .nav-hamburger span:nth-child(3) {
+        transform: translateY(-10.5px) rotate(-45deg);
+    }
+}
+
+
+/* FIX #25: Reusable Confirmation Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.modal-content {
+    background-color: var(--color-bg-light);
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 450px;
+    transform: scale(0.95);
+    transition: transform var(--transition-fast);
+}
+
+.modal-overlay.visible .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h3 {
+    margin-top: 0;
+    color: var(--color-text);
+}
+
+.modal-content p {
+    color: var(--color-text-muted);
+    margin-bottom: 2rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
 }

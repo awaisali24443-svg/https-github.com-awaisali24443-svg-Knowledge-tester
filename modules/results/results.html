@@ -1,1 +1,51 @@
-full contents of modules/results/results.html
+<div class="results-container fade-in">
+    <div class="results-summary card">
+        <h1 id="results-title">Quiz Complete!</h1>
+        <p id="results-subtitle">Here's how you did.</p>
+
+        <div class="score-ring">
+            <svg viewBox="0 0 36 36">
+                <path class="score-ring-bg"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+                <path id="score-ring-fg" class="score-ring-fg"
+                    stroke-dasharray="0, 100"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                />
+            </svg>
+            <div id="score-text" class="score-text">0%</div>
+        </div>
+
+        <p id="final-score-text" class="final-score-text">You answered 0 out of 10 questions correctly.</p>
+        
+        <div class="results-actions">
+            <a href="#custom-quiz" class="btn">New Custom Quiz</a>
+            <a href="#home" class="btn">Back to Home</a>
+        </div>
+    </div>
+
+    <div class="question-review-section">
+        <h2>Review Your Answers</h2>
+        <div id="question-review-container">
+            <!-- Review items will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+
+<template id="review-item-template">
+    <div class="review-item card">
+        <p class="review-question-text"></p>
+        <div class="review-options"></div>
+        <div class="review-explanation">
+            <strong>Explanation:</strong>
+            <p></p>
+        </div>
+        <button class="save-question-btn" title="Save this question to your library">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H7a2 2 0 0 0-2 2v16l7-3 7 3V5a2 2 0 0 0-2-2z"></path></svg>
+        </button>
+    </div>
+</template>

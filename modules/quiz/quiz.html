@@ -1,26 +1,30 @@
 <div class="quiz-container fade-in">
-    <div id="quiz-content" class="card">
-        <div class="quiz-header">
-            <div class="progress-container">
-                <div id="progress-bar" class="progress-bar"></div>
-            </div>
-            <div id="progress-text" class="progress-text">Question 1/5</div>
+    <header class="quiz-header">
+        <div class="progress-container">
+            <div id="progress-bar" class="progress-bar"></div>
         </div>
+        <p id="progress-text" class="progress-text">Question 1 / 10</p>
+    </header>
 
-        <div class="question-area">
-            <h2 id="question-text">Loading question...</h2>
-        </div>
+    <section class="question-area">
+        <h2 id="question-text">Loading question...</h2>
+    </section>
 
-        <div id="options-container" class="options-container">
-            <!-- Options will be dynamically inserted here -->
-        </div>
-        
-        <div id="explanation-container" class="explanation-container" style="display: none;">
-            <p id="explanation-text"></p>
-        </div>
+    <section id="options-container" class="options-container">
+        <!-- Option buttons will be dynamically inserted here -->
+    </section>
 
-        <div class="quiz-footer">
-            <button id="next-question-btn" class="btn" style="display: none;">Next</button>
-        </div>
-    </div>
+    <section id="explanation-container" class="explanation-container" style="display: none;">
+        <p id="explanation-text"></p>
+    </section>
+
+    <!-- FIX #15: Accessibility - ARIA Live Region for screen reader feedback -->
+    <div id="sr-feedback" class="sr-only" aria-live="assertive"></div>
+
+    <footer class="quiz-footer">
+        <button id="next-question-btn" class="btn" style="display: none;">Next Question</button>
+    </footer>
 </div>
+
+<!-- Visually hidden class for screen reader only text -->
+<style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}</style>

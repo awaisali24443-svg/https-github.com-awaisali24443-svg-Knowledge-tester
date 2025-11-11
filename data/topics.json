@@ -1,0 +1,55 @@
+
+{
+    "categories": [
+        {
+            "id": "science",
+            "name": "Science & Nature",
+            "description": "From the cosmos to the smallest particles.",
+            "icon": "🔬"
+        },
+        {
+            "id": "history",
+            "name": "History",
+            "description": "Explore the pivotal moments of the past.",
+            "icon": "🏛️"
+        },
+        {
+            "id": "technology",
+            "name": "Technology",
+            "description": "Dive into the world of code and circuits.",
+            "icon": "💻"
+        },
+        {
+            "id": "arts",
+            "name": "Arts & Literature",
+            "description": "Masterpieces of human creativity.",
+            "icon": "🎨"
+        }
+    ],
+    "topics": {
+        "science": [
+            { "id": "astronomy", "name": "Astronomy: The Solar System" },
+            { "id": "biology", "name": "Biology: Cell Structures" },
+            { "id": "chemistry", "name": "Chemistry: The Periodic Table" },
+            { "id": "physics", "name": "Physics: Newtonian Mechanics" }
+        ],
+        "history": [
+            { "id": "ancient-egypt", "name": "Ancient Egypt" },
+            { "id": "roman-empire", "name": "The Roman Empire" },
+            { "id": "world-war-2", "name": "World War II" },
+            { "id": "renaissance", "name": "The Renaissance" }
+        ],
+        "technology": [
+            { "id": "python-basics", "name": "Python Programming Basics" },
+            { "id": "javascript-fundamentals", "name": "JavaScript Fundamentals" },
+            { "id": "how-internet-works", "name": "How the Internet Works" },
+            { "id": "ai-concepts", "name": "Core Concepts of AI" }
+        ],
+        "arts": [
+            { "id": "shakespeare", "name": "William Shakespeare's Plays" },
+            { "id": "impressionism", "name": "Impressionist Painters" },
+            { "id": "classical-music", "name": "Classical Music Composers" },
+            { "id": "modern-architecture", "name": "Modern Architecture" }
+        ]
+    }
+}

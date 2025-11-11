@@ -1,44 +1,68 @@
-import { GUEST_LIBRARY_KEY } from '../constants.js';
+import { LIBRARY_KEY_GUEST } from '../constants.js';
 
-function getLibrary() {
-    // FIX #7: Wrap localStorage access
+let savedQuestions = [];
+
+// A simple hashing function for more robust duplicate checking
+function hashQuestion(question) {
+    const str = `${question.question}|${question.options.join(',')}|${question.correctAnswerIndex}`;
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return hash;
+}
+
+
+function loadLibrary() {
+    // FIX #6: Prepare for authenticated users by separating guest logic.
+    // FIX #7: Wrap localStorage access in try...catch.
     try {
-        const saved = localStorage.getItem(GUEST_LIBRARY_KEY);
-        return saved ? JSON.parse(saved) : [];
+        const storedLibrary = localStorage.getItem(LIBRARY_KEY_GUEST);
+        if (storedLibrary) {
+            savedQuestions = JSON.parse(storedLibrary);
+        } else {
+            savedQuestions = [];
+        }
     } catch (error) {
-        console.warn("Could not access library from localStorage.", error);
-        return [];
+        console.warn("Could not access localStorage for library.", error);
+        savedQuestions = [];
     }
 }
 
-function saveLibrary(library) {
-     // FIX #7: Wrap localStorage access
+function saveLibrary() {
     try {
-        localStorage.setItem(GUEST_LIBRARY_KEY, JSON.stringify(library));
+        localStorage.setItem(LIBRARY_KEY_GUEST, JSON.stringify(savedQuestions));
     } catch (error) {
         console.warn("Could not save library to localStorage.", error);
     }
 }
 
-export const libraryService = {
-    getSavedQuestions() {
-        return getLibrary();
-    },
+export function getSavedQuestions() {
+    return [...savedQuestions];
+}
 
-    saveQuestion(questionData) {
-        const library = getLibrary();
-        // Avoid duplicates
-        if (!library.some(q => q.question === questionData.question)) {
-            library.push(questionData);
-            saveLibrary(library);
-            return true;
-        }
-        return false;
-    },
-
-    removeQuestion(questionText) {
-        let library = getLibrary();
-        library = library.filter(q => q.question !== questionText);
-        saveLibrary(library);
+export function saveQuestion(question) {
+    if (!isQuestionSaved(question)) {
+        savedQuestions.push(question);
+        saveLibrary();
+        return true;
     }
-};
+    return false;
+}
+
+export function removeQuestion(questionToRemove) {
+    const hashToRemove = hashQuestion(questionToRemove);
+    savedQuestions = savedQuestions.filter(q => hashQuestion(q) !== hashToRemove);
+    saveLibrary();
+}
+
+export function isQuestionSaved(question) {
+    const newQuestionHash = hashQuestion(question);
+    // FIX #16: Use hash for more robust duplicate checking
+    return savedQuestions.some(savedQ => hashQuestion(savedQ) === newQuestionHash);
+}
+
+// Initialize library on load
+loadLibrary();

@@ -1,97 +1,102 @@
-import { getSetting, setSetting } from '../../services/configService.js';
-import { GUEST_PROGRESS_KEY, GUEST_MISSIONS_KEY, GUEST_LIBRARY_KEY, GUEST_PATHS_KEY } from '../../constants.js';
 
-// --- DOM ELEMENT REFERENCES ---
-let themeSelect, soundToggle, backgroundToggle, largeTextToggle, highContrastToggle, dyslexiaFontToggle, clearGuestDataBtn;
+import { getSetting, setSetting, getAllSettings } from '../../services/configService.js';
+import { LIBRARY_KEY_GUEST, LEARNING_PATH_PROGRESS_GUEST } from '../../constants.js';
+import { modalService } from '../../services/modalService.js';
 
-// --- NAMED EVENT HANDLERS for proper cleanup ---
-const handleThemeChange = (event) => {
-    const newTheme = event.target.value;
-    setSetting('theme', newTheme);
-    document.body.dataset.theme = newTheme;
+let themeSelect, soundToggle, backgroundToggle;
+let largeTextToggle, highContrastToggle, dyslexiaFontToggle;
+let clearDataBtn;
+
+// FIX #8: Use named functions for event listeners to allow for removal
+const handleThemeChange = (e) => setSetting('theme', e.target.value);
+const handleToggleChange = (e) => {
+    const key = e.target.dataset.key;
+    if (key) {
+        setSetting(key, e.target.checked);
+    }
 };
 
-const handleSoundToggle = (e) => handleToggleChange(e, 'enableSound');
-const handleBackgroundToggle = (e) => handleToggleChange(e, 'enable3DBackground');
-const handleLargeTextToggle = (e) => handleToggleChange(e, 'largeText');
-const handleHighContrastToggle = (e) => handleToggleChange(e, 'highContrast');
-const handleDyslexiaFontToggle = (e) => handleToggleChange(e, 'dyslexiaFont');
+const handleClearData = async () => {
+    // FIX #25: Use custom modal for confirmation
+    const confirmed = await modalService.confirm({
+        title: 'Clear All Guest Data?',
+        message: 'This will permanently remove your quiz history, saved library items, and learning path progress. This action cannot be undone.',
+        confirmText: 'Yes, Clear Data'
+    });
 
-function populateSettings() {
-    themeSelect.value = getSetting('theme');
-    soundToggle.checked = getSetting('enableSound');
-    backgroundToggle.checked = getSetting('enable3DBackground');
-    largeTextToggle.checked = getSetting('largeText');
-    highContrastToggle.checked = getSetting('highContrast');
-    dyslexiaFontToggle.checked = getSetting('dyslexiaFont');
-    updateBodyClasses();
-}
-
-function handleToggleChange(event, settingKey) {
-    setSetting(settingKey, event.target.checked);
-    updateBodyClasses();
-}
-
-// FIX #17: This is reasonably efficient, but avoids unnecessary changes.
-function updateBodyClasses() {
-    const body = document.body;
-    body.classList.toggle('large-text', getSetting('largeText'));
-    body.classList.toggle('high-contrast', getSetting('highContrast'));
-    body.classList.toggle('dyslexia-font', getSetting('dyslexiaFont'));
-}
-
-// FIX #18: Implement guest data clearing
-function clearGuestData() {
-    const keysToClear = [GUEST_PROGRESS_KEY, GUEST_MISSIONS_KEY, GUEST_LIBRARY_KEY, GUEST_PATHS_KEY];
-    if (confirm("Are you sure you want to clear all guest progress and saved items? This cannot be undone.")) {
-        keysToClear.forEach(key => {
-            try {
-                localStorage.removeItem(key);
-            } catch (e) {
-                console.error(`Failed to remove key ${key}:`, e);
-            }
-        });
-        alert("Guest data has been cleared.");
+    if (confirmed) {
+        try {
+            localStorage.removeItem(LIBRARY_KEY_GUEST);
+            localStorage.removeItem(LEARNING_PATH_PROGRESS_GUEST);
+            // Optionally, clear other guest-related keys here
+            
+            // Provide feedback to the user
+            alert("Your guest data has been cleared.");
+        } catch (error) {
+            console.error("Failed to clear guest data:", error);
+            alert("There was an error clearing your data.");
+        }
     }
-}
+};
 
-function addEventListeners() {
-    themeSelect.addEventListener('change', handleThemeChange);
-    soundToggle.addEventListener('change', handleSoundToggle);
-    backgroundToggle.addEventListener('change', handleBackgroundToggle);
-    largeTextToggle.addEventListener('change', handleLargeTextToggle);
-    highContrastToggle.addEventListener('change', handleHighContrastToggle);
-    dyslexiaFontToggle.addEventListener('change', handleDyslexiaFontToggle);
-    clearGuestDataBtn.addEventListener('click', clearGuestData);
-}
+const updateBodyClasses = () => {
+    const settings = getAllSettings();
+    document.body.classList.toggle('large-text', settings.largeText);
+    document.body.classList.toggle('high-contrast', settings.highContrast);
+    document.body.classList.toggle('dyslexia-font', settings.dyslexiaFont);
+    document.body.setAttribute('data-theme', settings.theme);
+};
 
-// FIX #8: Properly remove all named event listeners
-function removeEventListeners() {
-    themeSelect.removeEventListener('change', handleThemeChange);
-    soundToggle.removeEventListener('change', handleSoundToggle);
-    backgroundToggle.removeEventListener('change', handleBackgroundToggle);
-    largeTextToggle.removeEventListener('change', handleLargeTextToggle);
-    highContrastToggle.removeEventListener('change', handleHighContrastToggle);
-    dyslexiaFontToggle.removeEventListener('change', handleDyslexiaFontToggle);
-    clearGuestDataBtn.removeEventListener('click', clearGuestData);
-}
-
-export function init(appState) {
+export function init() {
+    console.log("Settings module initialized.");
+    
+    // --- Query elements ---
     themeSelect = document.getElementById('theme-select');
     soundToggle = document.getElementById('sound-toggle');
     backgroundToggle = document.getElementById('background-toggle');
     largeTextToggle = document.getElementById('large-text-toggle');
     highContrastToggle = document.getElementById('high-contrast-toggle');
     dyslexiaFontToggle = document.getElementById('dyslexia-font-toggle');
-    clearGuestDataBtn = document.getElementById('clear-guest-data-btn');
+    clearDataBtn = document.getElementById('clear-guest-data-btn');
 
-    populateSettings();
-    addEventListeners();
-    console.log("Settings module initialized.");
+    // Assign data-keys for the generic toggle handler
+    soundToggle.dataset.key = 'enableSound';
+    backgroundToggle.dataset.key = 'enable3DBackground';
+    largeTextToggle.dataset.key = 'largeText';
+    highContrastToggle.dataset.key = 'highContrast';
+    dyslexiaFontToggle.dataset.key = 'dyslexiaFont';
+    
+    // --- Populate UI from settings ---
+    const settings = getAllSettings();
+    themeSelect.value = settings.theme;
+    soundToggle.checked = settings.enableSound;
+    backgroundToggle.checked = settings.enable3DBackground;
+    largeTextToggle.checked = settings.largeText;
+    highContrastToggle.checked = settings.highContrast;
+    dyslexiaFontToggle.checked = settings.dyslexiaFont;
+    
+    // --- Attach event listeners ---
+    themeSelect.addEventListener('change', handleThemeChange);
+    soundToggle.addEventListener('change', handleToggleChange);
+    backgroundToggle.addEventListener('change', handleToggleChange);
+    largeTextToggle.addEventListener('change', handleToggleChange);
+    highContrastToggle.addEventListener('change', handleToggleChange);
+    dyslexiaFontToggle.addEventListener('change', handleToggleChange);
+    clearDataBtn.addEventListener('click', handleClearData);
+    
+    // Initial application of classes
+    updateBodyClasses();
 }
 
-// FIX #22: destroy() now performs meaningful cleanup.
 export function destroy() {
-    removeEventListeners();
+    // FIX #8, #22: Properly remove all event listeners on cleanup
+    if (themeSelect) themeSelect.removeEventListener('change', handleThemeChange);
+    if (soundToggle) soundToggle.removeEventListener('change', handleToggleChange);
+    if (backgroundToggle) backgroundToggle.removeEventListener('change', handleToggleChange);
+    if (largeTextToggle) largeTextToggle.removeEventListener('change', handleToggleChange);
+    if (highContrastToggle) highContrastToggle.removeEventListener('change', handleToggleChange);
+    if (dyslexiaFontToggle) dyslexiaFontToggle.removeEventListener('change', handleToggleChange);
+    if (clearDataBtn) clearDataBtn.removeEventListener('click', handleClearData);
+    
     console.log("Settings module destroyed and listeners removed.");
 }

@@ -1,85 +1,99 @@
-// server.js
+
 import express from 'express';
 import path from 'path';
-import { GoogleGenAI } from '@google/genai';
+import { fileURLToPath } from 'url';
+import { GoogleGenAI, Type } from '@google/genai';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
+// ES Module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Basic security middleware
 app.use(express.json());
-// Serve static files from the root directory
-app.use(express.static(path.resolve()));
+app.use(express.static(path.join(__dirname, '/')));
 
-// Gemini AI setup
-// Ensure API_KEY is set in your environment
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set.");
-}
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// FIX #1: Critical - Add rate limiting to the API endpoint
+const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 50, // Limit each IP to 50 requests per windowMs
+	standardHeaders: true, 
+	legacyHeaders: false, 
+    message: { error: "Too many requests from this IP, please try again after 15 minutes." }
+});
 
-const modelConfig = {
-    model: "gemini-2.5-flash",
-};
-
-// API Endpoint for quiz generation
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', apiLimiter, async (req, res) => {
     try {
         const { prompt, schema } = req.body;
+        
+        // FIX #28: Basic input validation and sanitization
+        if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0 || prompt.length > 1000) {
+            return res.status(400).json({ error: "Invalid or missing prompt." });
+        }
+        if (!schema) {
+            return res.status(400).json({ error: "Invalid or missing schema." });
+        }
+        
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            throw new Error('API_KEY environment variable not set');
+        }
 
-        // FIX: #28 - Basic input validation and sanitization
-        if (!prompt || typeof prompt !== 'string' || !schema) {
-            return res.status(400).json({ error: 'Prompt and schema are required' });
-        }
-        const sanitizedPrompt = prompt.trim();
-        if (sanitizedPrompt.length === 0 || sanitizedPrompt.length > 200) {
-            return res.status(400).json({ error: 'Prompt must be between 1 and 200 characters.' });
-        }
+        const ai = new GoogleGenAI({ apiKey });
 
         const response = await ai.models.generateContent({
-            model: modelConfig.model,
-            contents: sanitizedPrompt,
+            model: "gemini-2.5-flash",
+            contents: prompt,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: schema,
-            }
+            },
         });
-        
-        // FIX: #13 - More robust error checking from the API response itself
-        if (!response.text) {
-             console.error('API Error: No text in response', response);
-             let errorMessage = 'The AI returned an empty or invalid response.';
-             const finishReason = response?.candidates?.[0]?.finishReason;
-             switch(finishReason) {
-                case 'SAFETY':
-                    errorMessage = 'The request was blocked for safety reasons. Please try a different topic.';
-                    break;
-                case 'MAX_TOKENS':
-                    errorMessage = 'The AI response was too long and was cut off. This is an issue with the model.';
-                    break;
-                case 'RECITATION':
-                     errorMessage = 'The request was blocked due to potential recitation issues.';
-                     break;
+
+        const finishReason = response.candidates?.[0]?.finishReason;
+        const text = response.text;
+
+        // FIX #13: Better error handling for different finish reasons
+        if (finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
+             let errorMessage = "The AI response was stopped for an unexpected reason.";
+             if(finishReason === 'SAFETY') {
+                 errorMessage = "The request was blocked due to safety concerns. Please try a different topic.";
+             } else if (finishReason === 'RECITATION') {
+                 errorMessage = "The request was blocked due to recitation concerns.";
              }
-             return res.status(500).json({ error: errorMessage });
+             return res.status(400).json({ error: errorMessage });
         }
         
-        // FIX: #1 - Send the raw JSON string from Gemini, don't re-wrap it.
-        // The client expects a JSON string, so set content type appropriately.
+        if (!text) {
+            return res.status(500).json({ error: "The AI returned an empty response." });
+        }
+
+        // FIX #20: Validate that the response is valid JSON before sending
+        try {
+            JSON.parse(text); // Try parsing to see if it's valid
+        } catch (e) {
+            console.error("AI returned non-JSON text:", text);
+            return res.status(500).json({ error: "The AI generated an invalid data format. Please try again." });
+        }
+
+        // FIX #1: Send the raw JSON string directly.
         res.setHeader('Content-Type', 'application/json');
-        res.send(response.text);
+        res.send(text);
 
     } catch (error) {
-        console.error('API Error:', error);
-        res.status(500).json({ error: error.message || 'Failed to generate content from AI.' });
+        console.error('Error calling Gemini API:', error);
+        res.status(500).json({ error: 'Failed to generate quiz from AI service.' });
     }
 });
 
-// Fallback to index.html for single-page application routing
+// Serve the main index.html for any other GET request to support SPA routing
 app.get('*', (req, res) => {
-    res.sendFile(path.resolve('index.html'));
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening on port ${port}`);
 });

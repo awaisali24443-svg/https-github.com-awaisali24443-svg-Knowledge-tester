@@ -1,62 +1,63 @@
-import { GUEST_PATHS_KEY } from "../constants.js";
+import { LEARNING_PATH_PROGRESS_GUEST } from '../constants.js';
 
-// This would typically come from a CMS or API
-const learningPaths = [
-    {
-        id: 'js-fundamentals',
-        title: "JavaScript Fundamentals",
-        description: "Master the core concepts of JavaScript, from variables to asynchronous programming.",
+// This would typically come from a CMS or a separate JSON file
+const learningPaths = {
+    "javascript-basics": {
+        id: "javascript-basics",
+        name: "JavaScript Fundamentals",
+        description: "A guided path to learn the core concepts of JavaScript, from variables to functions.",
         steps: [
-            { type: 'quiz', title: 'Variables & Data Types', topic: 'JavaScript variables and data types' },
-            { type: 'quiz', title: 'Functions & Scope', topic: 'JavaScript functions and scope' },
-            { type: 'quiz', title: 'Arrays & Objects', topic: 'JavaScript arrays and objects' },
-            { type: 'quiz', title: 'Asynchronous JavaScript', topic: 'JavaScript Promises and async/await' },
-            { type: 'milestone', title: 'Congratulations! You are a JS Fundamentals master!' }
+            { id: "js-step-1", name: "Variables and Data Types", topic: "JavaScript variables and data types" },
+            { id: "js-step-2", name: "Operators and Conditionals", topic: "JavaScript operators and conditional statements" },
+            { id: "js-step-3", name: "Loops and Arrays", topic: "JavaScript loops and array methods" },
+            { id: "js-step-4", name: "Functions and Scope", topic: "JavaScript functions and scope" }
         ]
     }
-    // Add more paths here
-];
+};
 
-function getProgress() {
-    // FIX #7: Wrap localStorage access
+let progress = {};
+
+function loadProgress() {
+    // FIX #6: Prepare for authenticated users by separating guest logic.
+    // FIX #7: Wrap localStorage access in try...catch.
     try {
-        const saved = localStorage.getItem(GUEST_PATHS_KEY);
-        return saved ? JSON.parse(saved) : {};
+        const storedProgress = localStorage.getItem(LEARNING_PATH_PROGRESS_GUEST);
+        if (storedProgress) {
+            progress = JSON.parse(storedProgress);
+        } else {
+            progress = {};
+        }
     } catch (error) {
-        console.warn("Could not access learning path progress from localStorage.", error);
-        return {};
+        console.warn("Could not access localStorage for learning paths.", error);
+        progress = {};
     }
 }
 
-function saveProgress(progress) {
-    // FIX #7: Wrap localStorage access
+function saveProgress() {
     try {
-        localStorage.setItem(GUEST_PATHS_KEY, JSON.stringify(progress));
+        localStorage.setItem(LEARNING_PATH_PROGRESS_GUEST, JSON.stringify(progress));
     } catch (error) {
         console.warn("Could not save learning path progress to localStorage.", error);
     }
 }
 
-export const learningPathService = {
-    getPaths() {
-        return learningPaths;
-    },
+export function getLearningPath(pathId) {
+    return learningPaths[pathId] || null;
+}
 
-    getPathById(id) {
-        return learningPaths.find(p => p.id === id);
-    },
+export function getProgressForPath(pathId) {
+    return progress[pathId] || { completedSteps: [] };
+}
 
-    getPathProgress(pathId) {
-        const allProgress = getProgress();
-        return allProgress[pathId] || { currentStep: 0 };
-    },
-
-    completeStep(pathId) {
-        const allProgress = getProgress();
-        if (!allProgress[pathId]) {
-            allProgress[pathId] = { currentStep: 0 };
-        }
-        allProgress[pathId].currentStep++;
-        saveProgress(allProgress);
+export function markStepComplete(pathId, stepId) {
+    if (!progress[pathId]) {
+        progress[pathId] = { completedSteps: [] };
     }
-};
+    if (!progress[pathId].completedSteps.includes(stepId)) {
+        progress[pathId].completedSteps.push(stepId);
+        saveProgress();
+    }
+}
+
+// Initialize progress on load
+loadProgress();

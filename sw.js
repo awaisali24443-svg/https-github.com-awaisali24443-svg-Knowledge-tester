@@ -1,92 +1,103 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v2.2'; // Version bump to clear old caches
-const urlsToCache = [
-  '/',
-  '/index.html',
-  // Globals
-  '/global/global.css',
-  '/global/global.js',
-  '/global/accessibility.css',
-  '/global/splash.css',
-  '/global/header.html',
-  // Themes
-  '/themes/theme-dark-cyber.css',
-  // Third-party libraries (from CDN, will be cached on first fetch)
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.164.1/three.module.js',
-  'https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/controls/OrbitControls.js',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js',
-  // All Modules & Services are cached via network-first strategy now
-  // Assets
-  '/icon.svg',
-  '/assets/icon-192.png',
-  '/assets/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@800&display=swap',
-  'https://fonts.gstatic.com/s/exo2/v21/7cH1v4okm5zmbvwk_QED-Vk-PA.woff2'
+const CACHE_NAME = 'knowledge-tester-v1.3';
+const STATIC_ASSETS = [
+    '/global/global.css',
+    '/global/splash.css',
+    '/themes/theme-dark-cyber.css',
+    '/global/accessibility.css',
+    '/global/global.js',
+    '/constants.js',
+    // Pre-cache core services and home module for fast initial load
+    '/services/configService.js',
+    '/modules/home/home.js',
+    '/modules/home/home.html',
+    '/modules/home/home.css',
+    // Fonts and assets
+    'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;500;700&display=swap',
+    'https://fonts.gstatic.com/s/orbitron/v31/yMJRMIlzdpvBhQQL_Qq7dy0.woff2',
+    'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
+    '/assets/icon-192.png',
+    '/assets/icon-512.png',
+    '/icon.svg'
 ];
 
-// Install the service worker and cache the app shell
+// On install, pre-cache static assets
 self.addEventListener('install', event => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache, caching app shell');
-        return cache.addAll(urlsToCache);
-      })
-      .catch(err => {
-        console.error('Failed to cache resources during install:', err);
-      })
-  );
+    console.log('[Service Worker] Installing...');
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => {
+            console.log('[Service Worker] Pre-caching static assets.');
+            return cache.addAll(STATIC_ASSETS);
+        })
+    );
+    self.skipWaiting();
 });
 
-// FIX #4, #5: Implement a Network first, then cache strategy.
-// This prevents serving stale index.html or API data.
+// On activate, clean up old caches
+self.addEventListener('activate', event => {
+    console.log('[Service Worker] Activating...');
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheName !== CACHE_NAME) {
+                        console.log(`[Service Worker] Deleting old cache: ${cacheName}`);
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+    // FIX #24: Ensure the new service worker takes control immediately
+    return self.clients.claim();
+});
+
+// On fetch, implement caching strategy
 self.addEventListener('fetch', event => {
-    // We only want to handle GET requests.
-    if (event.request.method !== 'GET') {
-        return;
-    }
+    const { request } = event;
+
+    // FIX #7: Use a more intelligent, hybrid caching strategy.
     
-    // Specifically ignore API calls from being cached.
-    if (event.request.url.includes('/api/')) {
+    // Strategy 1: Network First for HTML and API calls.
+    // Ensures the user always gets the latest app logic and data.
+    if (request.mode === 'navigate' || request.url.includes('/api/generate') || request.url.includes('/data/topics.json')) {
+        event.respondWith(
+            fetch(request)
+                .then(response => {
+                    // If the request is successful, cache a copy for offline fallback
+                    if (response.ok) {
+                        const responseToCache = response.clone();
+                        caches.open(CACHE_NAME).then(cache => {
+                            cache.put(request, responseToCache);
+                        });
+                    }
+                    return response;
+                })
+                .catch(() => {
+                    // If network fails, try to serve from cache
+                    return caches.match(request);
+                })
+        );
         return;
     }
 
+    // Strategy 2: Cache First for all other static assets (CSS, JS, Fonts, etc.).
+    // This provides the fastest possible response time.
     event.respondWith(
-        fetch(event.request)
-            .then(networkResponse => {
-                // If the fetch is successful, clone it and cache it.
+        caches.match(request).then(cachedResponse => {
+            // If we have a cached response, return it.
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            // Otherwise, fetch from the network, cache it, and return the response.
+            return fetch(request).then(networkResponse => {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(event.request, responseToCache);
+                    cache.put(request, responseToCache);
                 });
                 return networkResponse;
-            })
-            .catch(() => {
-                // If the network fails, try to serve from the cache.
-                return caches.match(event.request);
-            })
-    );
-});
-
-
-// Clean up old caches on activation
-self.addEventListener('activate', event => {
-  // FIX #24: Ensure the new service worker takes control immediately.
-  self.clients.claim(); 
-  
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
-          }
+            });
         })
-      );
-    })
-  );
+    );
 });
