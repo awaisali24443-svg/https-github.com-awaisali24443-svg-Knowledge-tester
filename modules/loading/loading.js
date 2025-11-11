@@ -2,12 +2,12 @@ import { generateQuiz } from '../../services/geminiService.js';
 import { NUM_QUESTIONS } from '../../constants.js';
 
 const messages = [
-    "Contacting AI Oracle...",
-    "Compiling Knowledge Matrix...",
-    "Reticulating Splines...",
-    "Generating Question Constructs...",
-    "Finalizing Explanations...",
-    "Almost there..."
+    "Engaging AI Core...",
+    "Calibrating Neural Net...",
+    "Compiling Quiz Matrix...",
+    "Injecting Knowledge Vectors...",
+    "Finalizing Question Constructs...",
+    "Boot Sequence Complete..."
 ];
 
 let messageInterval;
