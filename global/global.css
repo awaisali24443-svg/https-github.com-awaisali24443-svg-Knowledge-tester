@@ -1,7 +1,8 @@
 /* --- CSS Variables & Base Styles --- */
 :root {
-    --font-sans: 'Poppins', sans-serif;
-    --font-display: 'Exo 2', sans-serif;
+    --font-sans: 'Roboto', sans-serif;
+    --font-display: 'Orbitron', sans-serif;
+    --font-mono: 'Roboto Mono', monospace;
     --border-radius-sm: 6px;
     --border-radius-md: 10px;
     --border-radius-lg: 16px;
