@@ -1,7 +1,7 @@
 import { GENERAL_SETTINGS_KEY } from '../constants.js';
 
 const defaultSettings = {
-    theme: 'cyber',
+    theme: 'dark',
     enableSound: true,
     enable3DBackground: true,
     largeText: false,
