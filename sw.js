@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v1.9'; // Incremented cache version
+const CACHE_NAME = 'knowledge-tester-v2.1'; // Incremented cache version
 const STATIC_ASSETS = [
     '/global/global.css',
     '/global/splash.css',
@@ -8,22 +8,26 @@ const STATIC_ASSETS = [
     '/global/accessibility.css',
     '/index.js',
     '/constants.js',
-    // Re-added core services for 3D view
+    // Core services
     '/services/configService.js',
     '/services/featureService.js',
     '/services/soundService.js',
     '/services/libraryService.js',
     '/services/topicService.js',
+    // NEW: 3D Galaxy Services
     '/services/threeManager.js',
     '/services/overlayService.js',
-    // Home module for galaxy view
+    // Home module for GALAXY view
     '/modules/home/home.js',
     '/modules/home/home.html',
     '/modules/home/home.css',
-    // Pre-cache Aural module
+    // Pre-cache other important modules
     '/modules/aural/aural.js',
     '/modules/aural/aural.html',
     '/modules/aural/aural.css',
+    '/modules/learning-path-generator/learning-path-generator.js',
+    '/modules/learning-path-generator/learning-path-generator.html',
+    '/modules/learning-path-generator/learning-path-generator.css',
     // Fonts
     'https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;500;700&display=swap',
     'https://fonts.gstatic.com/s/orbitron/v31/yMJRMIlzdpvBhQQL_Qq7dy0.woff2',
@@ -37,31 +41,30 @@ const STATIC_ASSETS = [
     '/assets/sounds/click.wav',
     '/assets/sounds/hover.wav',
     '/assets/sounds/transition.wav',
-    // NEW: Realistic Textures for 3D Scene
-    '/assets/textures/lensflare0.png',
-    '/assets/textures/lensflare3.png',
-    '/assets/textures/rings/realistic_rings.png',
-    '/assets/textures/planets/earth_day.jpg',
-    '/assets/textures/planets/earth_clouds.png',
-    '/assets/textures/planets/earth_specular.png',
-    '/assets/textures/planets/earth_night.jpg',
-    '/assets/textures/planets/earth_bump.jpg',
-    '/assets/textures/planets/asteroid.jpg',
-    '/assets/textures/planets/mars.jpg',
-    '/assets/textures/planets/mars_bump.jpg',
-    '/assets/textures/planets/jupiter.jpg',
-    '/assets/textures/planets/neptune.jpg',
-    '/assets/textures/planets/rocky.jpg',
-    '/assets/textures/planets/rocky_bump.jpg',
-    '/assets/textures/planets/ice.jpg',
-    '/assets/textures/particle_noise.png', // NEW: Added noise texture for particles
-    // Skybox textures
+    // NEW: High-resolution textures for the galaxy
     '/assets/textures/realistic_skybox/px.jpg',
     '/assets/textures/realistic_skybox/nx.jpg',
     '/assets/textures/realistic_skybox/py.jpg',
     '/assets/textures/realistic_skybox/ny.jpg',
     '/assets/textures/realistic_skybox/pz.jpg',
-    '/assets/textures/realistic_skybox/nz.jpg'
+    '/assets/textures/realistic_skybox/nz.jpg',
+    '/assets/textures/lensflare0.png',
+    '/assets/textures/lensflare3.png',
+    '/assets/textures/particle_noise.png',
+    '/assets/textures/planets/earth_day.jpg',
+    '/assets/textures/planets/earth_night.jpg',
+    '/assets/textures/planets/earth_bump.jpg',
+    '/assets/textures/planets/earth_specular.png',
+    '/assets/textures/planets/earth_clouds.png',
+    '/assets/textures/planets/mars.jpg',
+    '/assets/textures/planets/mars_bump.jpg',
+    '/assets/textures/planets/jupiter.jpg',
+    '/assets/textures/planets/neptune.jpg',
+    '/assets/textures/planets/ice.jpg',
+    '/assets/textures/planets/rocky.jpg',
+    '/assets/textures/planets/rocky_bump.jpg',
+    '/assets/textures/planets/asteroid.jpg',
+    '/assets/textures/rings/realistic_rings.png',
 ];
 
 // On install, pre-cache static assets

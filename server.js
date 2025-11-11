@@ -61,6 +61,79 @@ app.get('/api/topics', apiLimiter, (req, res) => {
     }
 });
 
+// --- NEW: API route for generating learning paths ---
+app.post('/api/generate-path', apiLimiter, async (req, res) => {
+    const { goal } = req.body;
+
+    if (!goal) {
+        return res.status(400).json({ error: 'Learning goal is required.' });
+    }
+
+    console.log(`Generating learning path for goal: "${goal}"`);
+
+    const prompt = `A user wants to learn about "${goal}". Create a structured, beginner-friendly learning path for them. The path should consist of 4 to 6 logical steps that build on each other.
+For each step, provide a clear, concise "name" for the step, and a specific "topic" string that would be suitable for generating a multiple-choice quiz. The topic string should be descriptive enough for an AI to create a good quiz.
+For example, if the goal is "Learn about Ancient Rome", a good step would be: name: "The Roman Republic", topic: "The political structure, key figures, and major events of the Roman Republic".`;
+
+    const schema = {
+        type: Type.OBJECT,
+        properties: {
+            path: {
+                type: Type.ARRAY,
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        name: { type: Type.STRING, description: "The concise name of this learning step (e.g., 'The Early Renaissance')." },
+                        topic: { type: Type.STRING, description: "The specific, quiz-friendly topic for this step (e.g., 'Key artists and innovations of the Early Italian Renaissance')." }
+                    },
+                    required: ["name", "topic"]
+                }
+            }
+        },
+        required: ["path"]
+    };
+
+    try {
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            return res.status(500).json({ error: 'Server configuration error: API key is missing.' });
+        }
+        const ai = new GoogleGenAI({ apiKey });
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: schema,
+                temperature: 0.5,
+            },
+        });
+
+        const finishReason = response.candidates?.[0]?.finishReason;
+        const text = response.text;
+        
+        if (finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
+            let errorMessage = "The AI response was stopped unexpectedly.";
+             if(finishReason === 'SAFETY') {
+                 errorMessage = "The request was blocked for safety concerns. Please try a different goal.";
+             }
+             return res.status(400).json({ error: errorMessage });
+        }
+
+        if (!text) {
+            throw new Error("The AI returned an empty response.");
+        }
+        
+        res.json(JSON.parse(text));
+
+    } catch (error) {
+        console.error('Error calling Gemini API for path generation:', error);
+        res.status(500).json({ error: error.message || 'Failed to generate learning path.' });
+    }
+});
+
+
 // API route for generating quizzes
 app.post('/api/generate', apiLimiter, async (req, res) => {
     const { topic, topicId, numQuestions, difficulty } = req.body;

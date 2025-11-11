@@ -14,6 +14,60 @@
     width: 100%;
 }
 
+/* --- NEW: Featured Action Card --- */
+.featured-actions {
+    margin-bottom: 3rem;
+}
+
+.featured-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-primary);
+    border-radius: var(--border-radius-lg);
+    text-decoration: none;
+    color: var(--color-text);
+    transition: all var(--transition-fast);
+    box-shadow: 0 0 20px var(--color-glow);
+}
+
+.featured-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0 30px var(--color-glow), 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.featured-icon {
+    font-size: 2.5rem;
+}
+
+.featured-text {
+    flex-grow: 1;
+}
+
+.featured-text h3 {
+    margin: 0 0 0.25rem 0;
+    color: var(--color-primary);
+}
+
+.featured-text p {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+.featured-arrow {
+    font-size: 2rem;
+    color: var(--color-primary);
+    transition: transform var(--transition-fast);
+}
+
+.featured-card:hover .featured-arrow {
+    transform: translateX(8px);
+}
+
+
+/* --- Results --- */
 .results-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

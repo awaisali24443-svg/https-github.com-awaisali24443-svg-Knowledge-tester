@@ -1,11 +1,14 @@
 
 
+
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
 import { updateMetaTags } from './services/seoService.js';
 import { createIndex as createSearchIndex } from './services/searchService.js';
 import { soundService } from './services/soundService.js'; // NEW
+import { threeManager } from './services/threeManager.js'; // NEW: For 3D Galaxy
+import { overlayService } from './services/overlayService.js'; // NEW: For 3D Galaxy
 
 const app = document.getElementById('app');
 const sidebarContainer = document.getElementById('sidebar-container');
@@ -53,6 +56,24 @@ const appState = {
 let currentModule = null;
 
 async function loadModule(moduleConfig, params = {}) {
+    // --- Special Handling for 3D Home ---
+    if (moduleConfig.module === 'home') {
+        if (currentModule && currentModule.instance && typeof currentModule.instance.destroy === 'function') {
+            currentModule.instance.destroy();
+        }
+        document.querySelector(`link[data-module-id]`)?.remove();
+        app.innerHTML = ''; // Clear previous content
+
+        // Dynamically import home module to initialize 3D scene
+        const homeModule = await import('./modules/home/home.js');
+        await homeModule.init(appState);
+        currentModule = { ...moduleConfig, instance: homeModule };
+        app.parentElement.classList.add('galaxy-view'); // Add class to main container
+        return;
+    }
+     
+    app.parentElement.classList.remove('galaxy-view');
+
     if (currentModule && currentModule.path === moduleConfig.path) {
         return; // Avoid reloading the same module
     }
@@ -119,6 +140,16 @@ async function loadModule(moduleConfig, params = {}) {
 async function handleRouteChange() {
     const hash = window.location.hash.slice(1) || 'home';
     
+    // If we're in the galaxy view and a new hash is set, it means we clicked a planet.
+    if (app.parentElement.classList.contains('galaxy-view') && hash !== 'home') {
+        return; // Let the overlay service handle it
+    }
+    
+    // If navigating away from the galaxy, clean it up.
+    if (!app.parentElement.classList.contains('galaxy-view') && currentModule?.module === 'home') {
+        threeManager.destroy();
+    }
+
     const [path, ...params] = hash.split('/');
     
     let matchedRoute = null;
@@ -151,6 +182,10 @@ async function handleRouteChange() {
     }
 
     if (matchedRoute) {
+        // For non-home routes clicked from nav, ensure galaxy is destroyed
+        if (matchedRoute.module !== 'home' && threeManager) {
+            threeManager.destroy();
+        }
         await loadModule(matchedRoute, routeParams);
         updateActiveNavLink(matchedRoute.hash);
         await updateMetaTags(matchedRoute.name, routeParams);

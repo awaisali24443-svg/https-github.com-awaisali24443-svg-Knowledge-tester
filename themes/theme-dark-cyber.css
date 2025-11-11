@@ -79,10 +79,10 @@
 [data-theme="cyber"] body {
     background-color: var(--color-bg);
     background-image:
-        linear-gradient(rgba(0, 246, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 246, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(0, 246, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 246, 255, 0.02) 1px, transparent 1px);
     background-size: 40px 40px;
-    animation: subtle-grid-scroll 4s linear infinite;
+    animation: subtle-grid-scroll 8s linear infinite;
     position: relative;
     overflow: hidden;
 }
@@ -123,47 +123,38 @@
     overflow: hidden;
 }
 
-/* --- NEW: Holographic Sheen Effect --- */
-[data-theme="cyber"] .card::before,
-[data-theme="cyber"] .dashboard-card::before,
-[data-theme="cyber"] .category-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(
-        circle 300px at var(--mouse-x, 50%) var(--mouse-y, 50%),
-        rgba(0, 246, 255, 0.15),
-        transparent 80%
-    );
-    opacity: 0;
-    transition: opacity 0.3s ease-out;
-    z-index: 1;
-    pointer-events: none;
+/* --- NEW: Holographic Sheen Effect on Cards --- */
+[data-theme="cyber"] .card,
+[data-theme="cyber"] .dashboard-card,
+[data-theme="cyber"] .category-card,
+[data-theme="cyber"] .topic-item,
+[data-theme="cyber"] .review-item,
+[data-theme="cyber"] .saved-question-item {
+    background-image: radial-gradient(circle at var(--mouse-x) var(--mouse-y), rgba(0, 246, 255, 0.2) 0%, transparent 40%);
+    background-size: 150% 150%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 0; /* Start hidden for hover effect */
+    transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), opacity 0.5s;
 }
-
-[data-theme="cyber"] .card:hover::before,
-[data-theme="cyber"] .dashboard-card:hover::before,
-[data-theme="cyber"] .category-card:hover::before {
-    opacity: 1;
-}
-
-[data-theme="cyber"] .card > *,
-[data-theme="cyber"] .dashboard-card > *,
-[data-theme="cyber"] .category-card > * {
-    position: relative;
-    z-index: 2;
-}
-
 
 [data-theme="cyber"] .card:hover,
 [data-theme="cyber"] .dashboard-card:hover,
-[data-theme="cyber"] .category-card:hover {
+[data-theme="cyber"] .category-card:hover,
+[data-theme="cyber"] .topic-item:hover,
+[data-theme="cyber"] .review-item:hover,
+[data-theme="cyber"] .saved-question-item:hover {
     transform: translateY(-5px);
     border-color: var(--color-primary);
     box-shadow: 0 0 20px var(--color-glow);
+}
+[data-theme="cyber"] .card:hover::before,
+[data-theme="cyber"] .dashboard-card:hover::before,
+[data-theme="cyber"] .category-card:hover::before,
+[data-theme="cyber"] .topic-item:hover::before,
+[data-theme="cyber"] .review-item:hover::before,
+[data-theme="cyber"] .saved-question-item:hover::before {
+    opacity: 1;
 }
 
 /* --- Header --- */

@@ -58,10 +58,15 @@ body {
     margin-left: var(--sidebar-width-expanded);
 }
 
-/* --- Styles for 3D Galaxy View --- */
-body.galaxy-view .main-container {
+/* Special case for 3D view to take full space */
+.main-container.galaxy-view {
     padding: 0;
-    overflow: hidden; /* No scrollbars on galaxy view */
+    overflow: hidden; /* Prevent scrollbars on the canvas */
+}
+.galaxy-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
 
@@ -238,94 +243,6 @@ body.galaxy-view .main-container {
     opacity: 1;
 }
 
-/* --- Module Overlay System --- */
-#module-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(10, 15, 30, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 500;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease-out;
-}
-
-#hex-transition-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 501;
-}
-
-
-#module-overlay.visible {
-    opacity: 1;
-    pointer-events: all;
-}
-
-.module-panel {
-    width: 90vw;
-    height: 90vh;
-    max-width: 1400px;
-    max-height: 800px;
-    background-color: rgba(var(--color-bg-light-rgb), 0.9);
-    border-radius: var(--border-radius-lg);
-    border: 1px solid var(--color-border);
-    box-shadow: var(--shadow-lg);
-    display: flex;
-    flex-direction: column;
-    transform: scale(0.98);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease-out;
-    position: relative;
-    z-index: 502;
-    overflow: hidden; /* Contain children */
-    opacity: 0;
-}
-#module-overlay.visible .module-panel {
-    transform: scale(1);
-    opacity: 1;
-}
-
-.module-panel-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid var(--color-border);
-    flex-shrink: 0;
-    transition: opacity 0.3s ease-out;
-}
-.module-panel-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-}
-.back-to-galaxy-btn {
-    background: none;
-    border: none;
-    color: var(--color-text-muted);
-    font-size: 2rem;
-    line-height: 1;
-    cursor: pointer;
-    transition: color var(--transition-fast), transform var(--transition-fast);
-}
-.back-to-galaxy-btn:hover {
-    color: var(--color-text);
-    transform: rotate(90deg);
-}
-
-.module-panel-body {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: 2rem;
-    transition: opacity 0.3s ease-out 0.1s;
-}
-
 /* --- Utility & Animation --- */
 .fade-in {
     animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
@@ -440,6 +357,86 @@ body.galaxy-view .main-container {
     gap: 1rem;
 }
 
+/* --- NEW: Module Overlay (for 3D view) --- */
+#module-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-out;
+}
+#module-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#hex-transition-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.module-panel {
+    position: relative;
+    z-index: 2;
+    width: 90%;
+    max-width: 900px;
+    height: 80vh;
+    background-color: rgba(var(--color-bg-light-rgb), 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.4s ease-out 0.2s, transform 0.4s ease-out 0.2s;
+}
+
+#module-overlay.visible .module-panel {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.module-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--color-border);
+    flex-shrink: 0;
+}
+.module-panel-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+.back-to-galaxy-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    transition: color var(--transition-fast), transform var(--transition-fast);
+}
+.back-to-galaxy-btn:hover {
+    color: var(--color-primary);
+    transform: rotate(90deg);
+}
+
+.module-panel-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2rem;
+}
+
 
 /* --- Mobile & Responsive --- */
 @media (max-width: 768px) {
@@ -501,24 +498,11 @@ body.galaxy-view .main-container {
         min-height: calc(100vh - 60px);
         overflow-y: auto;
     }
-    body.galaxy-view .main-container {
-      padding: 0 0 60px 0; /* Space for bottom nav */
-    }
-
+    
     .sidebar-nav:hover ~ .main-container {
         margin-left: 0;
     }
 
     .main-container h1 { font-size: 2.2rem; }
     .main-container h2 { font-size: 1.8rem; }
-    
-    .module-panel {
-        width: 100vw;
-        height: calc(100vh - 60px); /* Adjust for bottom nav */
-        max-width: 100%;
-        max-height: 100%;
-        border-radius: 0;
-        top: 0;
-        position: absolute;
-    }
 }

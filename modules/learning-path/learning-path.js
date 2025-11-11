@@ -1,11 +1,15 @@
 import { getLearningPath, getProgressForPath } from '../../services/learningPathService.js';
+import { initializeCardGlow } from '../../global/global.js';
 
 let appStateRef;
+let container;
 
 function renderPath(pathId) {
     const path = getLearningPath(pathId);
     if (!path) {
-        document.getElementById('path-steps-container').innerHTML = '<p>Learning path not found.</p>';
+        if(container) container.innerHTML = '<p class="card">Learning path not found. It may have been deleted.</p>';
+        document.getElementById('path-title').textContent = "Path Not Found";
+        document.getElementById('path-description').textContent = "Please generate a new path.";
         return;
     }
 
@@ -14,10 +18,9 @@ function renderPath(pathId) {
     document.getElementById('path-title').textContent = path.name;
     document.getElementById('path-description').textContent = path.description;
 
-    const stepsContainer = document.getElementById('path-steps-container');
     let currentStepFound = false;
 
-    stepsContainer.innerHTML = path.steps.map((step, index) => {
+    container.innerHTML = path.steps.map((step, index) => {
         let stateClass = 'locked';
         let isCurrent = false;
 
@@ -32,9 +35,9 @@ function renderPath(pathId) {
         }
 
         return `
-            <div class="path-step ${stateClass}">
+            <div class="path-step ${stateClass} stagger-in" style="animation-delay: ${index * 100}ms;">
                 <div class="step-marker">${isCompleted ? '✓' : index + 1}</div>
-                <div class="step-content">
+                <div class="step-content card">
                     <h3>${step.name}</h3>
                     <button class="btn btn-primary start-quiz-btn" data-topic="${step.topic}" data-path-id="${path.id}" data-step-id="${step.id}" ${!isCurrent ? 'disabled' : ''}>
                         Start Quiz
@@ -44,15 +47,16 @@ function renderPath(pathId) {
         `;
     }).join('');
 
-    stepsContainer.querySelectorAll('.start-quiz-btn').forEach(btn => {
+    container.querySelectorAll('.start-quiz-btn').forEach(btn => {
         btn.addEventListener('click', handleStartQuiz);
     });
+    
+    initializeCardGlow();
 }
 
 function handleStartQuiz(e) {
     const { topic, pathId, stepId } = e.target.dataset;
     
-    // Pass both the quiz topic and the learning path context to the next module
     appStateRef.context = { 
         topic,
         learningPathContext: {
@@ -65,23 +69,17 @@ function handleStartQuiz(e) {
 
 export function init(appState) {
     appStateRef = appState;
-    // For now, hardcode to the single available path.
-    // A future 'paths' module would let the user choose.
-    const pathId = "javascript-basics"; 
-    
-    // FIX #22: Handle empty state
-    if (!getLearningPath(pathId)) {
-        const container = document.getElementById('path-steps-container');
-        if (container) {
-            container.innerHTML = `
-                <div class="card">
-                    <h3>No Learning Paths Available</h3>
-                    <p>Check back soon for guided learning journeys!</p>
-                </div>
-            `;
-        }
-        document.getElementById('path-title').textContent = "Learning Paths";
-        document.getElementById('path-description').textContent = "No paths found.";
+    container = document.getElementById('path-steps-container');
+    const pathId = appState.context.params?.pathId;
+
+    if (!pathId) {
+        if(container) container.innerHTML = `
+            <div class="card">
+                <h3>Invalid Path</h3>
+                <p>No learning path was specified. Please generate one from the Explore page.</p>
+                <a href="#paths" class="btn">Generate a Path</a>
+            </div>
+        `;
         return;
     }
 
@@ -90,4 +88,6 @@ export function init(appState) {
 
 export function destroy() {
     console.log("Learning Path module destroyed.");
+    appStateRef = null;
+    container = null;
 }
