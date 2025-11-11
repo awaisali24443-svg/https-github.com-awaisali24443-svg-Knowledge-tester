@@ -1,4 +1,5 @@
 
+
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
@@ -16,8 +17,9 @@ const appState = {
         return this._context;
     },
     set context(data) {
-        this._context = data;
-        // FIX #2: Persist state to sessionStorage on change
+        // BUG FIX: Merge new data with existing context instead of overwriting it.
+        // This prevents state loss during navigation.
+        this._context = { ...this._context, ...data };
         try {
             sessionStorage.setItem(APP_STATE_KEY, JSON.stringify(this._context));
         } catch (error) {
@@ -74,7 +76,7 @@ async function loadModule(moduleConfig, params = {}) {
         currentModule.instance = js;
         
         // Pass params from router to the module's init function
-        appState.context.params = params;
+        appState.context = { params }; // Use setter to merge params
         if (typeof js.init === 'function') {
             js.init(appState);
         }
