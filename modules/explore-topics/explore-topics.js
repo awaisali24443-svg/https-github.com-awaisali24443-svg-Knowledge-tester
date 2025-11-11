@@ -1,3 +1,4 @@
+
 import { getCategories } from '../../services/topicService.js';
 import { search } from '../../services/searchService.js';
 
@@ -46,7 +47,7 @@ function renderSearchResults(results, query) {
                 `;
             } else { // topic
                 return `
-                    <a href="${item.href}" class="topic-result-card" data-topic="${item.topic}">
+                    <a href="${item.href}" class="topic-result-card" data-topic-name="${item.name}" data-topic-id="${item.id}">
                         <div class="card-icon">${item.icon}</div>
                         <div class="card-title"><h4>${item.name}</h4></div>
                     </a>
@@ -79,17 +80,18 @@ const handleSearchInput = (e) => {
 };
 
 const handleResultClick = (e) => {
-    const link = e.target.closest('a[data-topic]');
+    const link = e.target.closest('a[data-topic-name]');
     if (!link) return;
 
     e.preventDefault();
-    const selectedTopic = link.dataset.topic;
+    const topicName = link.dataset.topicName;
+    const topicId = link.dataset.topicId;
     
     if (appStateRef) {
-        appStateRef.context = { topic: selectedTopic };
+        appStateRef.context = { topic: topicName, topicId: topicId };
     }
     
-    window.location.hash = link.getAttribute('href');
+    window.location.hash = '#loading';
 };
 
 export async function init(appState) {

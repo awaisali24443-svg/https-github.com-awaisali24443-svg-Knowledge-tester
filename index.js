@@ -1,6 +1,7 @@
 
 
 
+
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
@@ -217,9 +218,6 @@ function init() {
         handleRouteChange(); // Initial route
     });
     
-    // Build the search index in the background on startup
-    createSearchIndex();
-
     // Hide splash screen after a delay
     setTimeout(() => {
         if(splashScreen) splashScreen.classList.add('fade-out');

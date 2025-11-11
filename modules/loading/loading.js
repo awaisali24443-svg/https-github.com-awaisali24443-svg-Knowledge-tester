@@ -1,3 +1,4 @@
+
 import { generateQuiz } from '../../services/geminiService.js';
 import { NUM_QUESTIONS } from '../../constants.js';
 
@@ -34,7 +35,8 @@ async function startQuizGeneration(appState) {
 
     try {
         const topic = appState.context?.topic || "a random interesting topic";
-        const quizData = await generateQuiz(topic, NUM_QUESTIONS);
+        const topicId = appState.context?.topicId; // Get ID for curated topics
+        const quizData = await generateQuiz(topic, topicId, NUM_QUESTIONS);
         
         if (isCancelled) return; // Don't navigate if user cancelled while waiting
 

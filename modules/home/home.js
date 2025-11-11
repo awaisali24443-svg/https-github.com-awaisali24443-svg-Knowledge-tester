@@ -1,3 +1,5 @@
+
+
 import { getSetting } from '../../services/configService.js';
 import { threeManager } from '../../services/threeManager.js';
 import { isFeatureEnabled } from '../../services/featureService.js';
@@ -56,12 +58,13 @@ const dashboardItems = [
 ];
 
 const handleGridClick = (e) => {
-    const topicCard = e.target.closest('a.dashboard-card[data-topic]');
+    const topicCard = e.target.closest('a.dashboard-card[data-topic-name]');
     if (topicCard) {
         e.preventDefault();
-        const topic = topicCard.dataset.topic;
+        const topicName = topicCard.dataset.topicName;
+        const topicId = topicCard.dataset.topicId;
         if (appStateRef) {
-            appStateRef.context = { topic };
+            appStateRef.context = { topic: topicName, topicId: topicId };
             window.location.hash = '#loading';
         }
     }
@@ -73,25 +76,28 @@ const handleCardMouseMove = (e) => {
     const x = e.clientX - left;
     const y = e.clientY - top;
 
-    const rotateX = (y / height - 0.5) * -25; // Tilt intensity
-    const rotateY = (x / width - 0.5) * 25;
+    // Update CSS custom properties for the glow effect
+    card.style.setProperty('--x', `${x}px`);
+    card.style.setProperty('--y', `${y}px`);
 
-    card.style.transition = 'transform 0.1s linear';
-    card.style.transform = `translateY(-5px) scale(1.03) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+    // 3D tilt effect
+    const rotateX = (y / height - 0.5) * -20; // Tilt intensity
+    const rotateY = (x / width - 0.5) * 20;
+
+    card.style.transform = `scale(1.03) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
 };
 
 const handleCardMouseLeave = (e) => {
     const card = e.currentTarget;
     card.style.transition = `transform ${getComputedStyle(card).getPropertyValue('--transition-med')} ease-out`;
-    card.style.transform = `translateY(0) scale(1) rotateX(0) rotateY(0)`;
+    card.style.transform = `scale(1) rotateX(0) rotateY(0)`;
 };
 
 async function renderDashboard() {
     const mainGridContainer = document.getElementById('dashboard-grid');
-    const featuredTopicsSection = document.getElementById('featured-topics-section');
-    const featuredTopicsGrid = document.getElementById('featured-topics-grid');
+    const topicSectionsContainer = document.getElementById('topic-sections-container');
 
-    if (!mainGridContainer || !featuredTopicsGrid) return;
+    if (!mainGridContainer || !topicSectionsContainer) return;
 
     // 1. Render static action cards
     const staticCardsHtml = dashboardItems.map(item => {
@@ -121,31 +127,46 @@ async function renderDashboard() {
     }).join('');
     mainGridContainer.innerHTML = staticCardsHtml;
 
-    // 2. Render featured topic cards
+    // 2. Render all topic cards grouped by category
     try {
         const categories = await getCategories();
-        const allTopicsPromises = categories.map(cat => getTopicsForCategory(cat.id));
-        const allTopicsArrays = await Promise.all(allTopicsPromises);
-        const allTopics = allTopicsArrays.flat();
-        
-        if (allTopics.length > 0) {
-            const topicCardsHtml = allTopics.map(topic => `
-                <a href="#loading" class="dashboard-card" data-topic="${topic.name}">
-                     <div class="card-icon">🧠</div>
-                     <div class="card-content">
-                        <h3>${topic.name}</h3>
-                        <p>${topic.description}</p>
-                    </div>
-                </a>
-            `).join('');
-            featuredTopicsGrid.innerHTML = topicCardsHtml;
-            featuredTopicsSection.style.display = 'block';
+        if (categories.length > 0) {
+            topicSectionsContainer.style.display = 'block';
+
+            // Fetch all topics concurrently for better performance
+            const topicsPerCategory = await Promise.all(
+                categories.map(cat => getTopicsForCategory(cat.id).then(topics => ({ category: cat, topics })))
+            );
+
+            const allTopicSectionsHtml = topicsPerCategory.map(({ category, topics }) => {
+                if (topics.length === 0) return '';
+                
+                const topicCardsHtml = topics.map(topic => `
+                    <a href="#loading" class="dashboard-card" data-topic-name="${topic.name}" data-topic-id="${topic.id}">
+                         <div class="card-icon">🧠</div>
+                         <div class="card-content">
+                            <h3>${topic.name}</h3>
+                            <p>${topic.description}</p>
+                        </div>
+                    </a>
+                `).join('');
+
+                return `
+                    <section class="topic-category-section">
+                        <h2 class="category-title">${category.name}</h2>
+                        <div class="dashboard-grid">${topicCardsHtml}</div>
+                    </section>
+                `;
+            }).join('');
+            
+            topicSectionsContainer.innerHTML = allTopicSectionsHtml;
         }
     } catch (error) {
         console.error("Could not load topics for home screen", error);
+        topicSectionsContainer.innerHTML = '<p>Error loading topics. Please try refreshing the page.</p>';
     }
     
-    // 3. Apply animations and effects to all cards
+    // 3. Apply animations and effects to all cards on the page
     const allCards = document.querySelectorAll('.home-content .dashboard-card');
     allCards.forEach((card, index) => {
         card.style.animationDelay = `${index * 100}ms`;

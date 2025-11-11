@@ -33,7 +33,7 @@
 
 .score-ring-fg {
     fill: none;
-    stroke: var(--color-primary);
+    stroke: url(#score-gradient);
     stroke-width: 3.8;
     stroke-linecap: round;
     transform: rotate(-90deg);

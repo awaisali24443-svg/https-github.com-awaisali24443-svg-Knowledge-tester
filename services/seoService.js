@@ -15,15 +15,6 @@ const metaConfig = {
         title: `Custom Quiz Generator | ${siteName}`,
         description: `Generate a unique quiz on any topic in seconds. Enter your subject and let our AI create a challenge for you.`,
     },
-    'Explore': {
-        title: `Explore Topics | ${siteName}`,
-        description: `Browse our library of curated quiz topics across subjects like science, history, technology, and arts.`,
-    },
-    'Topic List': {
-        // Dynamic template
-        title: (params) => `${params.categoryName} Quizzes | ${siteName}`,
-        description: (params) => `Discover and take quizzes from the ${params.categoryName} category. Test your knowledge on topics curated by experts.`,
-    },
     'My Library': {
         title: `My Library | ${siteName}`,
         description: `Review and manage your saved questions from previous quizzes to reinforce your learning.`,
@@ -75,4 +66,3 @@ export async function updateMetaTags(routeName, params) {
     const canonicalUrl = `${window.location.origin}${window.location.pathname}${window.location.hash || ''}`;
     document.querySelector('meta[property="og:url"]')?.setAttribute('content', canonicalUrl);
 }
-      

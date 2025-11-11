@@ -50,6 +50,10 @@
     --shadow-md: 0 2px 10px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 5px 20px rgba(0, 0, 0, 0.4);
 }
+[data-theme="cyber"] body {
+    background: #0d0f1a;
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+}
 [data-theme="cyber"] .btn-primary {
     text-shadow: 0 0 5px var(--color-primary), 0 0 10px var(--color-primary);
 }

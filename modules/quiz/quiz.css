@@ -74,7 +74,13 @@
 
 .option-btn:hover:not(:disabled) {
     border-color: var(--color-primary);
-    background-color: var(--color-bg);
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.option-btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .option-btn:disabled {
@@ -86,12 +92,16 @@
     background-color: var(--color-success);
     border-color: var(--color-success);
     color: #fff;
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .option-btn.incorrect {
     background-color: var(--color-danger);
     border-color: var(--color-danger);
     color: #fff;
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 /* Keyframes for feedback animations */

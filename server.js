@@ -1,3 +1,4 @@
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -21,12 +22,12 @@ try {
     topicsData = { categories: [], topics: {} };
 }
 
-// --- Helper function to find a curated topic ---
-function findCuratedTopic(topicName, data) {
+// --- Helper function to find a curated topic by its ID ---
+function findCuratedTopicById(topicId, data) {
     if (!data || !data.topics) return null;
     for (const categoryId in data.topics) {
         const topicsInCategory = data.topics[categoryId];
-        const foundTopic = topicsInCategory.find(t => t.name.toLowerCase() === topicName.toLowerCase());
+        const foundTopic = topicsInCategory.find(t => t.id === topicId);
         if (foundTopic) {
             return foundTopic;
         }
@@ -63,18 +64,22 @@ app.get('/api/topics', apiLimiter, (req, res) => {
 
 // API route for generating quizzes
 app.post('/api/generate', apiLimiter, async (req, res) => {
-    const { topic, numQuestions, difficulty } = req.body;
+    const { topic, topicId, numQuestions, difficulty } = req.body;
 
     if (!topic) {
         return res.status(400).json({ error: 'Topic is required.' });
     }
 
     let prompt;
-    const curatedTopic = findCuratedTopic(topic, topicsData);
+    let curatedTopic = null;
+
+    if (topicId) {
+        curatedTopic = findCuratedTopicById(topicId, topicsData);
+    }
 
     if (curatedTopic && curatedTopic.questions && curatedTopic.questions.length > 0) {
         // Handle curated topics: use the pre-defined questions
-        console.log(`Generating quiz for curated topic: "${topic}"`);
+        console.log(`Generating quiz for curated topic: "${topic}" (ID: ${topicId})`);
         const questionList = curatedTopic.questions.map(q => `- "${q}"`).join('\n');
         prompt = `Create a fun multiple-choice quiz based *only* on the following questions:
 ${questionList}

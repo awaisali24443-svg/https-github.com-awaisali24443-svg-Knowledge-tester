@@ -1,4 +1,5 @@
-export async function generateQuiz(topic, numQuestions, difficulty = 'Medium') {
+
+export async function generateQuiz(topic, topicId, numQuestions, difficulty = 'Medium') {
     try {
         const response = await fetch('/api/generate', {
             method: 'POST',
@@ -7,6 +8,7 @@ export async function generateQuiz(topic, numQuestions, difficulty = 'Medium') {
             },
             body: JSON.stringify({
                 topic,
+                topicId,
                 numQuestions,
                 difficulty,
             }),

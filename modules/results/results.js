@@ -18,6 +18,22 @@ const handleRetakeQuiz = () => {
     }
 };
 
+function animateScore(finalScore, scoreEl) {
+    let currentScore = 0;
+    const duration = 1000; // 1 second
+    const stepTime = 20; // update every 20ms
+    const increment = finalScore / (duration / stepTime);
+
+    const timer = setInterval(() => {
+        currentScore += increment;
+        if (currentScore >= finalScore) {
+            currentScore = finalScore;
+            clearInterval(timer);
+        }
+        scoreEl.textContent = `${Math.round(currentScore)}%`;
+    }, stepTime);
+}
+
 function renderResults(appState) {
     appStateRef = appState;
     const { questions, userAnswers, score } = getQuizState();
@@ -29,13 +45,13 @@ function renderResults(appState) {
     const finalScoreText = document.getElementById('final-score-text');
     const title = document.getElementById('results-title');
     retakeBtn = document.getElementById('retake-quiz-btn');
-
-    scoreText.textContent = `${scorePercent}%`;
+    
     finalScoreText.textContent = `You answered ${score} out of ${questions.length} questions correctly.`;
 
-    // Animate the score ring
+    // Animate the score ring and text
     setTimeout(() => {
         scoreRingFg.setAttribute('stroke-dasharray', `${scorePercent}, 100`);
+        animateScore(scorePercent, scoreText);
     }, 100);
 
     // Update title based on score

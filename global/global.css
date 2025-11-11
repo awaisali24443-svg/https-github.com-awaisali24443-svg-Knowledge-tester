@@ -1,10 +1,10 @@
 /* --- CSS Variables & Base Styles --- */
 :root {
-    --font-sans: 'Roboto', sans-serif;
-    --font-display: 'Orbitron', sans-serif;
-    --border-radius-sm: 4px;
-    --border-radius-md: 8px;
-    --border-radius-lg: 12px;
+    --font-sans: 'Poppins', sans-serif;
+    --font-display: 'Exo 2', sans-serif;
+    --border-radius-sm: 6px;
+    --border-radius-md: 10px;
+    --border-radius-lg: 16px;
     --transition-fast: 0.2s ease-out;
     --transition-med: 0.4s ease-out;
     --container-width: 1200px;
@@ -59,6 +59,7 @@ body {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
     font-weight: 600;
+    font-family: var(--font-sans); /* Ensure buttons use the sans font */
     border-radius: var(--border-radius-md);
     border: 2px solid transparent;
     cursor: pointer;
@@ -67,12 +68,15 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
+    background-image: linear-gradient(to right, var(--color-primary) 0%, var(--color-secondary) 100%);
+    background-size: 200% auto;
     color: #fff;
+    box-shadow: 0 4px 15px 0 rgba(0,0,0,0.2);
 }
 .btn-primary:hover {
-    opacity: 0.9;
-    transform: translateY(-2px);
+    background-position: right center; /* change the direction of the change here */
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px 0 rgba(0,0,0,0.25);
 }
 
 .main-container .card {

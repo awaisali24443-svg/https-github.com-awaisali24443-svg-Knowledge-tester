@@ -1,3 +1,4 @@
+
 // services/searchService.js
 import { getCategories, getTopicsForCategory } from './topicService.js';
 
@@ -41,7 +42,7 @@ export async function createIndex() {
                     description: `A quiz about ${topic.name} from the ${cat.name} category.`,
                     icon: '🧠',
                     href: `/#loading`, // Topics go to loading screen
-                    topic: topic.name // Store topic for context
+                    topic: topic.name // Store topic name for context
                 });
             });
         });

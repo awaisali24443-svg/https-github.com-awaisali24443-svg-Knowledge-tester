@@ -1,4 +1,5 @@
 
+
 import { getTopicsForCategory, getCategoryById } from '../../services/topicService.js';
 
 let listContainer;
@@ -9,14 +10,15 @@ const handleTopicClick = (e) => {
     if (!link) return;
 
     e.preventDefault();
-    const selectedTopic = link.dataset.topic;
+    const topicName = link.dataset.topicName;
+    const topicId = link.dataset.topicId;
     
     // Use the stored appState reference to modify the context
     if (appStateRef) {
-        appStateRef.context = { topic: selectedTopic };
+        appStateRef.context = { topic: topicName, topicId: topicId };
     }
     
-    window.location.hash = link.getAttribute('href');
+    window.location.hash = '#loading';
 };
 
 export async function init(appState) {
@@ -48,7 +50,7 @@ export async function init(appState) {
 
         if (topics && topics.length > 0) {
             listContainer.innerHTML = topics.map(topic => `
-                <a href="#loading" class="topic-item-link" data-topic="${topic.name}">
+                <a href="#loading" class="topic-item-link" data-topic-name="${topic.name}" data-topic-id="${topic.id}">
                     <div class="topic-item">
                         <span class="topic-icon">🧠</span>
                         <span class="topic-name">${topic.name}</span>

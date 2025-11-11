@@ -16,11 +16,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://ai-knowledge-tester.onrender.com/#explore</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://ai-knowledge-tester.onrender.com/#settings</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
