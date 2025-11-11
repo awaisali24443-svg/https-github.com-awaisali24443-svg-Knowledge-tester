@@ -7,6 +7,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js';
 import { soundService } from './soundService.js';
+import { getCategories } from './topicService.js';
 
 let camera, scene, renderer, composer, controls, sunLight, sunMesh;
 let clock, raycaster, mouse;
@@ -26,17 +27,15 @@ const targetLookAt = new THREE.Vector3();
 const initialCameraPos = new THREE.Vector3(0, 20, 55);
 const initialLookAt = new THREE.Vector3(0, 0, 0);
 
-// --- रियलिस्टिक प्लैनेट कॉन्फ़िगरेशन ---
-const PLANET_CONFIG = [
-    // Maps to new categories
-    { name: 'Science & Nature', route: '#explore', size: 1.2, orbitRadiusX: 18, orbitRadiusZ: 18, speed: 0.2, rotationSpeed: 0.005, type: 'earth' },
-    { name: 'History', route: '#explore', size: 0.8, orbitRadiusX: 28, orbitRadiusZ: 26, speed: 0.15, rotationSpeed: 0.004, type: 'mars' },
-    { name: 'Arts & Literature', route: '#custom-quiz', size: 1.0, orbitRadiusX: 38, orbitRadiusZ: 38, speed: 0.1, rotationSpeed: 0.003, type: 'neptune' },
-    { name: 'Technology', route: '#custom-quiz', size: 0.7, orbitRadiusX: 47, orbitRadiusZ: 45, speed: 0.08, rotationSpeed: 0.006, type: 'rocky' },
+// --- Static Planet Config for non-category modules ---
+const STATIC_PLANET_CONFIG = [
+    { name: 'Custom Quiz', route: '#custom-quiz', size: 1.0, orbitRadiusX: 28, orbitRadiusZ: 26, speed: 0.15, rotationSpeed: 0.004, type: 'neptune' },
     { name: 'Aural AI', route: '#aural', size: 1.5, orbitRadiusX: 58, orbitRadiusZ: 58, speed: 0.06, rotationSpeed: 0.002, type: 'jupiter', rings: true },
     { name: 'My Library', route: '#library', size: 0.9, orbitRadiusX: 70, orbitRadiusZ: 68, speed: 0.05, rotationSpeed: 0.007, type: 'ice' },
     { name: 'Settings', route: '#settings', size: 0.6, orbitRadiusX: 80, orbitRadiusZ: 80, speed: 0.04, rotationSpeed: 0.008, type: 'rocky_dark' },
 ];
+
+const PLANET_VISUAL_TYPES = ['earth', 'mars', 'rocky', 'neptune', 'ice', 'jupiter'];
 
 // --- Shaders ---
 const atmosphereVertexShader = `
@@ -106,7 +105,7 @@ const GodRaysShader = {
 
 
 // --- Main Initialization ---
-function init(canvas, clickCallback) {
+async function init(canvas, clickCallback) {
     onPlanetClick = clickCallback;
 
     clock = new THREE.Clock();
@@ -154,7 +153,32 @@ function init(canvas, clickCallback) {
     lensflare.addElement(new LensflareElement(textureFlare3, 70, 1));
     sunLight.add(lensflare);
 
-    PLANET_CONFIG.forEach(config => {
+    // --- Dynamic Planet Generation ---
+    const allPlanetConfigs = [...STATIC_PLANET_CONFIG];
+    try {
+        const categories = await getCategories();
+        const baseOrbit = 18;
+        const orbitStep = 10;
+        categories.forEach((cat, index) => {
+            allPlanetConfigs.push({
+                name: cat.name,
+                route: `/#topics/${cat.id}`,
+                size: 1.0 + Math.random() * 0.4 - 0.2, // ~0.8 to 1.2
+                orbitRadiusX: baseOrbit + (index * orbitStep),
+                orbitRadiusZ: baseOrbit + (index * orbitStep) + (Math.random() * 4 - 2), // slightly elliptical
+                speed: 0.2 - (index * 0.03),
+                rotationSpeed: 0.003 + Math.random() * 0.004,
+                type: PLANET_VISUAL_TYPES[index % PLANET_VISUAL_TYPES.length] // cycle through visuals
+            });
+        });
+    } catch (error) {
+        console.error("Could not fetch categories to generate planets:", error);
+    }
+    
+    // Sort planets by orbit radius for a logical layout
+    allPlanetConfigs.sort((a, b) => a.orbitRadiusX - b.orbitRadiusX);
+
+    allPlanetConfigs.forEach(config => {
         createPlanet(config);
         createOrbitLine(config);
     });

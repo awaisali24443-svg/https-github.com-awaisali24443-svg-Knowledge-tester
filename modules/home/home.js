@@ -11,18 +11,50 @@ const MAX_RETRIES = 20; // Increased retries for more resilience
 // --- Module Lifecycle ---
 
 const handlePlanetClick = (planet) => {
-    if (planet && planet.userData.route) {
-        // Find the full module configuration from the route hash
-        const routeHash = planet.userData.route.substring(1); // remove '#'
-        const moduleConfig = ROUTES.find(r => r.hash === routeHash);
+    if (!planet || !planet.userData.route) return;
 
-        if (moduleConfig) {
-            // 1. Animate camera to the planet
-            threeManager.focusOnPlanet(planet, () => {
-                // 2. When animation is done, show the module overlay, passing the appState
-                overlayService.show(moduleConfig, appStateRef);
-            });
+    const routeHash = planet.userData.route.substring(1); // remove '#'
+    let matchedRoute = null;
+    let routeParams = {};
+
+    // Find the full module configuration from the route hash, supporting dynamic routes
+    for (const route of ROUTES) {
+        const routeParts = route.hash.split('/');
+        const pathParts = routeHash.split('/');
+
+        if (routeParts.length !== pathParts.length) continue;
+
+        let isMatch = true;
+        let tempParams = {};
+
+        for (let i = 0; i < routeParts.length; i++) {
+            if (routeParts[i].startsWith(':')) {
+                const paramName = routeParts[i].substring(1);
+                tempParams[paramName] = pathParts[i];
+            } else if (routeParts[i] !== pathParts[i]) {
+                isMatch = false;
+                break;
+            }
         }
+        
+        if (isMatch) {
+            matchedRoute = route;
+            routeParams = tempParams;
+            break;
+        }
+    }
+
+    if (matchedRoute) {
+        // Set the parameters in the app state before showing the module
+        appStateRef.context = { params: routeParams };
+        
+        // 1. Animate camera to the planet
+        threeManager.focusOnPlanet(planet, () => {
+            // 2. When animation is done, show the module overlay, passing the appState
+            overlayService.show(matchedRoute, appStateRef);
+        });
+    } else {
+        console.error(`No route configuration found for hash: ${routeHash}`);
     }
 };
 
@@ -39,7 +71,7 @@ const handleCloseModule = () => {
  * 3. The canvas element has valid, non-zero dimensions (BOTH width and height).
  * This prevents all race conditions with the router and CSS layout engine.
  */
-function attemptThreeInit() {
+async function attemptThreeInit() {
     // 1. Check if canvas exists (it might have been destroyed by the router)
     if (!galaxyCanvas) return;
 
@@ -51,7 +83,8 @@ function attemptThreeInit() {
 
     if (isConnected && hasValidSize) {
         console.log(`Galaxy canvas is connected and sized: ${galaxyCanvas.clientWidth}x${galaxyCanvas.clientHeight}. Initializing Three.js.`);
-        threeManager.init(galaxyCanvas, handlePlanetClick);
+        // The init function is now async
+        await threeManager.init(galaxyCanvas, handlePlanetClick);
     } else if (retryCount < MAX_RETRIES) {
         retryCount++;
         // Log detailed status for debugging
@@ -82,7 +115,7 @@ export async function init(appState) {
         document.body.classList.add('galaxy-view');
         
         retryCount = 0; // Reset retry count for this initialization
-        attemptThreeInit(); // Start the robust initialization attempt
+        await attemptThreeInit(); // Start the robust initialization attempt
 
         window.addEventListener('close-module-view', handleCloseModule);
     } else {
