@@ -171,6 +171,22 @@ async function loadHeader() {
         headerContainer.innerHTML = headerHtml;
         setupHeaderListeners();
         populateNavLinks();
+
+        // --- Header Scroll Effect Listener ---
+        const headerEl = headerContainer.querySelector('.site-nav');
+        if (headerEl) {
+            const handleScroll = () => {
+                if (window.scrollY > 10) {
+                    headerEl.classList.add('scrolled');
+                } else {
+                    headerEl.classList.remove('scrolled');
+                }
+            };
+            // Set initial state
+            handleScroll();
+            // Add listener
+            window.addEventListener('scroll', handleScroll, { passive: true });
+        }
     } catch (error) {
         console.error("Failed to load header:", error);
     }

@@ -57,32 +57,86 @@
 
 [data-theme="aurora"] body {
     background-color: var(--color-bg);
-    background-image: 
-        radial-gradient(at 80% 10%, hsla(269, 88%, 69%, 0.15) 0px, transparent 50%),
-        radial-gradient(at 20% 90%, hsla(172, 78%, 69%, 0.15) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, hsla(330, 88%, 69%, 0.1) 0px, transparent 50%);
 }
 
-/* --- Glassmorphism Components for Aurora --- */
+/* --- Animated Aurora Background --- */
+.aurora-background {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; overflow: hidden;
+}
+.aurora-background::before, .aurora-background::after {
+    content: ''; position: absolute; width: 800px; height: 800px; border-radius: 50%;
+    opacity: 0.15; filter: blur(100px); will-change: transform;
+    animation: aurora-move 25s infinite alternate;
+}
+.aurora-background::before { background: var(--color-primary); top: -20%; left: -20%; }
+.aurora-background::after { background: var(--color-secondary); bottom: -20%; right: -20%; animation-delay: -12s; }
+
+@keyframes aurora-move {
+    from { transform: translate(-50px, -50px) rotate(0deg) scale(1); }
+    to { transform: translate(50px, 50px) rotate(90deg) scale(1.2); }
+}
+
+/* --- Enhanced Aurora Components --- */
 [data-theme="aurora"] .card,
 [data-theme="aurora"] .site-nav,
 [data-theme="aurora"] .modal-content,
 [data-theme="aurora"] .toast,
 [data-theme="aurora"] .hero-form,
-[data-theme="aurora"] .option-btn {
+[data-theme="aurora"] .option-btn,
+[data-theme="aurora"] .topic-item,
+[data-theme="aurora"] .saved-question-item,
+[data-theme="aurora"] .review-item {
     background: var(--color-bg-light);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--color-border);
     box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* --- Interactive Glow Effect on Cards --- */
+[data-theme="aurora"] .card::before,
+[data-theme="aurora"] .dashboard-card::before,
+[data-theme="aurora"] .category-card::before,
+[data-theme="aurora"] .topic-item::before,
+[data-theme="aurora"] .saved-question-item::before,
+[data-theme="aurora"] .review-item::before {
+    content: ""; position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: inherit;
+    background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(168, 85, 247, 0.25), transparent 40%);
+    opacity: 0; transition: opacity 0.5s; z-index: -1;
+}
+
+[data-theme="aurora"] .card:hover::before,
+[data-theme="aurora"] .dashboard-card:hover::before,
+[data-theme="aurora"] .category-card:hover::before,
+[data-theme="aurora"] .topic-item:hover::before,
+[data-theme="aurora"] .saved-question-item:hover::before,
+[data-theme="aurora"] .review-item:hover::before {
+    opacity: 1;
 }
 
 [data-theme="aurora"] .card:hover,
 [data-theme="aurora"] .dashboard-card:hover,
 [data-theme="aurora"] .category-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 0 25px var(--color-glow);
     border-color: var(--color-primary);
+}
+
+/* --- Scrolling Header Effect --- */
+[data-theme="aurora"] .site-nav {
+    background: transparent;
+    border-bottom-color: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+}
+[data-theme="aurora"] .site-nav.scrolled {
+    background: var(--color-bg-light);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
 }
 
 
@@ -114,12 +168,18 @@
     text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
     border: none;
     padding: calc(0.75rem + 2px) calc(1.5rem + 2px); /* Maintain size after removing border */
+    transition: background-position var(--transition-med), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 [data-theme="aurora"] .btn-primary:hover {
     filter: none; /* remove default brightness filter */
     background-position: right center;
-    box-shadow: 0 0 20px var(--color-glow);
+    box-shadow: 0 0 25px var(--color-glow);
+    transform: translateY(-2px);
     border-color: transparent;
+}
+
+[data-theme="aurora"] h1, [data-theme="aurora"] h2, [data-theme="aurora"] h3 {
+    text-shadow: 0 0 12px var(--color-glow);
 }
 
 /* --- Module Specific Overrides --- */

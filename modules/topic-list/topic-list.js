@@ -49,9 +49,9 @@ export async function init(appState) {
         }
 
         if (topics && topics.length > 0) {
-            listContainer.innerHTML = topics.map(topic => `
+            listContainer.innerHTML = topics.map((topic, index) => `
                 <a href="#loading" class="topic-item-link" data-topic-name="${topic.name}" data-topic-id="${topic.id}">
-                    <div class="topic-item">
+                    <div class="topic-item stagger-in" style="animation-delay: ${index * 80}ms;">
                         <span class="topic-icon">🧠</span>
                         <span class="topic-name">${topic.name}</span>
                         <span class="topic-arrow">→</span>
