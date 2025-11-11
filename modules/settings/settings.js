@@ -35,7 +35,7 @@ const handleClearData = async () => {
             toastService.show("Your guest data has been cleared.");
         } catch (error) {
             console.error("Failed to clear guest data:", error);
-            toastService.show("There was an error clearing your data.");
+            toastService.show("There was an error clearing your data.", "error");
         }
     }
 };

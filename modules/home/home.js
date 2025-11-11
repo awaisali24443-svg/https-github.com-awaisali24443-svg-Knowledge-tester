@@ -41,11 +41,10 @@ const handleCloseModule = () => {
  * This prevents all race conditions with the router and CSS layout engine.
  */
 function attemptThreeInit() {
-    // 1. Check if canvas exists (it might have been destroyed)
+    // 1. Check if canvas exists (it might have been destroyed by the router)
     if (!galaxyCanvas) return;
 
     // 2. CRITICAL: Check if the element is still part of the document.
-    // This prevents errors if the router clears the parent's innerHTML.
     const isConnected = galaxyCanvas.isConnected;
     
     // 3. Check for valid dimensions.
