@@ -1,8 +1,10 @@
+
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
 import { updateMetaTags } from './services/seoService.js';
 import { createIndex as createSearchIndex } from './services/searchService.js';
+import { soundService } from './services/soundService.js'; // NEW
 
 const app = document.getElementById('app');
 const sidebarContainer = document.getElementById('sidebar-container');
@@ -184,6 +186,7 @@ function populateNavLinks() {
 
 function updateActiveNavLink(currentHash) {
     const hashBase = currentHash.split('/')[0];
+    // Get all navigation links
     const navLinks = sidebarContainer.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
         link.classList.toggle('active', link.dataset.hash === hashBase);
@@ -207,6 +210,9 @@ function init() {
 
     // Build the search index for the explore page
     createSearchIndex();
+    
+    // NEW: Initialize the sound service
+    soundService.init();
     
     // FIX #15: Ensure sidebar is loaded before routing
     loadSidebar().then(() => {

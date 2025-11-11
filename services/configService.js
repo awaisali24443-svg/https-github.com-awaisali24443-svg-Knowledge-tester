@@ -1,3 +1,4 @@
+
 import { GENERAL_SETTINGS_KEY } from '../constants.js';
 
 const defaultSettings = {
@@ -8,7 +9,8 @@ const defaultSettings = {
     dyslexiaFont: false,
 };
 
-let currentSettings = {};
+// FIX: Initialize currentSettings with default values to provide a proper type for the type checker.
+let currentSettings = { ...defaultSettings };
 
 function loadSettings() {
     // FIX #7: Wrap localStorage access in try...catch

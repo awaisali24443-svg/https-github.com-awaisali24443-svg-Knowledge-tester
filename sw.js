@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v1.4';
+const CACHE_NAME = 'knowledge-tester-v1.5';
 const STATIC_ASSETS = [
     '/global/global.css',
     '/global/splash.css',
@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
     // Pre-cache core services and home module for fast initial load
     '/services/configService.js',
     '/services/featureService.js',
+    '/services/soundService.js', // NEW
     '/modules/home/home.js',
     '/modules/home/home.html',
     '/modules/home/home.css',
@@ -20,7 +21,12 @@ const STATIC_ASSETS = [
     'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2',
     '/assets/icon-192.png',
     '/assets/icon-512.png',
-    '/icon.svg'
+    '/icon.svg',
+    // NEW: Audio assets
+    '/assets/sounds/ambient.mp3',
+    '/assets/sounds/click.wav',
+    '/assets/sounds/hover.wav',
+    '/assets/sounds/transition.wav'
 ];
 
 // On install, pre-cache static assets

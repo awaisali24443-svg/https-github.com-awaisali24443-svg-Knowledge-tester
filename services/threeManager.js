@@ -1,10 +1,11 @@
-
 // services/threeManager.js
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { Lensflare, LensflareElement } from 'three/addons/objects/Lensflare.js'; // NEW
+import { soundService } from './soundService.js'; // NEW
 
 let camera, scene, renderer, composer, controls, sunLight;
 let clock, raycaster, mouse;
@@ -125,10 +126,13 @@ function init(canvas, clickCallback) {
     sunLight = new THREE.PointLight(0xffddaa, 3, 300);
     scene.add(sunLight);
 
+    // NEW: Mobile optimization
+    const isMobile = window.innerWidth <= 768;
+    const starCount = isMobile ? 2000 : 10000;
     const starGeometry = new THREE.BufferGeometry();
     const starMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.05 });
     const starVertices = [];
-    for (let i = 0; i < 10000; i++) {
+    for (let i = 0; i < starCount; i++) {
         const x = (Math.random() - 0.5) * 2000;
         const y = (Math.random() - 0.5) * 2000;
         const z = (Math.random() - 0.5) * 2000;
@@ -143,6 +147,18 @@ function init(canvas, clickCallback) {
     const sunMaterial = new THREE.MeshBasicMaterial({ map: sunTexture, transparent: true, blending: THREE.AdditiveBlending, toneMapped: false });
     const sunMesh = new THREE.Mesh(new THREE.SphereGeometry(4, 32, 32), sunMaterial);
     scene.add(sunMesh);
+
+    // NEW: Lens Flare
+    const textureLoader = new THREE.TextureLoader();
+    const textureFlare0 = textureLoader.load( 'https://threejs.org/examples/textures/lensflare/lensflare0.png' );
+    const textureFlare3 = textureLoader.load( 'https://threejs.org/examples/textures/lensflare/lensflare3.png' );
+    const lensflare = new Lensflare();
+    lensflare.addElement( new LensflareElement( textureFlare0, 700, 0, sunLight.color ) );
+    lensflare.addElement( new LensflareElement( textureFlare3, 60, 0.6 ) );
+    lensflare.addElement( new LensflareElement( textureFlare3, 70, 0.7 ) );
+    lensflare.addElement( new LensflareElement( textureFlare3, 120, 0.9 ) );
+    lensflare.addElement( new LensflareElement( textureFlare3, 70, 1 ) );
+    sunLight.add( lensflare );
 
 
     PLANET_CONFIG.forEach(config => createPlanet(config));
@@ -159,6 +175,7 @@ function init(canvas, clickCallback) {
 
     introAnimation();
     animate();
+    soundService.startAmbient(); // NEW
 }
 
 function createPlanet(config) {
@@ -283,6 +300,7 @@ function onClick(event) {
     const intersects = raycaster.intersectObjects(interactableObjects);
 
     if (intersects.length > 0) {
+        soundService.playSound('click'); // NEW
         const targetObject = intersects[0].object;
         if (onPlanetClick) {
             onPlanetClick(targetObject);
@@ -307,6 +325,7 @@ function onMouseMove(event) {
             }
             hoveredPlanet = intersectedObject;
             hoveredPlanet.material.emissive.setHex(0x333333);
+            soundService.playSound('hover'); // NEW
         }
     } else {
         document.body.style.cursor = 'grab';
@@ -330,6 +349,7 @@ function destroy() {
     window.removeEventListener('resize', onWindowResize);
     window.removeEventListener('click', onClick);
     window.removeEventListener('mousemove', onMouseMove);
+    soundService.stopAmbient(); // NEW
 
     scene.traverse(object => {
         if (object.geometry) object.geometry.dispose();
@@ -357,6 +377,7 @@ function focusOnPlanet(target, onComplete) {
     controls.enabled = false;
     isAnimatingCamera = true;
     animationCallback = onComplete;
+    soundService.playSound('transition'); // NEW
     
     const planetRadius = target.geometry.parameters.radius;
     const offset = new THREE.Vector3(0, planetRadius * 0.5, planetRadius * 4);
@@ -368,6 +389,7 @@ function resetCamera(onComplete) {
     controls.enabled = false;
     isAnimatingCamera = true;
     animationCallback = onComplete;
+    soundService.playSound('transition'); // NEW
     
     targetPosition.copy(initialCameraPos);
     targetLookAt.copy(initialLookAt);
