@@ -5,14 +5,17 @@ let container;
 function renderSavedQuestions() {
     const questions = getSavedQuestions();
     const emptyState = document.getElementById('library-empty-state');
+    const libraryActions = document.getElementById('library-actions');
     
     if (questions.length === 0) {
         emptyState.style.display = 'block';
+        libraryActions.style.display = 'none';
         container.innerHTML = '';
         return;
     }
 
     emptyState.style.display = 'none';
+    libraryActions.style.display = 'block';
     
     // FIX #11: Non-blocking render for large libraries
     let index = 0;
@@ -49,6 +52,7 @@ function renderSavedQuestions() {
         }
     }
     
+    container.innerHTML = ''; // Clear previous content before chunking
     requestAnimationFrame(renderChunk);
 }
 

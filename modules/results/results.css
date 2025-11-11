@@ -63,9 +63,22 @@
     gap: 1rem;
 }
 
-.question-review-section h2 {
-    text-align: center;
+.review-toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.review-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out;
+}
+
+.review-details.visible {
+    max-height: 5000px; /* A large value to allow for expansion */
 }
 
 .review-item {

@@ -52,15 +52,58 @@
     margin-top: 4rem;
 }
 
+/* --- Accordion Styles for Topic Categories --- */
 .topic-category-section {
-    margin-bottom: 4rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-lg);
+    background: rgba(255, 255, 255, 0.03);
+    transition: background-color var(--transition-fast);
+}
+
+.topic-category-section.active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 1.5rem 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    color: var(--color-text);
 }
 
 .category-title {
-    font-size: 2rem;
-    margin-bottom: 2rem;
-    text-align: center;
+    font-size: 1.75rem;
     font-family: var(--font-display);
+    margin: 0;
+}
+
+.category-icon {
+    font-size: 1.5rem;
+    transition: transform var(--transition-med);
+}
+
+.topic-category-section.active .category-icon {
+    transform: rotate(180deg);
+}
+
+.category-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, padding 0.5s ease-out;
+    padding: 0 2rem;
+}
+
+.topic-category-section.active .category-content {
+    /* A large value to accommodate any number of topics */
+    max-height: 2000px; 
+    padding: 0 2rem 2rem 2rem;
 }
 
 

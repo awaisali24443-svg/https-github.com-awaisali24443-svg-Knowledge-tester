@@ -36,13 +36,6 @@ const dashboardItems = [
         description: 'Review your saved questions and prepare for tests.',
     },
     {
-        href: '#study',
-        icon: '🧠',
-        title: 'Study Mode',
-        description: 'Use flashcards to master your saved questions.',
-        feature: 'studyMode'
-    },
-    {
         href: '#paths',
         icon: '🗺️',
         title: 'Learning Paths',
@@ -93,6 +86,14 @@ const handleCardMouseLeave = (e) => {
     card.style.transform = `scale(1) rotateX(0) rotateY(0)`;
 };
 
+const handleAccordionToggle = (e) => {
+    const header = e.target.closest('.category-header');
+    if (header) {
+        const parentSection = header.parentElement;
+        parentSection.classList.toggle('active');
+    }
+};
+
 async function renderDashboard() {
     const mainGridContainer = document.getElementById('dashboard-grid');
     const topicSectionsContainer = document.getElementById('topic-sections-container');
@@ -127,18 +128,17 @@ async function renderDashboard() {
     }).join('');
     mainGridContainer.innerHTML = staticCardsHtml;
 
-    // 2. Render all topic cards grouped by category
+    // 2. Render all topic cards grouped by category in accordions
     try {
         const categories = await getCategories();
         if (categories.length > 0) {
             topicSectionsContainer.style.display = 'block';
 
-            // Fetch all topics concurrently for better performance
             const topicsPerCategory = await Promise.all(
                 categories.map(cat => getTopicsForCategory(cat.id).then(topics => ({ category: cat, topics })))
             );
 
-            const allTopicSectionsHtml = topicsPerCategory.map(({ category, topics }) => {
+            const allTopicSectionsHtml = topicsPerCategory.map(({ category, topics }, index) => {
                 if (topics.length === 0) return '';
                 
                 const topicCardsHtml = topics.map(topic => `
@@ -151,15 +151,24 @@ async function renderDashboard() {
                     </a>
                 `).join('');
 
+                // Make the first category open by default
+                const isActive = index === 0 ? 'active' : '';
+
                 return `
-                    <section class="topic-category-section">
-                        <h2 class="category-title">${category.name}</h2>
-                        <div class="dashboard-grid">${topicCardsHtml}</div>
+                    <section class="topic-category-section ${isActive}">
+                        <button class="category-header">
+                            <h2 class="category-title">${category.name}</h2>
+                            <span class="category-icon">▼</span>
+                        </button>
+                        <div class="category-content">
+                            <div class="dashboard-grid">${topicCardsHtml}</div>
+                        </div>
                     </section>
                 `;
             }).join('');
             
             topicSectionsContainer.innerHTML = allTopicSectionsHtml;
+            topicSectionsContainer.addEventListener('click', handleAccordionToggle);
         }
     } catch (error) {
         console.error("Could not load topics for home screen", error);
@@ -219,6 +228,10 @@ export function destroy() {
     const contentArea = document.querySelector('.home-content');
      if (contentArea) {
         contentArea.removeEventListener('click', handleGridClick);
+    }
+    const topicSectionsContainer = document.getElementById('topic-sections-container');
+    if (topicSectionsContainer) {
+        topicSectionsContainer.removeEventListener('click', handleAccordionToggle);
     }
     
     // Clean up card event listeners

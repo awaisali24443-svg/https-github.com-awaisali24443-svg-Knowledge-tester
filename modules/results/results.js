@@ -5,7 +5,7 @@ import { PASSING_SCORE_PERCENTAGE } from '../../constants.js';
 import { toastService } from '../../services/toastService.js';
 
 let appStateRef;
-let retakeBtn;
+let retakeBtn, toggleReviewBtn;
 
 const handleRetakeQuiz = () => {
     const originalTopic = appStateRef.context.topic;
@@ -15,6 +15,16 @@ const handleRetakeQuiz = () => {
     } else {
         // Fallback for safety, e.g., if session state was lost
         window.location.hash = '#custom-quiz';
+    }
+};
+
+const handleToggleReview = () => {
+    const reviewDetails = document.getElementById('review-details');
+    if (reviewDetails) {
+        reviewDetails.classList.toggle('visible');
+        toggleReviewBtn.textContent = reviewDetails.classList.contains('visible') 
+            ? 'Hide Details' 
+            : 'Show Details';
     }
 };
 
@@ -45,6 +55,7 @@ function renderResults(appState) {
     const finalScoreText = document.getElementById('final-score-text');
     const title = document.getElementById('results-title');
     retakeBtn = document.getElementById('retake-quiz-btn');
+    toggleReviewBtn = document.getElementById('toggle-review-btn');
     
     finalScoreText.textContent = `You answered ${score} out of ${questions.length} questions correctly.`;
 
@@ -71,6 +82,9 @@ function renderResults(appState) {
 
     if (retakeBtn) {
         retakeBtn.addEventListener('click', handleRetakeQuiz);
+    }
+    if (toggleReviewBtn) {
+        toggleReviewBtn.addEventListener('click', handleToggleReview);
     }
 }
 
@@ -130,6 +144,9 @@ export function init(appState) {
 export function destroy() {
     if (retakeBtn) {
         retakeBtn.removeEventListener('click', handleRetakeQuiz);
+    }
+    if (toggleReviewBtn) {
+        toggleReviewBtn.removeEventListener('click', handleToggleReview);
     }
     console.log("Results module destroyed.");
 }

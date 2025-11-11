@@ -3,6 +3,16 @@
     margin-bottom: 3rem;
 }
 
+.library-actions {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.library-actions .btn {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
 .saved-question-item {
     background-color: var(--color-bg-light);
     border: 1px solid var(--color-border);
