@@ -3,6 +3,8 @@
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { setSetting, getSetting, getAllSettings } from './services/configService.js';
 import { endQuiz } from './services/quizStateService.js';
+import { updateMetaTags } from './services/seoService.js';
+import { createIndex as createSearchIndex } from './services/searchService.js';
 
 const app = document.getElementById('app');
 const headerContainer = document.getElementById('header-container');
@@ -100,7 +102,7 @@ async function loadModule(moduleConfig, params = {}) {
 }
 
 // FIX #2: New dynamic router
-function handleRouteChange() {
+async function handleRouteChange() {
     const hash = window.location.hash.slice(1) || 'home';
     const [path, ...params] = hash.split('/');
     
@@ -134,7 +136,8 @@ function handleRouteChange() {
     }
 
     if (matchedRoute) {
-        loadModule({ path: matchedRoute.module, name: matchedRoute.name }, routeParams);
+        await loadModule({ path: matchedRoute.module, name: matchedRoute.name }, routeParams);
+        await updateMetaTags(matchedRoute.name, routeParams);
     } else {
         // Fallback to a 'not found' module or redirect to home
         console.warn(`No route found for hash: ${hash}`);
@@ -212,6 +215,9 @@ function init() {
         window.addEventListener('hashchange', handleRouteChange);
         handleRouteChange(); // Initial route
     });
+    
+    // Build the search index in the background on startup
+    createSearchIndex();
 
     // Hide splash screen after a delay
     setTimeout(() => {

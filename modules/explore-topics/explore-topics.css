@@ -1,9 +1,20 @@
 .explore-header {
     text-align: center;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
 }
 
-.category-grid {
+.search-bar-container {
+    max-width: 700px;
+    margin: 0 auto 3rem auto;
+}
+
+#explore-search-input {
+    font-size: 1.1rem;
+    padding: 1rem;
+    width: 100%;
+}
+
+.results-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
@@ -54,4 +65,39 @@
     margin-top: 1.5rem;
     font-weight: 600;
     color: var(--color-primary);
+}
+
+/* Styles for search result items (topics) */
+.topic-result-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    text-decoration: none;
+    color: var(--color-text);
+    background-color: var(--color-bg-light);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-md);
+    transition: all var(--transition-fast);
+}
+
+.topic-result-card:hover {
+     border-color: var(--color-primary);
+    transform: translateX(5px);
+}
+
+.topic-result-card .card-icon {
+    font-size: 1.5rem;
+}
+
+.topic-result-card h4 {
+    margin: 0;
+    font-family: var(--font-sans);
+}
+
+.no-results-message {
+    grid-column: 1 / -1; /* Span full width */
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: 2rem;
 }
