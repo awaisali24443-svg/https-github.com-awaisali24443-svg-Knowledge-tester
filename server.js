@@ -99,7 +99,8 @@ app.post('/api/generate', apiLimiter, async (req, res) => {
 app.use(express.static(path.resolve(__dirname)));
 
 // Catch-all route to serve index.html for client-side routing
-app.get('/*', (req, res) => {
+// This regex ensures we don't accidentally intercept API calls.
+app.get(/^(?!\/api).*/, (req, res) => {
     res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
