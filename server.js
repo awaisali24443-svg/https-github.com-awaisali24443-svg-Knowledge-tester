@@ -99,7 +99,7 @@ app.post('/api/generate', apiLimiter, async (req, res) => {
 app.use(express.static(path.resolve(__dirname)));
 
 // Catch-all route to serve index.html for client-side routing
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(path.resolve(__dirname, 'index.html'));
 });
 
