@@ -1,3 +1,4 @@
+
 .quiz-container {
     max-width: 800px;
     margin: 1rem auto;
@@ -33,6 +34,7 @@
 .question-area {
     margin-bottom: 2.5rem;
     min-height: 80px;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
 
 #question-text {
@@ -46,6 +48,13 @@
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+}
+
+/* Class for fade-out transitions */
+.question-area.hiding, .options-container.hiding, .explanation-container.hiding {
+    opacity: 0;
+    transform: translateY(-20px);
 }
 
 .option-btn {
@@ -84,20 +93,33 @@
     color: #fff;
 }
 
+/* Keyframes for feedback animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* Classes to trigger feedback animations */
+.option-btn.pulse {
+    animation: pulse 0.5s ease-in-out;
+}
+
+.option-btn.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
 .explanation-container {
     margin-top: 2rem;
     padding: 1rem;
     background-color: var(--color-bg);
     border-left: 4px solid var(--color-secondary);
     border-radius: var(--border-radius-sm);
-}
-
-.quiz-footer {
-    margin-top: 2rem;
-    text-align: right;
-}
-
-#next-question-btn {
-    background-color: var(--color-primary);
-    color: #fff;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }

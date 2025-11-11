@@ -1,13 +1,33 @@
+
 import { startQuiz, getCurrentQuestion, answerQuestion, nextQuestion, isLastQuestion } from '../../services/quizStateService.js';
 
 let appStateRef;
 let elements;
 let hasAnswered = false;
+let nextQuestionTimer = null;
+
+async function proceedToNextStep() {
+    if (isLastQuestion()) {
+        window.location.hash = '#results';
+        return;
+    }
+    
+    // Animate out the current question and options
+    elements.questionArea.classList.add('hiding');
+    elements.optionsContainer.classList.add('hiding');
+    elements.explanationContainer.classList.add('hiding');
+
+    // Wait for the animation to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Update state and render the next question
+    nextQuestion();
+    renderQuestion();
+}
 
 function renderQuestion() {
     const question = getCurrentQuestion();
     if (!question) {
-        // Handle case where quiz ends or data is missing
         window.location.hash = '#home'; 
         return;
     }
@@ -26,9 +46,12 @@ function renderQuestion() {
 
     updateProgress();
     
-    // Hide explanation and next button
+    // Hide explanation and reset transition class
     elements.explanationContainer.style.display = 'none';
-    elements.nextButton.style.display = 'none';
+    
+    // Animate new content in by removing the hiding class
+    elements.questionArea.classList.remove('hiding');
+    elements.optionsContainer.classList.remove('hiding');
 }
 
 function handleOptionClick(e) {
@@ -41,37 +64,32 @@ function handleOptionClick(e) {
     const question = getCurrentQuestion();
     const isCorrect = selectedIndex === question.correctAnswerIndex;
 
-    // Provide visual feedback
-    const optionButtons = elements.optionsContainer.querySelectorAll('.option-btn');
-    optionButtons.forEach((btn, index) => {
-        if (index === question.correctAnswerIndex) {
-            btn.classList.add('correct');
-        } else if (index === selectedIndex) {
-            btn.classList.add('incorrect');
-        }
-        btn.disabled = true;
-    });
+    const optionButtons = Array.from(elements.optionsContainer.querySelectorAll('.option-btn'));
 
-    // FIX #15: Provide screen reader feedback
+    // Disable all buttons to prevent multiple clicks
+    optionButtons.forEach(btn => btn.disabled = true);
+
+    // Get specific buttons for feedback
+    const selectedButton = optionButtons[selectedIndex];
+    const correctButton = optionButtons[question.correctAnswerIndex];
+
+    // Apply feedback classes and animations
+    correctButton.classList.add('correct', 'pulse');
+    if (!isCorrect) {
+        selectedButton.classList.add('incorrect', 'shake');
+    }
+
+    // Provide screen reader feedback
     elements.srFeedback.textContent = isCorrect ? 'Correct!' : 'Incorrect.';
 
     // Show explanation
     elements.explanationText.textContent = question.explanation;
     elements.explanationContainer.style.display = 'block';
 
-    // Show next button
-    elements.nextButton.textContent = isLastQuestion() ? 'Finish Quiz' : 'Next Question';
-    elements.nextButton.style.display = 'inline-flex';
-}
-
-function handleNextClick() {
-    if (isLastQuestion()) {
-        // Navigate to results page
-        window.location.hash = '#results';
-    } else {
-        nextQuestion();
-        renderQuestion();
-    }
+    // Automatically proceed to the next question/results after a delay
+    nextQuestionTimer = setTimeout(() => {
+        proceedToNextStep();
+    }, 1800);
 }
 
 function updateProgress() {
@@ -100,25 +118,27 @@ export function init(appState) {
     elements = {
         progressBar: document.getElementById('progress-bar'),
         progressText: document.getElementById('progress-text'),
+        questionArea: document.querySelector('.question-area'),
         questionText: document.getElementById('question-text'),
         optionsContainer: document.getElementById('options-container'),
         explanationContainer: document.getElementById('explanation-container'),
         explanationText: document.getElementById('explanation-text'),
-        nextButton: document.getElementById('next-question-btn'),
         srFeedback: document.getElementById('sr-feedback')
     };
 
     elements.optionsContainer.addEventListener('click', handleOptionClick);
-    elements.nextButton.addEventListener('click', handleNextClick);
 
     renderQuestion();
     console.log("Quiz module initialized.");
 }
 
 export function destroy() {
+    if (nextQuestionTimer) {
+        clearTimeout(nextQuestionTimer);
+        nextQuestionTimer = null;
+    }
     if (elements) {
         elements.optionsContainer.removeEventListener('click', handleOptionClick);
-        elements.nextButton.removeEventListener('click', handleNextClick);
     }
     console.log("Quiz module destroyed.");
 }
