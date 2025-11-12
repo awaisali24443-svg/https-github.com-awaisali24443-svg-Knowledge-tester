@@ -190,9 +190,8 @@ async function main() {
         // Render static UI elements like the sidebar.
         renderSidebar(document.getElementById('sidebar'));
 
-        // Set up event listeners for routing and global settings changes.
+        // Set up event listeners for routing.
         window.addEventListener('hashchange', handleRouteChange);
-        window.addEventListener('settings-changed', (e) => themeService.applyTheme(e.detail.theme));
         
         // Global click sound handler
         document.body.addEventListener('click', (event) => {
