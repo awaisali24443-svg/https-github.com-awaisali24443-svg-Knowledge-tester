@@ -9,6 +9,10 @@ import fs from 'fs/promises';
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Trust the first proxy
+// This is necessary for rate limiting to work correctly behind a proxy (e.g., on Render, Heroku)
+app.set('trust proxy', 1);
+
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
