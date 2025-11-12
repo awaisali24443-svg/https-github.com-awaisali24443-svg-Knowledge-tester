@@ -1,23 +1,22 @@
 /* --- CSS Variables & Base Styles --- */
 :root {
-    --font-sans: 'Roboto', sans-serif;
-    --font-display: 'Orbitron', sans-serif;
+    --font-sans: 'Inter', sans-serif;
+    --font-display: 'Exo 2', sans-serif;
     --font-mono: 'Roboto Mono', monospace;
-    --border-radius-sm: 6px;
-    --border-radius-md: 10px;
-    --border-radius-lg: 16px;
-    --transition-fast: 0.2s ease-out;
-    --transition-med: 0.4s ease-out;
+    --border-radius-sm: 8px;
+    --border-radius-md: 12px;
+    --border-radius-lg: 18px;
+    --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-med: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     --container-width: 1200px;
     --sidebar-width: 80px;
-    --sidebar-width-expanded: 220px;
+    --sidebar-width-expanded: 240px; /* Increased width */
 }
 
-/* FIX #17: Add transitions for smooth theme changes */
+/* Smooth theme changes */
 body, .btn, .card, input, select, .modal-content, .sidebar-nav {
     transition: background-color var(--transition-med), color var(--transition-med), border-color var(--transition-med);
 }
-
 
 * {
     box-sizing: border-box;
@@ -28,40 +27,39 @@ body, .btn, .card, input, select, .modal-content, .sidebar-nav {
 html, body {
     height: 100%;
     width: 100%;
-    overflow: hidden; /* Prevent body scroll */
+    overflow: hidden;
 }
 
 body {
     font-family: var(--font-sans);
     background-color: var(--color-bg);
     color: var(--color-text);
-    line-height: 1.6;
+    line-height: 1.7; /* Increased for readability */
 }
 
 /* --- App Layout --- */
 .app-layout {
     display: flex;
-    height: 100vh; /* Use viewport height for stability */
+    height: 100vh;
 }
 
 .main-container {
     flex-grow: 1;
     margin-left: var(--sidebar-width);
-    width: calc(100% - var(--sidebar-width)); /* Use width instead of max-width */
-    transition: margin-left var(--transition-med), padding var(--transition-med);
-    overflow-y: auto; /* Allow scrolling for content that overflows */
-    height: 100%; /* Ensure it fills parent height */
-    padding: 2rem 1.5rem;
-    position: relative; /* Add for stacking context */
+    width: calc(100% - var(--sidebar-width));
+    transition: margin-left var(--transition-med);
+    overflow-y: auto;
+    height: 100%;
+    padding: 3rem 2.5rem; /* Increased padding */
+    position: relative;
 }
 .sidebar-nav:hover ~ .main-container {
     margin-left: var(--sidebar-width-expanded);
 }
 
-/* Special case for 3D view to take full space */
 .main-container.galaxy-view {
     padding: 0;
-    overflow: hidden; /* Prevent scrollbars on the canvas */
+    overflow: hidden;
 }
 .galaxy-container {
     width: 100%;
@@ -69,61 +67,75 @@ body {
     overflow: hidden;
 }
 
-
-/* FIX #23: Scope typography to avoid conflicts */
+/* --- Refined Typography --- */
 .main-container h1, .main-container h2, .main-container h3 {
     font-family: var(--font-display);
     font-weight: 700;
-    line-height: 1.2;
-    margin-bottom: 1rem;
+    line-height: 1.25;
+    margin-bottom: 1.25rem;
+    color: var(--color-heading);
 }
-.main-container h1 { font-size: 3rem; }
-.main-container h2 { font-size: 2.5rem; }
-.main-container h3 { font-size: 1.75rem; }
-.main-container p { margin-bottom: 1rem; }
-.main-container a { color: var(--color-primary); text-decoration: none; transition: opacity var(--transition-fast); }
-.main-container a:hover { opacity: 0.8; }
+.main-container h1 { font-size: 3.2rem; }
+.main-container h2 { font-size: 2.2rem; }
+.main-container h3 { font-size: 1.5rem; }
+.main-container p { margin-bottom: 1.5rem; color: var(--color-text-muted); }
+.main-container a { color: var(--color-primary); text-decoration: none; transition: color var(--transition-fast); }
+.main-container a:hover { color: var(--color-secondary); }
 
-/* --- Components --- */
-/* FIX #24: Increase specificity for global components */
+/* --- Redesigned Components --- */
 .main-container .btn, .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.75rem 1.5rem;
+    padding: 0.8rem 1.8rem;
     font-size: 1rem;
     font-weight: 600;
-    font-family: var(--font-sans); /* Ensure buttons use the sans font */
+    font-family: var(--font-sans);
     border-radius: var(--border-radius-md);
-    border: 2px solid transparent;
+    border: 2px solid var(--color-border);
     cursor: pointer;
     text-decoration: none;
     transition: all var(--transition-fast);
+    background-color: var(--color-bg-light);
+    color: var(--color-text);
+}
+.btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+.btn:active {
+    transform: translateY(0px) scale(0.98);
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
-    color: #fff;
-    box-shadow: 0 4px 15px 0 rgba(0,0,0,0.1);
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 15px 0 var(--color-glow);
 }
 .btn-primary:hover {
+    background: var(--color-secondary);
+    border-color: var(--color-secondary);
+    color: white;
     filter: brightness(1.1);
-    box-shadow: 0 6px 20px 0 rgba(0,0,0,0.15);
-    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 var(--color-glow);
+    transform: translateY(-3px);
 }
 
 .main-container .card {
     background-color: var(--color-bg-light);
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius-lg);
-    padding: 2rem;
+    padding: 2.5rem; /* Increased padding */
     box-shadow: var(--shadow-md);
     transition: background-color var(--transition-med), border-color var(--transition-med), box-shadow var(--transition-fast), transform var(--transition-fast);
 }
 
 .form-control {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1.2rem;
     font-size: 1rem;
     background-color: var(--color-bg);
     border: 1px solid var(--color-border);
@@ -134,10 +146,10 @@ body {
 .form-control:focus {
     outline: none;
     border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px var(--color-glow);
+    box-shadow: 0 0 0 4px var(--color-glow);
 }
 
-/* --- Sidebar Navigation --- */
+/* --- Refined Sidebar --- */
 .sidebar-nav {
     position: fixed;
     top: 0;
@@ -164,7 +176,7 @@ body {
     justify-content: center;
     margin-bottom: 3rem;
     padding: 0 1rem;
-    width: var(--sidebar-width-expanded); /* Fixed width for alignment */
+    width: var(--sidebar-width-expanded);
 }
 .sidebar-logo .logo-icon {
     width: 40px;
@@ -174,7 +186,7 @@ body {
 .sidebar-logo .logo-text {
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 20px;
     fill: url(#logo-gradient);
     letter-spacing: 1px;
     white-space: nowrap;
@@ -185,7 +197,6 @@ body {
 .sidebar-nav:hover .logo-text {
     opacity: 1;
 }
-
 
 .nav-links {
     list-style: none;
@@ -198,29 +209,16 @@ body {
     color: var(--color-text-muted);
     text-decoration: none;
     padding: 1rem 0;
-    margin: 0.5rem 0;
+    margin: 0.5rem 0.75rem; /* Margin for rounded corners */
     height: 56px;
+    border-radius: var(--border-radius-md);
     transition: color var(--transition-fast), background-color var(--transition-fast);
     position: relative;
     white-space: nowrap;
 }
 .nav-link:hover, .nav-link.active {
-    color: var(--color-text);
+    color: var(--color-heading);
     background-color: var(--color-glow);
-}
-.nav-link::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 4px;
-    background: var(--color-primary);
-    transform: scaleY(0);
-    transition: transform var(--transition-fast);
-}
-.nav-link.active::before, .nav-link:hover::before {
-    transform: scaleY(1);
 }
 
 .nav-icon {
@@ -231,8 +229,8 @@ body {
     flex-shrink: 0;
 }
 .nav-icon svg {
-    width: 24px;
-    height: 24px;
+    width: 26px; /* Slightly larger */
+    height: 26px;
 }
 .nav-text {
     opacity: 0;
@@ -243,52 +241,37 @@ body {
     opacity: 1;
 }
 
-/* --- Utility & Animation --- */
+/* --- Smoother Animations --- */
 .fade-in {
-    animation: fadeIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(15px); }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .main-container.fade-out {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.99);
     transition: opacity 0.2s ease-in, transform 0.2s ease-in;
 }
 
 .stagger-in {
-    animation: stagger-fade-in 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     opacity: 0;
-    transform: translateX(-20px);
 }
 
-@keyframes stagger-fade-in {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Replaced "shake" with a sharper, more professional "vibrate" animation */
-@keyframes vibrate-error {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-4px); }
-    40%, 80% { transform: translateX(4px); }
-}
-
-/* --- Toast Notifications --- */
+/* --- Professionalized Modal & Toast --- */
 #toast-container {
     position: fixed;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 20px; /* Positioned to the right */
+    left: auto;
+    transform: none;
     z-index: 10000;
     display: flex;
     flex-direction: column-reverse;
-    gap: 10px;
-    pointer-events: none;
+    gap: 12px;
 }
 .toast {
     padding: 1rem 1.5rem;
@@ -298,23 +281,22 @@ body {
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
     font-weight: 600;
-    animation: toast-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, toast-out 0.3s ease-in 2.7s forwards;
+    animation: toast-in-right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, toast-out-right 0.4s ease-in 3.6s forwards;
 }
-@keyframes toast-in {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes toast-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
 }
-@keyframes toast-out {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(20px); }
+@keyframes toast-out-right {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(20px); }
 }
 
-/* --- Confirmation Modal --- */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(10, 15, 30, 0.5);
-    backdrop-filter: blur(5px);
+    background-color: rgba(10, 15, 30, 0.6);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -329,14 +311,14 @@ body {
 }
 .modal-content {
     background-color: var(--color-bg-light);
-    padding: 2rem;
+    padding: 2.5rem;
     border-radius: var(--border-radius-lg);
     border: 1px solid var(--color-border);
     box-shadow: var(--shadow-lg);
     width: 90%;
-    max-width: 450px;
+    max-width: 480px;
     text-align: center;
-    transform: scale(0.9);
+    transform: scale(0.95);
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .modal-overlay.visible .modal-content {
@@ -349,7 +331,7 @@ body {
 }
 .modal-content p {
     color: var(--color-text-muted);
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 .modal-actions {
     display: flex;
@@ -362,11 +344,10 @@ body {
     .app-layout {
         flex-direction: column;
     }
-    
     .sidebar-nav {
         flex-direction: row;
         width: 100%;
-        height: 60px;
+        height: 65px; /* Slightly taller for better touch targets */
         position: fixed;
         bottom: 0;
         top: auto;
@@ -374,14 +355,10 @@ body {
         border-right: none;
         padding: 0;
     }
-
     .sidebar-nav:hover {
         width: 100%;
     }
-
-    .sidebar-logo {
-        display: none;
-    }
+    .sidebar-logo { display: none; }
     .nav-links {
         display: flex;
         flex-direction: row;
@@ -396,32 +373,23 @@ body {
         margin: 0;
         padding: 0.5rem 0;
     }
-    .nav-icon {
-        width: 100%;
-        height: 28px;
-    }
+    .nav-icon { width: 100%; height: 28px; }
     .sidebar-nav .nav-text {
         opacity: 1;
-        font-size: 0.7rem;
+        font-size: 0.75rem; /* Slightly larger */
         transition: none;
     }
-    .sidebar-nav:hover .nav-text {
-        opacity: 1;
-    }
-
     .main-container {
         margin-left: 0;
-        width: 100%; /* Ensure full width */
-        padding: 1rem 1rem 70px 1rem; /* Space for bottom nav */
-        height: auto; 
-        min-height: calc(100vh - 60px);
+        width: 100%;
+        padding: 1.5rem 1.5rem 80px 1.5rem; /* Adjusted padding */
+        height: auto;
+        min-height: calc(100vh - 65px);
         overflow-y: auto;
     }
-    
     .sidebar-nav:hover ~ .main-container {
         margin-left: 0;
     }
-
-    .main-container h1 { font-size: 2.2rem; }
-    .main-container h2 { font-size: 1.8rem; }
+    .main-container h1 { font-size: 2.5rem; }
+    .main-container h2 { font-size: 2rem; }
 }

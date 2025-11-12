@@ -24,14 +24,14 @@ const initialCameraPos = new THREE.Vector3(0, 25, 60);
 
 // --- Static Planet Config for non-category modules ---
 const STATIC_PLANET_CONFIG = [
-    { name: 'Custom Quiz', route: '#custom-quiz', size: 1.0, orbitRadiusX: 28, orbitRadiusZ: 26, speed: 0.15, rotationSpeed: 0.004, axialTilt: 0.1, type: 'neptune' },
-    { name: 'Aural AI', route: '#aural', size: 1.8, orbitRadiusX: 65, orbitRadiusZ: 65, speed: 0.06, rotationSpeed: 0.002, axialTilt: 0.05, type: 'saturn', rings: true },
+    { name: 'Custom Quiz', route: '#custom-quiz', size: 1.0, orbitRadiusX: 28, orbitRadiusZ: 26, speed: 0.15, rotationSpeed: 0.004, axialTilt: 0.1, type: 'rocky' },
+    { name: 'Aural AI', route: '#aural', size: 1.8, orbitRadiusX: 65, orbitRadiusZ: 65, speed: 0.06, rotationSpeed: 0.002, axialTilt: 0.05, type: 'gas_giant', rings: true },
     { name: 'Learning Paths', route: '#paths', size: 1.2, orbitRadiusX: 80, orbitRadiusZ: 78, speed: 0.05, rotationSpeed: 0.007, axialTilt: 0.2, type: 'ice' },
-    { name: 'My Library', route: '#library', size: 0.9, orbitRadiusX: 95, orbitRadiusZ: 95, speed: 0.04, rotationSpeed: 0.008, axialTilt: -0.15, type: 'rocky_dark' },
+    { name: 'My Library', route: '#library', size: 0.9, orbitRadiusX: 95, orbitRadiusZ: 95, speed: 0.04, rotationSpeed: 0.008, axialTilt: -0.15, type: 'lava' },
     { name: 'Settings', route: '#settings', size: 0.7, orbitRadiusX: 110, orbitRadiusZ: 112, speed: 0.03, rotationSpeed: 0.009, axialTilt: 0.3, type: 'mars' },
 ];
 
-const PLANET_VISUAL_TYPES = ['earth', 'mars', 'rocky', 'neptune', 'ice', 'jupiter'];
+const PLANET_VISUAL_TYPES = ['earth', 'mars', 'rocky', 'gas_giant', 'ice', 'lava'];
 
 // --- Shaders for Atmosphere & Sun ---
 const atmosphereVertexShader = `
@@ -50,9 +50,6 @@ const atmosphereFragmentShader = `
     varying vec3 vPosition;
     void main() {
         vec3 viewDirection = normalize(-vPosition);
-        // CRITICAL FIX: The result of a dot product can be negative. Passing a negative number to pow()
-        // in GLSL is undefined behavior and causes the renderer to fail, resulting in a black screen.
-        // Clamping the value to the [0, 1] range prevents this.
         float fresnel = clamp(1.0 - dot(viewDirection, vNormal), 0.0, 1.0);
         float intensity = pow(fresnel, uPower);
         gl_FragColor = vec4(uGlowColor, 1.0) * intensity;
@@ -60,27 +57,21 @@ const atmosphereFragmentShader = `
 `;
 const sunFragmentShader = `
     uniform float uTime;
-    uniform sampler2D uTexture;
     varying vec2 vUv;
-
-    // Perlin noise function
     vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
     vec2 mod289(vec2 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
     vec3 permute(vec3 x) { return mod289(((x*34.0)+1.0)*x); }
-
     float snoise(vec2 v) {
         const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
         vec2 i  = floor(v + dot(v, C.yy) );
         vec2 x0 = v -   i + dot(i, C.xx);
-        vec2 i1;
-        i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+        vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
         vec4 x12 = x0.xyxy + C.xxzz;
         x12.xy -= i1;
         i = mod289(i);
         vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 ));
         vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);
-        m = m*m;
-        m = m*m;
+        m = m*m; m = m*m;
         vec3 x = 2.0 * fract(p * C.www) - 1.0;
         vec3 h = abs(x) - 0.5;
         vec3 ox = floor(x + 0.5);
@@ -91,31 +82,73 @@ const sunFragmentShader = `
         g.yz = a0.yz * x12.xz + h.yz * x12.yw;
         return 130.0 * dot(m, g);
     }
-
     void main() {
-        // BUG FIX: snoise returns values in [-1, 1]. They must be normalized to [0, 1] for color mixing.
-        // Using un-normalized values can lead to negative colors, causing the renderer to fail.
         float noise1 = (snoise(vUv * 5.0 + uTime * 0.1) + 1.0) * 0.5;
-        float noise2 = (snoise(vUv * 10.0 - uTime * 0.2) + 1.0) * 0.5; // Use different time direction for more variation
-
-        // Combine the two noise layers for more detail
+        float noise2 = (snoise(vUv * 10.0 - uTime * 0.2) + 1.0) * 0.5;
         float finalNoise = mix(noise1, noise2, 0.5);
-
-        vec3 color1 = vec3(1.0, 0.6, 0.2); // Darker, fiery orange
-        vec3 color2 = vec3(1.0, 0.9, 0.6); // Brighter, yellow-white
-
-        // Interpolate between the two colors based on the final noise value
+        vec3 color1 = vec3(1.0, 0.6, 0.2);
+        vec3 color2 = vec3(1.0, 0.9, 0.6);
         vec3 finalColor = mix(color1, color2, finalNoise);
-
         gl_FragColor = vec4(finalColor, 1.0);
     }
 `;
+
+// --- NEW SHADERS FOR PERFECT PLANETS ---
+const gasGiantFragmentShader = `
+    uniform float uTime;
+    uniform sampler2D uTexture;
+    varying vec2 vUv;
+    void main() {
+        // Create distorted, scrolling bands
+        float latitudeFactor = (vUv.y - 0.5) * 2.0; // -1 to 1
+        float band1 = texture2D(uTexture, vec2(vUv.x + uTime * 0.02, vUv.y)).r;
+        float band2 = texture2D(uTexture, vec2(vUv.x - uTime * 0.015, vUv.y)).g;
+        float scrollOffset = mix(band1, band2, abs(latitudeFactor));
+
+        vec2 scrolledUv = vec2(vUv.x + scrollOffset * 0.1, vUv.y);
+        vec4 color = texture2D(uTexture, scrolledUv);
+
+        // Add subtle noise for atmospheric turbulence
+        float noise = (fract(sin(dot(vUv, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.05;
+        
+        gl_FragColor = color + noise;
+    }
+`;
+
+const lavaPlanetFragmentShader = `
+    uniform float uTime;
+    uniform sampler2D uRockTexture;
+    uniform sampler2D uNoiseTexture;
+    varying vec2 vUv;
+    
+    void main() {
+        vec2 scroll = vec2(uTime * 0.01, uTime * 0.005);
+        float noise = texture2D(uNoiseTexture, vUv * 2.0 + scroll).r;
+        
+        // Create sharp cracks
+        float crackThreshold = 0.6;
+        float crackWidth = 0.03;
+        float cracks = smoothstep(crackThreshold - crackWidth, crackThreshold, noise) - smoothstep(crackThreshold, crackThreshold + crackWidth, noise);
+        
+        // Make lava glow and pulse
+        float pulse = (sin(uTime * 2.0 + vUv.y * 10.0) + 1.0) * 0.5;
+        vec3 lavaColor = vec3(1.0, 0.3, 0.0) * (pulse * 0.5 + 0.5);
+        
+        vec3 rockColor = texture2D(uRockTexture, vUv).rgb * 0.5; // Darken rock
+        
+        // Mix rock and glowing lava
+        vec3 finalColor = mix(rockColor, lavaColor, cracks);
+        
+        gl_FragColor = vec4(finalColor, 1.0);
+    }
+`;
+
 
 // --- Main Initialization ---
 async function init(canvas, clickCallback, onReady) {
     onPlanetClick = clickCallback;
     onReadyCallback = onReady;
-    isFirstFrame = true; // Reset for initialization
+    isFirstFrame = true; 
 
     clock = new THREE.Clock();
     raycaster = new THREE.Raycaster();
@@ -143,7 +176,7 @@ async function init(canvas, clickCallback, onReady) {
     controls.maxDistance = 200;
     controls.enablePan = false;
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.05);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.08); // Slightly brighter ambient
     scene.add(ambientLight);
 
     sunLight = new THREE.PointLight(0xffffee, 4.0, 2000);
@@ -151,7 +184,6 @@ async function init(canvas, clickCallback, onReady) {
     sunLight.shadow.mapSize.width = 1024;
     sunLight.shadow.mapSize.height = 1024;
     sunLight.shadow.bias = -0.001;
-    // ENHANCEMENT: Add radius for softer shadows
     sunLight.shadow.radius = 4;
     sunLight.shadow.blurSamples = 8;
     scene.add(sunLight);
@@ -159,7 +191,7 @@ async function init(canvas, clickCallback, onReady) {
     // --- Dynamic Sun ---
     const sunGroup = new THREE.Group();
     const sunMaterial = new THREE.ShaderMaterial({
-        uniforms: { uTime: { value: 0 }, uTexture: { value: null } },
+        uniforms: { uTime: { value: 0 } },
         vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: sunFragmentShader,
     });
@@ -200,7 +232,7 @@ async function init(canvas, clickCallback, onReady) {
                 orbitRadiusZ: baseOrbit + (index * orbitStep) + (Math.random() * 4 - 2),
                 speed: 0.2 - (index * 0.03),
                 rotationSpeed: 0.003 + Math.random() * 0.004,
-                axialTilt: (Math.random() - 0.5) * 0.4, // Add random tilt
+                axialTilt: (Math.random() - 0.5) * 0.4,
                 type: PLANET_VISUAL_TYPES[index % PLANET_VISUAL_TYPES.length]
             });
         });
@@ -216,7 +248,7 @@ async function init(canvas, clickCallback, onReady) {
     
     createAsteroidBelt();
     createParticleNebula();
-    createTwinklingStars(); // ENHANCEMENT: Add twinkling stars
+    createTwinklingStars();
 
     // --- Post-Processing ---
     composer = new EffectComposer(renderer);
@@ -241,8 +273,6 @@ function createPlanet(config) {
     
     let planetMesh;
     const materialConfig = { roughness: 0.8, metalness: 0.1 };
-
-    // ENHANCEMENT: Create a tilt group for realistic axial tilt
     const tiltGroup = new THREE.Object3D();
     tiltGroup.rotation.z = config.axialTilt || 0;
     planetGroup.add(tiltGroup);
@@ -260,7 +290,6 @@ function createPlanet(config) {
                     emissiveMap: textureLoader.load('/assets/textures/planets/earth_night.jpg'),
                     emissive: new THREE.Color(0xffddaa),
                     emissiveIntensity: 1.0,
-                    // ENHANCEMENT: Add normal map for better surface detail
                     normalMap: textureLoader.load('/assets/textures/planets/earth_normal.jpg'),
                     normalScale: new THREE.Vector2(0.5, 0.5),
                 })
@@ -276,7 +305,6 @@ function createPlanet(config) {
             );
             cloudsMesh.castShadow = true;
             planetMesh.add(cloudsMesh);
-            
             const atmosphereMesh = new THREE.Mesh(
                 new THREE.SphereGeometry(config.size * 1.04, 64, 64),
                 new THREE.ShaderMaterial({
@@ -289,10 +317,49 @@ function createPlanet(config) {
             );
             planetMesh.add(atmosphereMesh);
             break;
-        case 'saturn':
+        case 'gas_giant':
+            const gasGiantMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uTexture: { value: textureLoader.load('/assets/textures/planets/gas_giant_clouds.jpg') }
+                },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: gasGiantFragmentShader
+            });
+            planetMesh = new THREE.Mesh(new THREE.SphereGeometry(config.size, 64, 64), gasGiantMaterial);
+            break;
+        case 'lava':
+            const lavaMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTime: { value: 0 },
+                    uRockTexture: { value: textureLoader.load('/assets/textures/planets/lava_rock.jpg') },
+                    uNoiseTexture: { value: textureLoader.load('/assets/textures/planets/lava_noise.png') }
+                },
+                vertexShader: `varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+                fragmentShader: lavaPlanetFragmentShader
+            });
+            planetMesh = new THREE.Mesh(new THREE.SphereGeometry(config.size, 64, 64), lavaMaterial);
+            break;
+        case 'ice':
             planetMesh = new THREE.Mesh(
                 new THREE.SphereGeometry(config.size, 64, 64),
-                new THREE.MeshStandardMaterial({ ...materialConfig, map: textureLoader.load('/assets/textures/planets/jupiter.jpg') })
+                new THREE.MeshStandardMaterial({
+                    map: textureLoader.load('/assets/textures/planets/ice.jpg'),
+                    roughness: 0.1, metalness: 0.0,
+                    normalMap: textureLoader.load('/assets/textures/planets/rocky_bump.jpg'),
+                    normalScale: new THREE.Vector2(0.2, 0.2),
+                })
+            );
+            break;
+        case 'rocky':
+            planetMesh = new THREE.Mesh(
+                new THREE.SphereGeometry(config.size, 64, 64),
+                new THREE.MeshStandardMaterial({
+                    ...materialConfig,
+                    map: textureLoader.load('/assets/textures/planets/rocky.jpg'),
+                    bumpMap: textureLoader.load('/assets/textures/planets/rocky_bump.jpg'),
+                    bumpScale: 0.05
+                })
             );
             break;
         case 'mars':
@@ -303,24 +370,15 @@ function createPlanet(config) {
                     map: textureLoader.load('/assets/textures/planets/mars.jpg'),
                     bumpMap: textureLoader.load('/assets/textures/planets/mars_bump.jpg'),
                     bumpScale: 0.05,
-                    // ENHANCEMENT: Add normal map for Mars
                     normalMap: textureLoader.load('/assets/textures/planets/mars_normal.jpg'),
                     normalScale: new THREE.Vector2(0.3, 0.3),
                 })
             );
             break;
         default:
-            const textureName = config.type.startsWith('rocky') ? 'rocky' : config.type;
-            const bumpName = textureName === 'rocky' ? 'rocky' : null;
-            planetMesh = new THREE.Mesh(
+             planetMesh = new THREE.Mesh(
                 new THREE.SphereGeometry(config.size, 64, 64),
-                new THREE.MeshStandardMaterial({
-                    ...materialConfig,
-                    map: textureLoader.load(`/assets/textures/planets/${textureName}.jpg`),
-                    bumpMap: bumpName ? textureLoader.load(`/assets/textures/planets/${bumpName}_bump.jpg`) : null,
-                    bumpScale: 0.05,
-                    color: config.type === 'rocky_dark' ? 0xbbbbbb : 0xffffff,
-                })
+                new THREE.MeshStandardMaterial({ ...materialConfig, map: textureLoader.load(`/assets/textures/planets/neptune.jpg`) })
             );
             break;
     }
@@ -329,19 +387,18 @@ function createPlanet(config) {
     planetMesh.receiveShadow = true;
     planetMesh.userData = { route: config.route, name: config.name, isPlanet: true, atmosphere: planetMesh.children.find(c => c.material.type === 'ShaderMaterial') };
     
-    // Add the planet to the tilt group instead of directly to the planet group
     tiltGroup.add(planetMesh);
     interactableObjects.push(planetMesh);
 
     if (config.rings) {
         const ringTexture = textureLoader.load('/assets/textures/rings/realistic_rings.png');
         const ringGeo = new THREE.RingGeometry(config.size * 1.6, config.size * 2.8, 64);
-        const ringMat = new THREE.MeshStandardMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.9 });
+        const ringMat = new THREE.MeshStandardMaterial({ map: ringTexture, side: THREE.DoubleSide, transparent: true, opacity: 0.9, shadowSide: THREE.BackSide });
         const ringMesh = new THREE.Mesh(ringGeo, ringMat);
         ringMesh.receiveShadow = true;
         ringMesh.castShadow = true;
         ringMesh.rotation.x = Math.PI * 0.5;
-        tiltGroup.add(ringMesh); // Add rings to the tilt group as well
+        tiltGroup.add(ringMesh);
     }
     
     planets.push({ mesh: planetMesh, group: planetGroup, config });
@@ -365,6 +422,7 @@ function createAsteroidBelt() {
     const material = new THREE.MeshStandardMaterial({ map: textureLoader.load('/assets/textures/planets/asteroid.jpg'), color: 0xaaaaaa, roughness: 0.8 });
     asteroidBelt = new THREE.InstancedMesh(geometry, material, asteroidCount);
     asteroidBelt.receiveShadow = true;
+    asteroidBelt.castShadow = true;
 
     const dummy = new THREE.Object3D();
     const innerRadius = 42;
@@ -397,7 +455,6 @@ function createParticleNebula() {
     scene.add(particleSystem);
 }
 
-// ENHANCEMENT: Create a twinkling starfield for more depth
 function createTwinklingStars() {
     const starCount = 5000;
     const positions = new Float32Array(starCount * 3);
@@ -407,7 +464,6 @@ function createTwinklingStars() {
         positions[i * 3] = (Math.random() - 0.5) * 1000;
         positions[i * 3 + 1] = (Math.random() - 0.5) * 1000;
         positions[i * 3 + 2] = (Math.random() - 0.5) * 1000;
-        
         const color = new THREE.Color();
         color.setHSL(0.6, 1.0, 0.5 + Math.random() * 0.5);
         colors[i * 3] = color.r;
@@ -418,13 +474,7 @@ function createTwinklingStars() {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    const material = new THREE.PointsMaterial({
-        size: 0.5 + Math.random(),
-        vertexColors: true,
-        transparent: true,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-    });
+    const material = new THREE.PointsMaterial({ size: 0.5 + Math.random(), vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
     starSystem = new THREE.Points(geometry, material);
     scene.add(starSystem);
 }
@@ -439,7 +489,7 @@ function introAnimation() {
         if (!clock) return;
         if (startTime === null) startTime = timestamp;
         const t = Math.min((timestamp - startTime) / (duration * 1000), 1.0);
-        const easedT = 1 - Math.pow(1 - t, 3); // EaseOutCubic
+        const easedT = 1 - Math.pow(1 - t, 3);
         camera.position.lerpVectors(startPos, initialCameraPos, easedT);
         if (t < 1.0) requestAnimationFrame(update);
     }
@@ -451,13 +501,13 @@ function animate() {
     const delta = clock.getDelta();
     const elapsedTime = clock.getElapsedTime();
     
-    // Ensure shader material and uniforms exist before updating
-    const sunMaterial = scene.getObjectByProperty('type', 'ShaderMaterial');
-    if (sunMaterial && sunMaterial.uniforms.uTime) {
-        sunMaterial.uniforms.uTime.value = elapsedTime;
-    }
+    // Update shader uniforms
+    scene.traverse(obj => {
+        if (obj.isMesh && obj.material.type === 'ShaderMaterial' && obj.material.uniforms.uTime) {
+            obj.material.uniforms.uTime.value = elapsedTime;
+        }
+    });
 
-    // ENHANCEMENT: Animate sun corona for a "living" effect
     if (corona) {
         const coronaScale = 1.0 + Math.sin(elapsedTime * 0.8) * 0.04;
         corona.scale.set(30 * coronaScale, 30 * coronaScale, 1);
@@ -477,12 +527,11 @@ function animate() {
     
     if (asteroidBelt) asteroidBelt.rotation.y += 0.0001;
     if (particleSystem) particleSystem.rotation.y += 0.00005;
-    if (starSystem) starSystem.rotation.y += 0.0001; // ENHANCEMENT: Slowly rotate starfield
+    if (starSystem) starSystem.rotation.y += 0.0001;
     
     controls.update();
     composer.render(delta);
 
-    // After the first frame is successfully rendered, trigger the onReady callback
     if (isFirstFrame && onReadyCallback) {
         onReadyCallback();
         isFirstFrame = false;

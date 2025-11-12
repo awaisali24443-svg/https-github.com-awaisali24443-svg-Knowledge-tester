@@ -1,6 +1,6 @@
 // sw.js
 
-const CACHE_NAME = 'knowledge-tester-v2.3'; // Incremented cache version
+const CACHE_NAME = 'knowledge-tester-v2.4'; // Incremented cache version
 const STATIC_ASSETS = [
     '/global/global.css',
     '/global/splash.css',
@@ -13,7 +13,7 @@ const STATIC_ASSETS = [
     '/services/soundService.js',
     '/services/libraryService.js',
     '/services/topicService.js',
-    '/services/geminiService.js', // FIX: Corrected service name
+    '/services/geminiService.js',
     // NEW: 3D Galaxy Services
     '/services/threeManager.js',
     // Home module for GALAXY view
@@ -43,7 +43,7 @@ const STATIC_ASSETS = [
     '/assets/sounds/click.wav',
     '/assets/sounds/hover.wav',
     '/assets/sounds/transition.wav',
-    // NEW: High-resolution textures for the galaxy
+    // High-resolution textures for the galaxy
     '/assets/textures/realistic_skybox/px.jpg',
     '/assets/textures/realistic_skybox/nx.jpg',
     '/assets/textures/realistic_skybox/py.jpg',
@@ -67,9 +67,12 @@ const STATIC_ASSETS = [
     '/assets/textures/planets/rocky_bump.jpg',
     '/assets/textures/planets/asteroid.jpg',
     '/assets/textures/rings/realistic_rings.png',
-    // ENHANCEMENT: Add new normal maps for more detail
     '/assets/textures/planets/earth_normal.jpg',
     '/assets/textures/planets/mars_normal.jpg',
+    // PERFECT PLANETS: Add new textures for custom shaders
+    '/assets/textures/planets/gas_giant_clouds.jpg',
+    '/assets/textures/planets/lava_rock.jpg',
+    '/assets/textures/planets/lava_noise.png',
 ];
 
 // On install, pre-cache static assets

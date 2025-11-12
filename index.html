@@ -23,12 +23,12 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/assets/icon-192.png">
-    <meta name="theme-color" content="#ff007f">
+    <meta name="theme-color" content="#9c27b0">
 
     <!-- FONTS & STYLESHEETS -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700;900&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Dyslexic&display=swap" media="print" onload="this.media='all'">
     
@@ -58,16 +58,26 @@
 
     <div id="splash-screen">
         <div class="splash-content">
-            <svg class="splash-logo" viewBox="0 0 400 60" xmlns="http://www.w3.org/2000/svg">
+            <svg class="splash-logo" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
                 <defs>
-                    <linearGradient id="splash-logo-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <linearGradient id="splash-logo-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" style="stop-color:var(--color-primary)" />
                         <stop offset="100%" style="stop-color:var(--color-secondary)" />
                     </linearGradient>
+                    <filter id="splash-glow">
+                        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                        <feMerge>
+                            <feMergeNode in="blur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
                 </defs>
-                <text x="50%" y="40" class="splash-logo-text" text-anchor="middle">KNOWLEDGE TESTER</text>
+                <g class="logo-group" filter="url(#splash-glow)">
+                    <polygon class="hex hex1" fill="none" stroke="url(#splash-logo-gradient)" stroke-width="3" points="60,10 109.28,35 109.28,85 60,110 10.72,85 10.72,35"/>
+                    <polygon class="hex hex2" fill="none" stroke="url(#splash-logo-gradient)" stroke-width="2" points="60,25 93.3,42.5 93.3,77.5 60,95 26.7,77.5 26.7,42.5"/>
+                    <polygon class="hex hex3" fill="none" stroke="var(--color-primary)" stroke-width="1.5" points="60,40 77.32,50 77.32,70 60,80 42.68,70 42.68,50"/>
+                </g>
             </svg>
-            <div class="splash-loader"></div>
         </div>
     </div>
 
@@ -86,8 +96,8 @@
             <h3 id="modal-title">Confirm Action</h3>
             <p id="modal-message">Are you sure you want to proceed?</p>
             <div class="modal-actions">
-                <button id="modal-confirm-btn" class="btn btn-primary">Confirm</button>
                 <button id="modal-cancel-btn" class="btn">Cancel</button>
+                <button id="modal-confirm-btn" class="btn btn-primary">Confirm</button>
             </div>
         </div>
     </div>
