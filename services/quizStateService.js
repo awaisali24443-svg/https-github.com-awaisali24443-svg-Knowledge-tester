@@ -56,9 +56,15 @@ export function getCurrentQuestion() {
  * @returns {boolean} True if the answer was correct, false otherwise.
  */
 export function answerQuestion(answerIndex) {
-    if (!quizState) return;
+    if (!quizState) return false;
 
     const currentQuestion = getCurrentQuestion();
+    // Add a guard clause to prevent crash if question is not found
+    if (!currentQuestion) {
+        console.error("Attempted to answer a question that could not be found in the current state.");
+        return false;
+    }
+    
     const isCorrect = currentQuestion.correctAnswerIndex === answerIndex;
 
     quizState.userAnswers[quizState.currentIndex] = answerIndex;
@@ -73,7 +79,7 @@ export function answerQuestion(answerIndex) {
  * @returns {boolean} True if there are more questions, false if the quiz is finished.
  */
 export function nextQuestion() {
-    if (!quizState) return;
+    if (!quizState) return false;
 
     if (quizState.currentIndex < quizState.questions.length - 1) {
         quizState.currentIndex++;
