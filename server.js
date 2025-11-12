@@ -32,7 +32,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, '/')));
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -43,7 +42,7 @@ const apiLimiter = rateLimit({
 });
 
 // --- API Routes ---
-
+// Define API routes before serving static files to ensure they are matched first.
 app.get('/api/topics', apiLimiter, async (req, res) => {
     try {
         const data = await loadTopicsData();
@@ -166,9 +165,12 @@ app.post('/api/generate', apiLimiter, async (req, res) => {
     }
 });
 
+// Serve static assets from the root directory
+app.use(express.static(path.join(__dirname, '/')));
 
 // Fallback to serve index.html for any other request (enables SPA routing)
-app.get('/*', (req, res) => {
+// This should come after all other routes.
+app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
