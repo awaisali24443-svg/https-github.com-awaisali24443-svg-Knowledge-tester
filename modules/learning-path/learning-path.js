@@ -1,3 +1,4 @@
+
 import { getLearningPath, getProgressForPath } from '../../services/learningPathService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
@@ -87,7 +88,9 @@ export function init(appState) {
 }
 
 export function destroy() {
-    console.log("Learning Path module destroyed.");
+    container?.querySelectorAll('.start-quiz-btn').forEach(btn => {
+        btn.removeEventListener('click', handleStartQuiz);
+    });
     appStateRef = null;
     container = null;
 }

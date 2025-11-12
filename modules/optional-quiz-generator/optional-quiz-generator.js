@@ -1,6 +1,8 @@
-let form, appStateRef;
 
-const formSubmitHandler = (e) => {
+let form;
+let appStateRef;
+
+const handleSubmit = (e) => {
     e.preventDefault();
     const input = document.getElementById('topic-input');
     const topic = input.value.trim();
@@ -12,22 +14,18 @@ const formSubmitHandler = (e) => {
         input.classList.add('invalid');
         setTimeout(() => {
             input.classList.remove('invalid');
-        }, 500); // Shortened duration
+        }, 500);
     }
 };
 
 export function init(appState) {
     appStateRef = appState;
     form = document.getElementById('quiz-generator-form');
-    if (form) {
-        form.addEventListener('submit', formSubmitHandler);
-    }
+    form?.addEventListener('submit', handleSubmit);
 }
 
 export function destroy() {
-    if (form) {
-        form.removeEventListener('submit', formSubmitHandler);
-    }
+    form?.removeEventListener('submit', handleSubmit);
     appStateRef = null;
-    console.log("Quiz Generator module destroyed.");
+    form = null;
 }

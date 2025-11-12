@@ -1,3 +1,4 @@
+
 import { getQuizState, startQuiz, getCurrentQuestion, answerQuestion, nextQuestion, isLastQuestion } from '../../services/quizStateService.js';
 import { soundService } from '../../services/soundService.js';
 
@@ -125,8 +126,9 @@ export function init(appState) {
 
 export function destroy() {
     if (elements) {
-        elements.optionsContainer.removeEventListener('click', handleOptionClick);
-        elements.nextQuestionBtn.removeEventListener('click', proceedToNextStep);
+        elements.optionsContainer?.removeEventListener('click', handleOptionClick);
+        elements.nextQuestionBtn?.removeEventListener('click', proceedToNextStep);
     }
-    console.log("Quiz module destroyed.");
+    elements = {};
+    appStateRef = null;
 }

@@ -1,3 +1,4 @@
+
 import { getSavedQuestions, removeQuestion } from '../../services/libraryService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
@@ -73,5 +74,7 @@ export function init() {
 }
 
 export function destroy() {
-    console.log("Library module destroyed.");
+    // Event listeners are added/removed on-the-fly, so no specific cleanup needed here
+    // besides clearing the main container reference.
+    container = null;
 }

@@ -1,3 +1,4 @@
+
 import { getQuizState, endQuiz } from '../../services/quizStateService.js';
 import { saveQuestion, isQuestionSaved } from '../../services/libraryService.js';
 import { markStepComplete } from '../../services/learningPathService.js';
@@ -6,7 +7,7 @@ import { toastService } from '../../services/toastService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
 let appStateRef;
-let retakeBtn, toggleReviewBtn;
+let elements = {};
 
 const handleRetakeQuiz = () => {
     // Retake quiz with the same topic context
@@ -14,10 +15,10 @@ const handleRetakeQuiz = () => {
 };
 
 const handleToggleReview = () => {
-    const reviewDetails = document.getElementById('review-details');
+    const reviewDetails = elements.reviewDetails;
     if (reviewDetails) {
         reviewDetails.classList.toggle('visible');
-        toggleReviewBtn.textContent = reviewDetails.classList.contains('visible') 
+        elements.toggleReviewBtn.textContent = reviewDetails.classList.contains('visible') 
             ? 'Hide Details' 
             : 'Show Details';
     }
@@ -27,7 +28,7 @@ function animateScore(finalScore, scoreEl) {
     let currentScore = 0;
     const duration = 1000;
     const stepTime = 20;
-    const increment = finalScore / (duration / stepTime) || 1;
+    const increment = finalScore === 0 ? 0 : (finalScore / (duration / stepTime));
 
     const timer = setInterval(() => {
         currentScore += increment;
@@ -50,24 +51,17 @@ function renderResults() {
     
     const scorePercent = Math.round((score / questions.length) * 100);
 
-    const scoreRingFg = document.getElementById('score-ring-fg');
-    const scoreText = document.getElementById('score-text');
-    const finalScoreText = document.getElementById('final-score-text');
-    const title = document.getElementById('results-title');
-    retakeBtn = document.getElementById('retake-quiz-btn');
-    toggleReviewBtn = document.getElementById('toggle-review-btn');
-    
-    finalScoreText.textContent = `You answered ${score} out of ${questions.length} questions correctly.`;
+    elements.finalScoreText.textContent = `You answered ${score} out of ${questions.length} questions correctly.`;
 
     setTimeout(() => {
-        scoreRingFg.style.strokeDasharray = `${scorePercent}, 100`;
-        animateScore(scorePercent, scoreText);
+        elements.scoreRingFg.style.strokeDasharray = `${scorePercent}, 100`;
+        animateScore(scorePercent, elements.scoreText);
     }, 100);
 
     if (scorePercent >= PASSING_SCORE_PERCENTAGE) {
-        title.textContent = "Congratulations!";
+        elements.title.textContent = "Congratulations!";
     } else {
-        title.textContent = "Keep Practicing!";
+        elements.title.textContent = "Keep Practicing!";
     }
 
     const pathContext = appStateRef.context.learningPathContext;
@@ -77,14 +71,11 @@ function renderResults() {
     }
 
     renderQuestionReview(questions, userAnswers);
-
-    retakeBtn.addEventListener('click', handleRetakeQuiz);
-    toggleReviewBtn.addEventListener('click', handleToggleReview);
 }
 
 function renderQuestionReview(questions, userAnswers) {
-    const container = document.getElementById('question-review-container');
-    const template = document.getElementById('review-item-template');
+    const container = elements.reviewContainer;
+    const template = elements.reviewTemplate;
     container.innerHTML = '';
 
     questions.forEach((q, index) => {
@@ -131,17 +122,28 @@ function renderQuestionReview(questions, userAnswers) {
 
 export function init(appState) {
     appStateRef = appState;
+    elements = {
+        retakeBtn: document.getElementById('retake-quiz-btn'),
+        toggleReviewBtn: document.getElementById('toggle-review-btn'),
+        reviewDetails: document.getElementById('review-details'),
+        scoreRingFg: document.getElementById('score-ring-fg'),
+        scoreText: document.getElementById('score-text'),
+        finalScoreText: document.getElementById('final-score-text'),
+        title: document.getElementById('results-title'),
+        reviewContainer: document.getElementById('question-review-container'),
+        reviewTemplate: document.getElementById('review-item-template'),
+    };
+    
     renderResults();
+    
+    elements.retakeBtn.addEventListener('click', handleRetakeQuiz);
+    elements.toggleReviewBtn.addEventListener('click', handleToggleReview);
 }
 
 export function destroy() {
-    if (retakeBtn) {
-        retakeBtn.removeEventListener('click', handleRetakeQuiz);
-    }
-    if (toggleReviewBtn) {
-        toggleReviewBtn.removeEventListener('click', handleToggleReview);
-    }
+    elements.retakeBtn?.removeEventListener('click', handleRetakeQuiz);
+    elements.toggleReviewBtn?.removeEventListener('click', handleToggleReview);
     endQuiz(); // Clear the quiz state after leaving the results page
     appStateRef = null;
-    console.log("Results module destroyed.");
+    elements = {};
 }

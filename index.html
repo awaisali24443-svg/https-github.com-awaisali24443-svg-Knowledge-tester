@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +16,7 @@
     <!-- OPEN GRAPH / SOCIAL MEDIA PREVIEW -->
     <meta property="og:title" content="Knowledge Tester | AI-Powered Quizzes on Any Topic">
     <meta property="og:description" content="Instantly generate custom quizzes on any subject with our AI-powered tool. Explore curated topics, save questions to your library, and master new skills.">
-    <meta property="og:image" content="">
+    <meta property="og:image" content="https://ai-knowledge-tester.onrender.com/assets/og-image.png">
     <meta property="og:url" content="https://ai-knowledge-tester.onrender.com">
     <meta property="og:type" content="website">
 
@@ -42,11 +43,11 @@
 {
   "imports": {
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
-    "express": "https://aistudiocdn.com/express@^5.1.0",
     "path": "https://aistudiocdn.com/path@^0.12.7",
+    "express": "https://aistudiocdn.com/express@^5.1.0",
     "url": "https://aistudiocdn.com/url@^0.11.4",
-    "express-rate-limit": "https://aistudiocdn.com/express-rate-limit@^8.2.1",
-    "fs/": "https://aistudiocdn.com/fs@^0.0.1-security/"
+    "fs/": "https://aistudiocdn.com/fs@^0.0.1-security/",
+    "express-rate-limit": "https://aistudiocdn.com/express-rate-limit@^8.2.1"
   }
 }
 </script>
@@ -88,7 +89,7 @@
     <div id="toast-container"></div>
 
     <!-- Reusable Confirmation Modal Structure -->
-    <div id="confirmation-modal" class="modal-overlay">
+    <div id="confirmation-modal" class="modal-overlay" role="alertdialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message">
         <div class="modal-content">
             <h3 id="modal-title">Confirm Action</h3>
             <p id="modal-message">Are you sure you want to proceed?</p>

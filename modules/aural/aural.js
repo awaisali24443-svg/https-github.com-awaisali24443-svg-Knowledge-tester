@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
 // --- State Management ---
@@ -208,14 +209,22 @@ async function handleServerMessage(message) {
     }
 }
 
-function stopConversation() {
+async function stopConversation() {
     if (!isSessionActive && !isConnecting) return;
     
     isSessionActive = false;
     isConnecting = false;
 
-    sessionPromise?.then(session => session.close()).catch(e => console.error("Error closing session:", e));
-    sessionPromise = null;
+    if (sessionPromise) {
+        try {
+            const session = await sessionPromise;
+            session.close();
+        } catch(e) {
+            console.error("Error closing session:", e);
+        } finally {
+            sessionPromise = null;
+        }
+    }
 
     microphoneStream?.getTracks().forEach(track => track.stop());
     microphoneStream = null;
@@ -223,8 +232,12 @@ function stopConversation() {
     scriptProcessor?.disconnect();
     scriptProcessor = null;
     
-    inputAudioContext?.close().catch(e => {});
-    outputAudioContext?.close().catch(e => {});
+    if (inputAudioContext && inputAudioContext.state !== 'closed') {
+        await inputAudioContext.close().catch(e => {});
+    }
+    if (outputAudioContext && outputAudioContext.state !== 'closed') {
+        await outputAudioContext.close().catch(e => {});
+    }
     inputAudioContext = null;
     outputAudioContext = null;
 
@@ -256,15 +269,11 @@ export function init() {
         controlBtn: document.getElementById('aural-control-btn'),
         log: document.querySelector('.transcription-log'),
     };
-    elements.controlBtn.addEventListener('click', handleControlButtonClick);
-    console.log("Aural module initialized.");
+    elements.controlBtn?.addEventListener('click', handleControlButtonClick);
 }
 
 export function destroy() {
     stopConversation();
-    if (elements.controlBtn) {
-        elements.controlBtn.removeEventListener('click', handleControlButtonClick);
-    }
+    elements.controlBtn?.removeEventListener('click', handleControlButtonClick);
     elements = {}; // Clear references
-    console.log("Aural module destroyed.");
 }

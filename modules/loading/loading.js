@@ -1,3 +1,4 @@
+
 import { generateQuiz } from '../../services/geminiService.js';
 import { NUM_QUESTIONS } from '../../constants.js';
 
@@ -13,13 +14,14 @@ const messages = [
 let messageInterval;
 let isCancelled = false;
 let cancelTimeout;
+let cancelBtn;
 
 async function startQuizGeneration(appState) {
     const statusEl = document.getElementById('loading-status');
     const errorContainer = document.getElementById('error-message-container');
-    const errorText = errorContainer.querySelector('.error-text');
+    const errorText = errorContainer?.querySelector('.error-text');
     const loadingText = document.querySelector('.loading-text');
-    const cancelBtn = document.getElementById('cancel-btn');
+    cancelBtn = document.getElementById('cancel-btn');
 
     // Show cancel button after a delay
     cancelTimeout = setTimeout(() => {
@@ -53,6 +55,8 @@ async function startQuizGeneration(appState) {
         console.error("Failed to generate quiz:", error);
         if(loadingText) loadingText.style.display = 'none';
         if(cancelBtn) cancelBtn.style.display = 'none';
+        document.querySelector('.loader')?.style.display = 'none';
+
 
         let userFriendlyError = "An unexpected error occurred.";
         if (error.message.toLowerCase().includes('safety')) {
@@ -68,7 +72,8 @@ async function startQuizGeneration(appState) {
         if(errorText) errorText.textContent = userFriendlyError;
         if(errorContainer) errorContainer.style.display = 'block';
     } finally {
-        clearTimeout(cancelTimeout); // Clean up timeout
+        clearInterval(messageInterval);
+        clearTimeout(cancelTimeout);
     }
 }
 
@@ -79,18 +84,15 @@ function handleCancel() {
 
 export function init(appState) {
     isCancelled = false;
-    document.getElementById('cancel-btn')?.addEventListener('click', handleCancel);
+    cancelBtn = document.getElementById('cancel-btn');
+    cancelBtn?.addEventListener('click', handleCancel);
     startQuizGeneration(appState);
-    console.log("Loading module initialized.");
 }
 
 export function destroy() {
     clearInterval(messageInterval);
     clearTimeout(cancelTimeout);
     isCancelled = true; // Mark as cancelled on navigation
-    const cancelBtn = document.getElementById('cancel-btn');
-    if(cancelBtn) {
-        cancelBtn.removeEventListener('click', handleCancel);
-    }
-    console.log("Loading module destroyed.");
+    cancelBtn?.removeEventListener('click', handleCancel);
+    cancelBtn = null;
 }

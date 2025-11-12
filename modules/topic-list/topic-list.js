@@ -1,3 +1,4 @@
+
 import { getTopicsForCategory, getCategoryById } from '../../services/topicService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
@@ -67,9 +68,7 @@ export async function init(appState) {
 }
 
 export function destroy() {
-    if (listContainer) {
-        listContainer.removeEventListener('click', handleTopicClick);
-    }
+    listContainer?.removeEventListener('click', handleTopicClick);
     appStateRef = null;
-    console.log("Topic List module destroyed.");
+    listContainer = null;
 }

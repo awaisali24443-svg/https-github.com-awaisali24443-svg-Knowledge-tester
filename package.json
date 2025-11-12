@@ -24,7 +24,7 @@
   "license": "UNLICENSED",
   "dependencies": {
     "@google/genai": "^1.29.0",
-    "express": "^5.0.0-beta.1",
+    "express": "^4.19.2",
     "express-rate-limit": "^7.3.1"
   }
 }

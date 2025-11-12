@@ -1,13 +1,14 @@
+
 import { saveNewPath, getAllLearningPaths } from '../../services/learningPathService.js';
 import { generateLearningPath } from '../../services/geminiService.js';
 import { toastService } from '../../services/toastService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
-let form, input, button, btnText, loader, errorContainer;
+let elements = {};
 
 async function handleFormSubmit(e) {
     e.preventDefault();
-    const goal = input.value.trim();
+    const goal = elements.input.value.trim();
 
     if (!goal) {
         toastService.show("Please enter a learning goal.");
@@ -18,14 +19,17 @@ async function handleFormSubmit(e) {
 
     try {
         const data = await generateLearningPath(goal);
+        if (!data.path || data.path.length === 0) {
+            throw new Error("The AI was unable to generate a valid path for this topic. Please try being more specific.");
+        }
         const newPath = saveNewPath({ name: goal, steps: data.path });
         
         window.location.hash = `learning-path/${newPath.id}`;
 
     } catch (error) {
         console.error("Path generation failed:", error);
-        errorContainer.textContent = error.message || "An unknown error occurred while generating the path.";
-        errorContainer.style.display = 'block';
+        elements.errorContainer.textContent = error.message || "An unknown error occurred while generating the path.";
+        elements.errorContainer.style.display = 'block';
     } finally {
         setLoading(false);
     }
@@ -33,25 +37,24 @@ async function handleFormSubmit(e) {
 
 function setLoading(isLoading) {
     if (isLoading) {
-        button.disabled = true;
-        btnText.style.display = 'none';
-        loader.style.display = 'inline-block';
-        errorContainer.style.display = 'none';
+        elements.button.disabled = true;
+        elements.btnText.style.display = 'none';
+        elements.loader.style.display = 'inline-block';
+        elements.errorContainer.style.display = 'none';
     } else {
-        button.disabled = false;
-        btnText.style.display = 'inline-block';
-        loader.style.display = 'none';
+        elements.button.disabled = false;
+        elements.btnText.style.display = 'inline-block';
+        elements.loader.style.display = 'none';
     }
 }
 
 function renderSavedPaths() {
     const savedPaths = getAllLearningPaths();
-    const listContainer = document.getElementById('saved-paths-list');
     
-    if (!listContainer) return;
+    if (!elements.savedPathsList) return;
 
     if (savedPaths.length > 0) {
-        listContainer.innerHTML = savedPaths.map(path => `
+        elements.savedPathsList.innerHTML = savedPaths.map(path => `
             <a href="#learning-path/${path.id}" class="saved-path-item card">
                 <h3>${path.name}</h3>
                 <p>${path.steps.length} steps</p>
@@ -59,26 +62,28 @@ function renderSavedPaths() {
         `).join('');
         initializeCardGlow();
     } else {
-        listContainer.innerHTML = `<p class="card" style="text-align: center; color: var(--color-text-muted);">You haven't generated any learning paths yet.</p>`;
+        elements.savedPathsList.innerHTML = `<p class="card" style="text-align: center; color: var(--color-text-muted);">You haven't generated any learning paths yet.</p>`;
     }
 }
 
 export function init() {
-    form = document.getElementById('path-generator-form');
-    input = document.getElementById('goal-input');
-    button = form.querySelector('button[type="submit"]');
-    btnText = button.querySelector('.btn-text');
-    loader = button.querySelector('.loader');
-    errorContainer = document.getElementById('path-error-container');
-
-    form.addEventListener('submit', handleFormSubmit);
+    const form = document.getElementById('path-generator-form');
+    elements = {
+        form,
+        input: document.getElementById('goal-input'),
+        button: form.querySelector('button[type="submit"]'),
+        btnText: form.querySelector('.btn-text'),
+        loader: form.querySelector('.loader'),
+        errorContainer: document.getElementById('path-error-container'),
+        savedPathsList: document.getElementById('saved-paths-list'),
+    };
+    
+    elements.form?.addEventListener('submit', handleFormSubmit);
 
     renderSavedPaths();
 }
 
 export function destroy() {
-    if (form) {
-        form.removeEventListener('submit', handleFormSubmit);
-    }
-    console.log("Learning Path Generator destroyed.");
+    elements.form?.removeEventListener('submit', handleFormSubmit);
+    elements = {};
 }

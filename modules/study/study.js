@@ -1,3 +1,4 @@
+
 import { getSavedQuestions } from '../../services/libraryService.js';
 
 let deck = [];
@@ -69,12 +70,12 @@ export function init() {
 }
 
 export function destroy() {
-    if (elements.flipBtn) {
-        elements.flipBtn.removeEventListener('click', flipCard);
-        elements.card.removeEventListener('click', flipCard);
-        elements.nextBtn.removeEventListener('click', nextCard);
-        elements.shuffleBtn.removeEventListener('click', shuffleDeck);
-    }
+    elements.flipBtn?.removeEventListener('click', flipCard);
+    elements.card?.removeEventListener('click', flipCard);
+    elements.nextBtn?.removeEventListener('click', nextCard);
+    elements.shuffleBtn?.removeEventListener('click', shuffleDeck);
+    
     elements = {}; // Clear references
-    console.log("Study module destroyed.");
+    deck = [];
+    currentIndex = 0;
 }

@@ -1,3 +1,4 @@
+
 // index.js - Main Application Entry Point
 // Rewritten from scratch for stability and performance.
 
@@ -35,6 +36,7 @@ const appState = {
 // --- Module Cache & State ---
 const moduleCache = new Map();
 let currentModule = null;
+const appContainer = document.getElementById('app');
 
 // --- Core Functions ---
 
@@ -72,7 +74,7 @@ async function renderSidebar() {
             .filter(route => route.inNav && (!route.featureFlag || isFeatureEnabled(route.featureFlag)))
             .map(route => `
                 <li>
-                    <a href="#${route.hash}" class="nav-link" data-nav-id="${route.hash}">
+                    <a href="#${route.hash}" class="nav-link" data-nav-id="${route.hash.split('/')[0]}">
                         <span class="nav-icon">${route.icon}</span>
                         <span class="nav-text">${route.name}</span>
                     </a>
@@ -122,25 +124,26 @@ function matchRoute(hash) {
  * @param {object} route - The route configuration object.
  */
 async function loadModule(route) {
-    const appContainer = document.getElementById('app');
     if (!appContainer) return;
 
     // 1. Cleanup previous module
     appContainer.classList.add('fade-out');
     if (currentModule?.instance?.destroy) {
         try {
-            currentModule.instance.destroy();
+            await currentModule.instance.destroy();
         } catch (e) {
             console.error(`Error destroying module ${currentModule.module}:`, e);
         }
     }
     await new Promise(resolve => setTimeout(resolve, 200)); // Wait for fade-out
 
-    // 2. Update navigation and metadata
+    // 2. Update navigation, metadata, and container style
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.toggle('active', link.dataset.navId === route.hash.split('/')[0]);
     });
     updateMetaTags(route.name, route.params);
+    appContainer.classList.toggle('full-bleed', !!route.fullBleed);
+
 
     try {
         // 3. Fetch module assets (HTML, CSS, JS) if not cached
@@ -150,6 +153,7 @@ async function loadModule(route) {
                 fetch(`/modules/${route.module}/${route.module}.css`),
                 import(`./modules/${route.module}/${route.module}.js`)
             ]);
+            if (!htmlRes.ok || !js) throw new Error(`Module assets for ${route.module} not found.`);
             const html = await htmlRes.text();
             const css = cssRes.ok ? await cssRes.text() : '';
             moduleCache.set(route.module, { html, css, js });
@@ -167,7 +171,8 @@ async function loadModule(route) {
 
     } catch (error) {
         console.error(`Failed to load module ${route.module}:`, error);
-        appContainer.innerHTML = `<h2>Error loading ${route.name}</h2><p>Please try refreshing the page.</p>`;
+        appContainer.classList.remove('full-bleed');
+        appContainer.innerHTML = `<div class="card" style="margin: 2rem auto; max-width: 600px; text-align: center;"><h2>Error loading ${route.name}</h2><p>Please try refreshing the page or return home.</p><a href="#home" class="btn btn-primary">Go Home</a></div>`;
     } finally {
         // 5. Finalize UI
         appContainer.classList.remove('fade-out');
@@ -217,7 +222,6 @@ function applyBodySettings() {
 async function main() {
     try {
         // Verify essential DOM elements exist
-        const appContainer = document.getElementById('app');
         const sidebarContainer = document.getElementById('sidebar-container');
         if (!appContainer || !sidebarContainer) throw new Error("Core application layout elements (#app, #sidebar-container) are missing.");
 
