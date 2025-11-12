@@ -1,5 +1,5 @@
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
-import { applyTheme } from './themeService.js';
+// Theme application is now handled directly by the settings UI module to improve separation of concerns.
 
 const defaultConfig = {
     theme: 'dark-cyber',
@@ -62,9 +62,4 @@ export function getConfig() {
 export function setConfig(newConfig) {
     currentConfig = { ...currentConfig, ...newConfig };
     saveConfig();
-
-    // Directly apply the theme if it was changed to make the system more robust.
-    if (newConfig.theme) {
-        applyTheme(newConfig.theme);
-    }
 }

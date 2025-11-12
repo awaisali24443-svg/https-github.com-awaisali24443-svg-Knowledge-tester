@@ -2,6 +2,7 @@ import * as configService from '../../services/configService.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 import { LOCAL_STORAGE_KEYS } from '../../constants.js';
 import { showToast } from '../../services/toastService.js';
+import { applyTheme } from '../../services/themeService.js';
 
 let soundToggle;
 let clearDataBtn;
@@ -24,8 +25,8 @@ function handleThemeToggle(event) {
     const button = event.target.closest('button[data-theme]');
     if (button) {
         const newTheme = button.dataset.theme;
+        applyTheme(newTheme);
         configService.setConfig({ theme: newTheme });
-        // The 'settings-changed' event will trigger the themeService to update the CSS
         loadSettings(); // Instantly update the active button style
     }
 }
