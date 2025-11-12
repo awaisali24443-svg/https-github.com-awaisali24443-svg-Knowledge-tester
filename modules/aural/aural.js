@@ -1,6 +1,3 @@
-
-import { GoogleGenAI, Modality } from '@google/genai';
-
 // --- State Management ---
 const STATE = {
   IDLE: 'IDLE',
@@ -12,7 +9,7 @@ const STATE = {
 };
 
 let currentState = STATE.IDLE;
-let session, ai, mediaStream, inputAudioContext, outputAudioContext, scriptProcessor;
+let socket, mediaStream, inputAudioContext, outputAudioContext, scriptProcessor;
 let nextStartTime = 0;
 let sources = new Set();
 let currentInputTranscription = '', currentOutputTranscription = '';
@@ -20,7 +17,7 @@ let currentInputTranscription = '', currentOutputTranscription = '';
 // --- DOM Elements ---
 let elements = {};
 
-// --- Audio Utilities (as per Gemini Spec) ---
+// --- Audio Utilities ---
 function encode(bytes) {
   let binary = '';
   const len = bytes.byteLength;
@@ -38,17 +35,10 @@ function decode(base64) {
   }
   return bytes;
 }
-async function decodeAudioData(
-  data, // data is a Uint8Array
-  ctx,
-  sampleRate,
-  numChannels,
-) {
-  // Use the specific buffer segment of the Uint8Array for robustness
+async function decodeAudioData(data, ctx, sampleRate, numChannels) {
   const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
   const frameCount = dataInt16.length / numChannels;
   const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
-
   for (let channel = 0; channel < numChannels; channel++) {
     const channelData = buffer.getChannelData(channel);
     for (let i = 0; i < frameCount; i++) {
@@ -67,7 +57,6 @@ function createBlob(data) {
         mimeType: 'audio/pcm;rate=16000',
     };
 }
-
 
 // --- UI & State Updates ---
 function updateUI(newState, message = '') {
@@ -125,87 +114,90 @@ async function startConversation() {
     elements.error.style.display = 'none';
 
     try {
-        if (!ai) ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
         outputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
         
-        const sessionPromise = ai.live.connect({
-            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-            config: {
-                responseModalities: [Modality.AUDIO],
-                inputAudioTranscription: {},
-                outputAudioTranscription: {},
-            },
-            callbacks: {
-                onopen: () => {
-                    updateUI(STATE.LISTENING);
-                    const source = inputAudioContext.createMediaStreamSource(mediaStream);
-                    scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
-                    scriptProcessor.onaudioprocess = (event) => {
-                        const inputData = event.inputBuffer.getChannelData(0);
-                        const pcmBlob = createBlob(inputData);
-                        sessionPromise.then(s => s.sendRealtimeInput({ media: pcmBlob }));
-                    };
-                    source.connect(scriptProcessor);
-                    scriptProcessor.connect(inputAudioContext.destination);
-                },
-                onmessage: async (message) => {
-                    if (message.serverContent?.interrupted) {
-                        for (const source of sources.values()) {
-                            source.stop();
-                        }
-                        sources.clear();
-                        nextStartTime = 0;
-                    }
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socket = new WebSocket(`${protocol}//${window.location.host}`);
 
-                    const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-                    if (audioData) {
-                        updateUI(STATE.SPEAKING);
-                        const decoded = decode(audioData);
-                        const audioBuffer = await decodeAudioData(decoded, outputAudioContext, 24000, 1);
-                        
-                        nextStartTime = Math.max(nextStartTime, outputAudioContext.currentTime);
-                        const source = outputAudioContext.createBufferSource();
-                        source.buffer = audioBuffer;
-                        source.connect(outputAudioContext.destination);
-                        source.addEventListener('ended', () => {
-                            sources.delete(source);
-                        });
-                        source.start(nextStartTime);
-                        nextStartTime += audioBuffer.duration;
-                        sources.add(source);
-                    }
+        socket.onopen = () => {
+            updateUI(STATE.LISTENING);
+            const source = inputAudioContext.createMediaStreamSource(mediaStream);
+            scriptProcessor = inputAudioContext.createScriptProcessor(4096, 1, 1);
+            scriptProcessor.onaudioprocess = (event) => {
+                if (socket.readyState !== WebSocket.OPEN) return;
+                const inputData = event.inputBuffer.getChannelData(0);
+                const pcmBlob = createBlob(inputData);
+                socket.send(JSON.stringify({ type: 'audio_input', payload: pcmBlob }));
+            };
+            source.connect(scriptProcessor);
+            scriptProcessor.connect(inputAudioContext.destination);
+        };
 
-                    if (message.serverContent?.outputTranscription?.text) {
-                        currentOutputTranscription += message.serverContent.outputTranscription.text;
-                    }
-                    if (message.serverContent?.inputTranscription?.text) {
-                        currentInputTranscription += message.serverContent.inputTranscription.text;
-                    }
-                    if(message.serverContent?.turnComplete) {
-                        addTranscriptionEntry(currentInputTranscription, 'user');
-                        addTranscriptionEntry(currentOutputTranscription, 'model');
-                        currentInputTranscription = '';
-                        currentOutputTranscription = '';
-                        updateUI(STATE.LISTENING);
-                    }
-                },
-                onerror: (e) => updateUI(STATE.ERROR, `Session error: ${e.message || e}`),
-                onclose: () => { if(currentState !== STATE.IDLE) stopConversation(); },
+        socket.onmessage = async (event) => {
+            const serverMessage = JSON.parse(event.data);
+            if (serverMessage.type === 'error') {
+                updateUI(STATE.ERROR, serverMessage.message);
+                return;
             }
-        });
-        session = await sessionPromise;
+
+            const geminiMessage = serverMessage.message;
+            if (!geminiMessage) return;
+
+            if (geminiMessage.serverContent?.interrupted) {
+                sources.forEach(source => source.stop());
+                sources.clear();
+                nextStartTime = 0;
+            }
+
+            const audioData = geminiMessage.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+            if (audioData) {
+                updateUI(STATE.SPEAKING);
+                const decoded = decode(audioData);
+                const audioBuffer = await decodeAudioData(decoded, outputAudioContext, 24000, 1);
+                
+                nextStartTime = Math.max(nextStartTime, outputAudioContext.currentTime);
+                const source = outputAudioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(outputAudioContext.destination);
+                source.addEventListener('ended', () => sources.delete(source));
+                source.start(nextStartTime);
+                nextStartTime += audioBuffer.duration;
+                sources.add(source);
+            }
+
+            if (geminiMessage.serverContent?.outputTranscription?.text) {
+                currentOutputTranscription += geminiMessage.serverContent.outputTranscription.text;
+            }
+            if (geminiMessage.serverContent?.inputTranscription?.text) {
+                currentInputTranscription += geminiMessage.serverContent.inputTranscription.text;
+            }
+            if(geminiMessage.serverContent?.turnComplete) {
+                addTranscriptionEntry(currentInputTranscription, 'user');
+                addTranscriptionEntry(currentOutputTranscription, 'model');
+                currentInputTranscription = '';
+                currentOutputTranscription = '';
+                updateUI(STATE.LISTENING);
+            }
+        };
+        
+        socket.onerror = (err) => updateUI(STATE.ERROR, `WebSocket error. Check console.`);
+        socket.onclose = () => { if(currentState !== STATE.IDLE) stopConversation(); };
+
     } catch (err) {
-        console.error(err);
-        updateUI(STATE.ERROR, err.message);
+        console.error("Error starting conversation:", err);
+        updateUI(STATE.ERROR, `Could not start microphone: ${err.message}`);
     }
 }
 
 function stopConversation() {
     if (currentState === STATE.IDLE) return;
     
+    if (socket) {
+        socket.close();
+        socket = null;
+    }
     if (scriptProcessor) {
         scriptProcessor.disconnect();
         scriptProcessor.onaudioprocess = null;
@@ -216,18 +208,14 @@ function stopConversation() {
         mediaStream = null;
     }
     if (inputAudioContext) {
-        inputAudioContext.close();
+        inputAudioContext.close().catch(e => {});
         inputAudioContext = null;
     }
     if (outputAudioContext) {
         sources.forEach(s => s.stop());
         sources.clear();
-        outputAudioContext.close();
+        outputAudioContext.close().catch(e => {});
         outputAudioContext = null;
-    }
-    if (session) {
-        session.close();
-        session = null;
     }
     updateUI(STATE.IDLE);
 }

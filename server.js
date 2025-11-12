@@ -2,15 +2,18 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, Type, Modality } from '@google/genai';
 import rateLimit from 'express-rate-limit';
 import fs from 'fs/promises';
+import http from 'http';
+import { WebSocketServer } from 'ws';
 
 const app = express();
+const server = http.createServer(app);
+const wss = new WebSocketServer({ server });
 const port = process.env.PORT || 3000;
 
 // Trust the first proxy
-// This is necessary for rate limiting to work correctly behind a proxy (e.g., on Render, Heroku)
 app.set('trust proxy', 1);
 
 // ES module equivalent of __dirname
@@ -20,16 +23,14 @@ const __dirname = path.dirname(__filename);
 // --- Middleware ---
 app.use(express.json());
 
-// Rate limiting to prevent abuse
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: 'Too many requests from this IP, please try again after 15 minutes',
 });
 
-// Serve static files from the root directory
 app.use(express.static(path.join(__dirname, '/')));
 
 // --- Gemini API Initialization ---
@@ -40,6 +41,62 @@ if (process.env.API_KEY) {
 } else {
   console.error('API_KEY is not defined in environment variables. API calls will fail.');
 }
+
+// --- WebSocket Handling for Aural Conversation ---
+wss.on('connection', (ws) => {
+  console.log('Client connected to WebSocket');
+  let sessionPromise;
+
+  if (!ai) {
+    ws.send(JSON.stringify({ type: 'error', message: 'Server not configured with API key.' }));
+    ws.close();
+    return;
+  }
+
+  try {
+    sessionPromise = ai.live.connect({
+      model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+      config: {
+        responseModalities: [Modality.AUDIO],
+        inputAudioTranscription: {},
+        outputAudioTranscription: {},
+      },
+      callbacks: {
+        onopen: () => ws.send(JSON.stringify({ type: 'socket_open' })),
+        onmessage: (message) => ws.send(JSON.stringify({ type: 'gemini_message', message })),
+        onerror: (e) => ws.send(JSON.stringify({ type: 'error', message: e.message || 'An unknown error occurred' })),
+        onclose: () => ws.send(JSON.stringify({ type: 'gemini_closed' })),
+      }
+    });
+
+    ws.on('message', async (message) => {
+      try {
+        const data = JSON.parse(message);
+        if (data.type === 'audio_input') {
+          const session = await sessionPromise;
+          session.sendRealtimeInput({ media: data.payload });
+        }
+      } catch (e) {
+        console.error('Error processing client message:', e);
+      }
+    });
+
+    ws.on('close', async () => {
+      console.log('Client disconnected');
+      try {
+        const session = await sessionPromise;
+        session.close();
+      } catch (e) {
+        console.error('Error closing Gemini session:', e);
+      }
+    });
+  } catch (err) {
+    console.error('Failed to connect to Gemini Live:', err);
+    ws.send(JSON.stringify({ type: 'error', message: `Failed to connect to AI: ${err.message}` }));
+    ws.close();
+  }
+});
+
 
 const quizGenerationSchema = {
     type: Type.OBJECT,
@@ -124,7 +181,6 @@ app.post('/api/generate', apiLimiter, async (req, res) => {
       }
     });
 
-    // The response.text should already be a valid JSON string due to responseSchema
     const quizData = JSON.parse(response.text);
     res.json(quizData);
 
@@ -168,14 +224,12 @@ app.post('/api/generate-path', apiLimiter, async (req, res) => {
 
 
 // --- SPA Fallback Route ---
-// This regex-based route handles all other GET requests and serves the main HTML file.
-// This is crucial for client-side routing to work correctly on page refreshes.
 app.get(/^\/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 
 // --- Server Start ---
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
