@@ -1,4 +1,4 @@
-import { getQuizState } from '../../services/quizStateService.js';
+import { getQuizState, endQuiz } from '../../services/quizStateService.js';
 import { saveQuestion, isQuestionSaved } from '../../services/libraryService.js';
 import { markStepComplete } from '../../services/learningPathService.js';
 import { PASSING_SCORE_PERCENTAGE } from '../../constants.js';
@@ -9,14 +9,8 @@ let appStateRef;
 let retakeBtn, toggleReviewBtn;
 
 const handleRetakeQuiz = () => {
-    const originalTopic = appStateRef.context.topic;
-    if (originalTopic) {
-        appStateRef.context = { topic: originalTopic };
-        window.location.hash = '#loading';
-    } else {
-        // Fallback for safety, e.g., if session state was lost
-        window.location.hash = '#custom-quiz';
-    }
+    // Retake quiz with the same topic context
+    window.location.hash = '#loading';
 };
 
 const handleToggleReview = () => {
@@ -31,9 +25,9 @@ const handleToggleReview = () => {
 
 function animateScore(finalScore, scoreEl) {
     let currentScore = 0;
-    const duration = 1000; // 1 second
-    const stepTime = 20; // update every 20ms
-    const increment = finalScore / (duration / stepTime);
+    const duration = 1000;
+    const stepTime = 20;
+    const increment = finalScore / (duration / stepTime) || 1;
 
     const timer = setInterval(() => {
         currentScore += increment;
@@ -45,9 +39,14 @@ function animateScore(finalScore, scoreEl) {
     }, stepTime);
 }
 
-function renderResults(appState) {
-    appStateRef = appState;
+function renderResults() {
     const { questions, userAnswers, score } = getQuizState();
+    
+    if (!questions || questions.length === 0) {
+        console.warn("No quiz state found, redirecting home.");
+        window.location.hash = '#home';
+        return;
+    }
     
     const scorePercent = Math.round((score / questions.length) * 100);
 
@@ -60,33 +59,27 @@ function renderResults(appState) {
     
     finalScoreText.textContent = `You answered ${score} out of ${questions.length} questions correctly.`;
 
-    // Animate the score ring and text
     setTimeout(() => {
         scoreRingFg.style.strokeDasharray = `${scorePercent}, 100`;
         animateScore(scorePercent, scoreText);
     }, 100);
 
-    // Update title based on score
     if (scorePercent >= PASSING_SCORE_PERCENTAGE) {
         title.textContent = "Congratulations!";
     } else {
         title.textContent = "Keep Practicing!";
     }
 
-    const pathContext = appState.context.learningPathContext;
+    const pathContext = appStateRef.context.learningPathContext;
     if (pathContext && scorePercent >= PASSING_SCORE_PERCENTAGE) {
         markStepComplete(pathContext.pathId, pathContext.stepId);
-        console.log(`Marked step ${pathContext.stepId} of path ${pathContext.pathId} as complete.`);
+        toastService.show("Learning path step completed!");
     }
 
     renderQuestionReview(questions, userAnswers);
 
-    if (retakeBtn) {
-        retakeBtn.addEventListener('click', handleRetakeQuiz);
-    }
-    if (toggleReviewBtn) {
-        toggleReviewBtn.addEventListener('click', handleToggleReview);
-    }
+    retakeBtn.addEventListener('click', handleRetakeQuiz);
+    toggleReviewBtn.addEventListener('click', handleToggleReview);
 }
 
 function renderQuestionReview(questions, userAnswers) {
@@ -109,11 +102,9 @@ function renderQuestionReview(questions, userAnswers) {
             } else if (optIndex === userAnswers[index]) {
                 optionEl.classList.add('incorrect');
             }
-
             if (optIndex === userAnswers[index]) {
                 optionEl.classList.add('user-answer');
             }
-
             optionsContainer.appendChild(optionEl);
         });
 
@@ -132,16 +123,15 @@ function renderQuestionReview(questions, userAnswers) {
                 }
             });
         }
-
         container.appendChild(reviewItem);
     });
     
-    initializeCardGlow(); // Apply effect to newly rendered cards
+    initializeCardGlow();
 }
 
 export function init(appState) {
-    console.log("Results module initialized.");
-    renderResults(appState);
+    appStateRef = appState;
+    renderResults();
 }
 
 export function destroy() {
@@ -151,5 +141,7 @@ export function destroy() {
     if (toggleReviewBtn) {
         toggleReviewBtn.removeEventListener('click', handleToggleReview);
     }
+    endQuiz(); // Clear the quiz state after leaving the results page
+    appStateRef = null;
     console.log("Results module destroyed.");
 }

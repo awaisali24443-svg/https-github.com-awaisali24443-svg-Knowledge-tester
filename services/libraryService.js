@@ -14,10 +14,7 @@ function hashQuestion(question) {
     return hash;
 }
 
-
 function loadLibrary() {
-    // FIX #6: Prepare for authenticated users by separating guest logic.
-    // FIX #7: Wrap localStorage access in try...catch.
     try {
         const storedLibrary = localStorage.getItem(LIBRARY_KEY_GUEST);
         if (storedLibrary) {
@@ -26,7 +23,7 @@ function loadLibrary() {
             savedQuestions = [];
         }
     } catch (error) {
-        console.warn("Could not access localStorage for library.", error);
+        console.warn("Could not access localStorage for library. Using in-memory store for this session.", error);
         savedQuestions = [];
     }
 }
@@ -60,7 +57,6 @@ export function removeQuestion(questionToRemove) {
 
 export function isQuestionSaved(question) {
     const newQuestionHash = hashQuestion(question);
-    // FIX #16: Use hash for more robust duplicate checking
     return savedQuestions.some(savedQ => hashQuestion(savedQ) === newQuestionHash);
 }
 

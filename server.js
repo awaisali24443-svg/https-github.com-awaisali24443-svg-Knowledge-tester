@@ -8,60 +8,51 @@ import fs from 'fs/promises';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Load topics data on startup and cache it ---
+// --- Caching ---
 let topicsData = null;
-try {
-    const dataPath = path.resolve(__dirname, 'data', 'topics.json');
-    const data = await fs.readFile(dataPath, 'utf-8');
-    topicsData = JSON.parse(data);
-    console.log('Topics data loaded and cached successfully.');
-} catch (error) {
-    console.error('FATAL: Could not load topics.json. The topics API will be unavailable.', error);
-    // Set to a default structure to avoid crashes on clients expecting an object
-    topicsData = { categories: [], topics: {} };
-}
 
-// --- Helper function to find a curated topic by its ID ---
-function findCuratedTopicById(topicId, data) {
-    if (!data || !data.topics) return null;
-    for (const categoryId in data.topics) {
-        const topicsInCategory = data.topics[categoryId];
-        const foundTopic = topicsInCategory.find(t => t.id === topicId);
-        if (foundTopic) {
-            return foundTopic;
-        }
+// --- Helper Functions ---
+async function loadTopicsData() {
+    if (topicsData) return topicsData;
+    try {
+        const dataPath = path.resolve(__dirname, 'data', 'topics.json');
+        const data = await fs.readFile(dataPath, 'utf-8');
+        topicsData = JSON.parse(data);
+        console.log('Topics data loaded and cached successfully.');
+        return topicsData;
+    } catch (error) {
+        console.error('FATAL: Could not load topics.json.', error);
+        return { categories: [], topics: {} }; // Return default structure to prevent crashes
     }
-    return null;
 }
 
+// --- Express App Setup ---
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
+app.use(express.static(path.join(__dirname, '/')));
 
-// Basic rate limiting to prevent abuse
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes',
+    message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
 });
 
 // --- API Routes ---
 
-// API route for serving topics
-app.get('/api/topics', apiLimiter, (req, res) => {
-    if (topicsData) {
-        res.json(topicsData);
-    } else {
-        // This case should be rare due to startup loading, but it's good practice.
-        res.status(500).json({ error: 'Topics data is currently unavailable.' });
+app.get('/api/topics', apiLimiter, async (req, res) => {
+    try {
+        const data = await loadTopicsData();
+        res.json(data);
+    } catch (error) {
+        console.error('[API /api/topics] Error loading topics data:', error);
+        res.status(500).json({ error: 'Failed to load server data.' });
     }
 });
 
-// --- NEW: API route for generating learning paths ---
 app.post('/api/generate-path', apiLimiter, async (req, res) => {
     const { goal } = req.body;
 
@@ -69,11 +60,9 @@ app.post('/api/generate-path', apiLimiter, async (req, res) => {
         return res.status(400).json({ error: 'Learning goal is required.' });
     }
 
-    console.log(`Generating learning path for goal: "${goal}"`);
+    console.log(`[API] Generating learning path for goal: "${goal}"`);
 
-    const prompt = `A user wants to learn about "${goal}". Create a structured, beginner-friendly learning path for them. The path should consist of 4 to 6 logical steps that build on each other.
-For each step, provide a clear, concise "name" for the step, and a specific "topic" string that would be suitable for generating a multiple-choice quiz. The topic string should be descriptive enough for an AI to create a good quiz.
-For example, if the goal is "Learn about Ancient Rome", a good step would be: name: "The Roman Republic", topic: "The political structure, key figures, and major events of the Roman Republic".`;
+    const prompt = `A user wants to learn about "${goal}". Create a structured, beginner-friendly learning path for them. The path should consist of 4 to 6 logical steps that build on each other. For each step, provide a clear "name" and a specific "topic" string suitable for generating a quiz. For example, if the goal is "Learn about Ancient Rome", a good step would be: name: "The Roman Republic", topic: "The political structure, key figures, and major events of the Roman Republic".`;
 
     const schema = {
         type: Type.OBJECT,
@@ -83,8 +72,8 @@ For example, if the goal is "Learn about Ancient Rome", a good step would be: na
                 items: {
                     type: Type.OBJECT,
                     properties: {
-                        name: { type: Type.STRING, description: "The concise name of this learning step (e.g., 'The Early Renaissance')." },
-                        topic: { type: Type.STRING, description: "The specific, quiz-friendly topic for this step (e.g., 'Key artists and innovations of the Early Italian Renaissance')." }
+                        name: { type: Type.STRING },
+                        topic: { type: Type.STRING }
                     },
                     required: ["name", "topic"]
                 }
@@ -94,169 +83,96 @@ For example, if the goal is "Learn about Ancient Rome", a good step would be: na
     };
 
     try {
-        const apiKey = process.env.API_KEY;
-        if (!apiKey) {
-            return res.status(500).json({ error: 'Server configuration error: API key is missing.' });
+        if (!process.env.API_KEY) {
+            throw new Error("API_KEY environment variable is not set.");
         }
-        const ai = new GoogleGenAI({ apiKey });
-
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
+                responseMimeType: 'application/json',
                 responseSchema: schema,
                 temperature: 0.5,
-            },
+            }
         });
 
-        const finishReason = response.candidates?.[0]?.finishReason;
-        const text = response.text;
-        
-        if (finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
-            let errorMessage = "The AI response was stopped unexpectedly.";
-             if(finishReason === 'SAFETY') {
-                 errorMessage = "The request was blocked for safety concerns. Please try a different goal.";
-             }
-             return res.status(400).json({ error: errorMessage });
-        }
-
-        if (!text) {
-            throw new Error("The AI returned an empty response.");
-        }
-        
-        res.json(JSON.parse(text));
+        const jsonResponse = JSON.parse(response.text);
+        console.log(`[API] Successfully generated path for "${goal}"`);
+        res.json(jsonResponse);
 
     } catch (error) {
-        console.error('Error calling Gemini API for path generation:', error);
-        res.status(500).json({ error: error.message || 'Failed to generate learning path.' });
+        console.error(`[API /api/generate-path] Error generating learning path for goal "${goal}":`, error);
+        res.status(500).json({ error: 'Failed to generate learning path from AI model.' });
     }
 });
 
-
-// API route for generating quizzes
 app.post('/api/generate', apiLimiter, async (req, res) => {
-    const { topic, topicId, numQuestions, difficulty } = req.body;
+    const { topic, numQuestions, difficulty } = req.body;
 
-    if (!topic) {
-        return res.status(400).json({ error: 'Topic is required.' });
+    if (!topic || !numQuestions) {
+        return res.status(400).json({ error: 'Topic and number of questions are required.' });
     }
 
-    let prompt;
-    let curatedTopic = null;
+    console.log(`[API] Generating quiz for topic: "${topic}"`);
 
-    if (topicId) {
-        curatedTopic = findCuratedTopicById(topicId, topicsData);
-    }
+    const prompt = `Generate a ${numQuestions}-question multiple-choice quiz about "${topic}". The difficulty should be ${difficulty}. For each question, provide a "question" text, an array of 4 "options", the "correctAnswerIndex" (0-3), and a brief "explanation" for why the correct answer is right. Ensure the options are distinct and plausible.`;
 
-    if (curatedTopic && curatedTopic.questions && curatedTopic.questions.length > 0) {
-        // Handle curated topics: use the pre-defined questions
-        console.log(`Generating quiz for curated topic: "${topic}" (ID: ${topicId})`);
-        const questionList = curatedTopic.questions.map(q => `- "${q}"`).join('\n');
-        prompt = `Create a fun multiple-choice quiz based *only* on the following questions:
-${questionList}
-
-Your tone should be friendly, engaging, and conversational. Use simple, everyday language that's easy for anyone to understand, avoiding jargon.
-The quiz difficulty should be "${difficulty || 'Medium'}".
-
-For each question, provide:
-1. The original question text, exactly as provided.
-2. Four possible answer options.
-3. The index of the correct answer.
-4. A brief, clear explanation for the correct answer, also written in a friendly and simple tone.
-
-Ensure the number of questions in your response exactly matches the number of questions I provided.`;
-
-    } else {
-        // Handle custom topics: generate questions from scratch
-        console.log(`Generating quiz for custom topic: "${topic}"`);
-        if (!numQuestions) {
-            return res.status(400).json({ error: 'Number of questions is required for a custom topic.' });
-        }
-        prompt = `Create a fun multiple-choice quiz about "${topic}". I need ${numQuestions} questions.
-Your tone should be friendly, engaging, and conversational. Use simple, everyday language that's easy for anyone to understand, avoiding jargon.
-The quiz difficulty should be "${difficulty || 'Medium'}".
-For each question, provide:
-1. The question text.
-2. Four possible answer options.
-3. The index of the correct answer.
-4. A brief, clear explanation for the correct answer, also written in a friendly and simple tone.`;
-    }
+    const questionSchema = {
+        type: Type.OBJECT,
+        properties: {
+            question: { type: Type.STRING },
+            options: { type: Type.ARRAY, items: { type: Type.STRING } },
+            correctAnswerIndex: { type: Type.INTEGER },
+            explanation: { type: Type.STRING }
+        },
+        required: ["question", "options", "correctAnswerIndex", "explanation"]
+    };
 
     const schema = {
         type: Type.OBJECT,
         properties: {
             questions: {
                 type: Type.ARRAY,
-                items: {
-                    type: Type.OBJECT,
-                    properties: {
-                        question: { type: Type.STRING },
-                        options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        correctAnswerIndex: { type: Type.INTEGER },
-                        explanation: { type: Type.STRING }
-                    },
-                    required: ["question", "options", "correctAnswerIndex", "explanation"]
-                }
+                items: questionSchema
             }
         },
         required: ["questions"]
     };
 
     try {
-        const apiKey = process.env.API_KEY;
-        if (!apiKey) {
-            console.error('API_KEY is not configured in the environment.');
-            return res.status(500).json({ error: 'Server configuration error: API key is missing.' });
+        if (!process.env.API_KEY) {
+            throw new Error("API_KEY environment variable is not set.");
         }
-        const ai = new GoogleGenAI({ apiKey });
-
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            model: 'gemini-2.5-flash',
             contents: prompt,
             config: {
-                responseMimeType: "application/json",
+                responseMimeType: 'application/json',
                 responseSchema: schema,
+                temperature: 0.7,
             },
         });
-
-        // CRITICAL FIX: Use optional chaining and check finishReason to prevent crash on unexpected AI response.
-        const finishReason = response.candidates?.[0]?.finishReason;
-        const text = response.text;
         
-        if (finishReason !== 'STOP' && finishReason !== 'MAX_TOKENS') {
-            let errorMessage = "The AI response was stopped for an unexpected reason.";
-             if(finishReason === 'SAFETY') {
-                 errorMessage = "The request was blocked due to safety concerns. Please try a different topic.";
-             } else if (finishReason === 'RECITATION') {
-                 errorMessage = "The request was blocked due to recitation concerns.";
-             }
-             // Send a 400 Bad Request for client-side issues like safety blocks.
-             return res.status(400).json({ error: errorMessage });
-        }
-
-        if (!text) {
-            throw new Error("The AI returned an empty response.");
-        }
-        
-        // The response text is already a JSON string because of responseMimeType
-        res.json(JSON.parse(text));
+        const jsonResponse = JSON.parse(response.text);
+        console.log(`[API] Successfully generated quiz for "${topic}"`);
+        res.json(jsonResponse);
 
     } catch (error) {
-        console.error('Error calling Gemini API:', error);
-        res.status(500).json({ error: error.message || 'Failed to generate quiz from AI service.' });
+        console.error(`[API /api/generate] Error generating quiz for topic "${topic}":`, error);
+        res.status(500).json({ error: 'Failed to generate quiz from AI model.' });
     }
 });
 
-// Serve static files from the root directory
-app.use(express.static(path.resolve(__dirname)));
 
-// Catch-all route to serve index.html for client-side routing
-// This regex ensures we don't accidentally intercept API calls.
-app.get(/^(?!\/api).*/, (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'index.html'));
+// Fallback to serve index.html for any other request (enables SPA routing)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// --- Server Start ---
 app.listen(port, () => {
-    console.log(`Server listening at http://localhost:${port}`);
+    console.log(`Server listening on port ${port}`);
+    loadTopicsData(); // Pre-cache data on startup
 });

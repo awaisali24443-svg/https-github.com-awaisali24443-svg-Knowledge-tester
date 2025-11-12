@@ -1,10 +1,12 @@
 import { getQuizState, startQuiz, getCurrentQuestion, answerQuestion, nextQuestion, isLastQuestion } from '../../services/quizStateService.js';
+import { soundService } from '../../services/soundService.js';
 
 let appStateRef;
 let elements;
 let hasAnswered = false;
 
 async function proceedToNextStep() {
+    soundService.playSound('click');
     if (isLastQuestion()) {
         window.location.hash = '#results';
         return;
@@ -45,11 +47,9 @@ function renderQuestion() {
 
     updateProgress();
     
-    // Hide explanation and footer for the new question
     elements.explanationContainer.style.display = 'none';
     elements.quizFooter.style.display = 'none';
     
-    // Animate new content in by removing the hiding class
     elements.questionArea.classList.remove('hiding');
     elements.optionsContainer.classList.remove('hiding');
 }
@@ -58,29 +58,26 @@ function handleOptionClick(e) {
     if (hasAnswered || !e.target.classList.contains('option-btn')) return;
 
     hasAnswered = true;
-    const selectedIndex = parseInt(e.target.dataset.index);
+    const selectedIndex = parseInt(e.target.dataset.index, 10);
     answerQuestion(selectedIndex);
 
     const question = getCurrentQuestion();
     const isCorrect = selectedIndex === question.correctAnswerIndex;
 
-    const optionButtons = Array.from(elements.optionsContainer.querySelectorAll('.option-btn'));
+    soundService.playSound(isCorrect ? 'correct' : 'incorrect');
 
-    // Disable all buttons to prevent multiple clicks
+    const optionButtons = Array.from(elements.optionsContainer.querySelectorAll('.option-btn'));
     optionButtons.forEach(btn => btn.disabled = true);
 
     const selectedButton = optionButtons[selectedIndex];
     const correctButton = optionButtons[question.correctAnswerIndex];
 
-    // Apply feedback classes. The theme's CSS will handle the animations.
     correctButton.classList.add('correct');
     if (!isCorrect) {
         selectedButton.classList.add('incorrect');
     }
 
     elements.srFeedback.textContent = isCorrect ? 'Correct!' : 'Incorrect.';
-
-    // Show explanation and "Next" button
     elements.explanationText.textContent = question.explanation;
     elements.explanationContainer.style.display = 'block';
     
@@ -124,7 +121,6 @@ export function init(appState) {
     elements.nextQuestionBtn.addEventListener('click', proceedToNextStep);
 
     renderQuestion();
-    console.log("Quiz module initialized.");
 }
 
 export function destroy() {

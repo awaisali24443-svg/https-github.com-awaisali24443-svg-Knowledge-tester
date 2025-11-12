@@ -2,11 +2,10 @@ import { getSavedQuestions } from '../../services/libraryService.js';
 
 let deck = [];
 let currentIndex = 0;
+let elements = {};
 
-let elements;
-
-// FIX #21: Fisher-Yates shuffle algorithm
 function shuffleDeck() {
+    // Fisher-Yates shuffle algorithm
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -28,7 +27,7 @@ function displayCard() {
     const cardData = deck[currentIndex];
     elements.card.classList.remove('is-flipped');
     
-    // Use a short delay to allow flip animation to reset
+    // Use a short delay to allow flip animation to reset before changing content
     setTimeout(() => {
         elements.question.textContent = cardData.question;
         elements.answer.textContent = cardData.options[cardData.correctAnswerIndex];
@@ -41,12 +40,7 @@ function flipCard() {
 }
 
 function nextCard() {
-    if (currentIndex < deck.length - 1) {
-        currentIndex++;
-    } else {
-        // Loop back to the start
-        currentIndex = 0;
-    }
+    currentIndex = (currentIndex + 1) % deck.length;
     displayCard();
 }
 
@@ -63,7 +57,6 @@ export function init() {
         progress: document.getElementById('card-progress')
     };
 
-    // FIX #13: Always fetch fresh data on init
     deck = getSavedQuestions();
     currentIndex = 0;
 
@@ -73,16 +66,15 @@ export function init() {
     elements.card.addEventListener('click', flipCard);
     elements.nextBtn.addEventListener('click', nextCard);
     elements.shuffleBtn.addEventListener('click', shuffleDeck);
-
-    console.log("Study module initialized.");
 }
 
 export function destroy() {
-    if (elements && elements.flipBtn) {
+    if (elements.flipBtn) {
         elements.flipBtn.removeEventListener('click', flipCard);
         elements.card.removeEventListener('click', flipCard);
         elements.nextBtn.removeEventListener('click', nextCard);
         elements.shuffleBtn.removeEventListener('click', shuffleDeck);
     }
+    elements = {}; // Clear references
     console.log("Study module destroyed.");
 }

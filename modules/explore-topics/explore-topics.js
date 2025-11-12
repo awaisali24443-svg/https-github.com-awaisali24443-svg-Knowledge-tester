@@ -1,5 +1,3 @@
-
-
 import { getCategories } from '../../services/topicService.js';
 import { search } from '../../services/searchService.js';
 import { initializeCardGlow } from '../../global/global.js';
@@ -9,6 +7,7 @@ let searchInput;
 let appStateRef;
 
 function renderCategories(categories) {
+    if (!resultsContainer) return;
     if (categories.length > 0) {
         resultsContainer.innerHTML = categories.map(category => `
             <a href="${category.href || `/#topics/${category.id}`}" class="category-card">
@@ -29,10 +28,11 @@ function renderCategories(categories) {
     } else {
         resultsContainer.innerHTML = '<p class="no-results-message">No categories available at the moment.</p>';
     }
-    initializeCardGlow(); // Apply effect to newly rendered cards
+    initializeCardGlow();
 }
 
 function renderSearchResults(results, query) {
+    if (!resultsContainer) return;
     if (results.length > 0) {
         resultsContainer.innerHTML = results.map(item => {
             if (item.type === 'category') {
@@ -60,7 +60,7 @@ function renderSearchResults(results, query) {
     } else {
         resultsContainer.innerHTML = `<p class="no-results-message">No results found for "${query}"</p>`;
     }
-    initializeCardGlow(); // Apply effect to newly rendered cards
+    initializeCardGlow();
 }
 
 async function showDefaultView() {
@@ -69,7 +69,7 @@ async function showDefaultView() {
         renderCategories(categories);
     } catch (error) {
         console.error("Failed to load categories:", error);
-        resultsContainer.innerHTML = '<p class="no-results-message">Could not load categories. Please try again later.</p>';
+        if(resultsContainer) resultsContainer.innerHTML = '<p class="no-results-message">Could not load categories. Please try again later.</p>';
     }
 }
 

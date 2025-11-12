@@ -1,6 +1,3 @@
-
-
-
 import { getTopicsForCategory, getCategoryById } from '../../services/topicService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
@@ -15,7 +12,6 @@ const handleTopicClick = (e) => {
     const topicName = link.dataset.topicName;
     const topicId = link.dataset.topicId;
     
-    // Use the stored appState reference to modify the context
     if (appStateRef) {
         appStateRef.context = { topic: topicName, topicId: topicId };
     }
@@ -24,7 +20,7 @@ const handleTopicClick = (e) => {
 };
 
 export async function init(appState) {
-    appStateRef = appState; // Store reference to appState
+    appStateRef = appState;
     listContainer = document.getElementById('topic-list-container');
     const categoryTitle = document.getElementById('category-title');
     const categoryDescription = document.getElementById('category-description');
@@ -33,9 +29,7 @@ export async function init(appState) {
 
     if (!categoryId || !listContainer) {
         console.error("Category ID not found in state or list container not found.");
-        if (listContainer) {
-            listContainer.innerHTML = "<p>Could not load topics for this category.</p>";
-        }
+        if (listContainer) listContainer.innerHTML = "<p>Could not load topics for this category.</p>";
         return;
     }
 
@@ -50,7 +44,7 @@ export async function init(appState) {
             categoryDescription.textContent = category.description;
         }
 
-        if (topics && topics.length > 0) {
+        if (topics?.length > 0) {
             listContainer.innerHTML = topics.map((topic, index) => `
                 <a href="#loading" class="topic-item-link" data-topic-name="${topic.name}" data-topic-id="${topic.id}">
                     <div class="topic-item stagger-in" style="animation-delay: ${index * 80}ms;">
@@ -61,11 +55,8 @@ export async function init(appState) {
                 </a>
             `).join('');
             
-            // Use a single delegated event listener on the container
             listContainer.addEventListener('click', handleTopicClick);
-            
-            initializeCardGlow(); // Apply effect to newly rendered items
-
+            initializeCardGlow();
         } else {
             listContainer.innerHTML = "<p>No topics found for this category.</p>";
         }
@@ -77,9 +68,8 @@ export async function init(appState) {
 
 export function destroy() {
     if (listContainer) {
-        // Remove the single delegated listener
         listContainer.removeEventListener('click', handleTopicClick);
     }
-    appStateRef = null; // Clear reference
+    appStateRef = null;
     console.log("Topic List module destroyed.");
 }

@@ -14,7 +14,7 @@ function loadFromStorage() {
         const storedProgress = localStorage.getItem(LEARNING_PATH_PROGRESS_GUEST);
         progress = storedProgress ? JSON.parse(storedProgress) : {};
     } catch (error) {
-        console.warn("Could not access localStorage for learning paths.", error);
+        console.warn("Could not access localStorage for learning paths. Using in-memory store for this session.", error);
         learningPaths = {};
         progress = {};
     }

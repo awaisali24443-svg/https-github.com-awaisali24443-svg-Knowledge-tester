@@ -20,12 +20,11 @@ async function handleFormSubmit(e) {
         const data = await generateLearningPath(goal);
         const newPath = saveNewPath({ name: goal, steps: data.path });
         
-        // FIX: Standardize hash to work with the new router
         window.location.hash = `learning-path/${newPath.id}`;
 
     } catch (error) {
         console.error("Path generation failed:", error);
-        errorContainer.textContent = error.message;
+        errorContainer.textContent = error.message || "An unknown error occurred while generating the path.";
         errorContainer.style.display = 'block';
     } finally {
         setLoading(false);
@@ -75,8 +74,6 @@ export function init() {
     form.addEventListener('submit', handleFormSubmit);
 
     renderSavedPaths();
-
-    console.log("Learning Path Generator initialized.");
 }
 
 export function destroy() {

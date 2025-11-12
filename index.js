@@ -1,4 +1,5 @@
 // index.js - Main Application Entry Point
+// Rewritten from scratch for stability and performance.
 
 import { ROUTES, APP_STATE_KEY } from './constants.js';
 import { updateMetaTags } from './services/seoService.js';
@@ -7,40 +8,59 @@ import { createIndex } from './services/searchService.js';
 import { soundService } from './services/soundService.js';
 import { isFeatureEnabled } from './services/featureService.js';
 
-// --- Global State ---
+// --- Global State Manager ---
 const appState = {
-    get context() {
+    _context: {},
+    init() {
         try {
             const stored = sessionStorage.getItem(APP_STATE_KEY);
-            return stored ? JSON.parse(stored) : {};
+            this._context = stored ? JSON.parse(stored) : {};
         } catch {
-            return {};
+            this._context = {};
         }
     },
+    get context() {
+        return this._context;
+    },
     set context(data) {
+        this._context = { ...this._context, ...data };
         try {
-            const current = this.context;
-            const merged = { ...current, ...data };
-            sessionStorage.setItem(APP_STATE_KEY, JSON.stringify(merged));
+            sessionStorage.setItem(APP_STATE_KEY, JSON.stringify(this._context));
         } catch (e) {
             console.error("Failed to save app state to session storage", e);
         }
     }
 };
 
-// --- Module Cache ---
+// --- Module Cache & State ---
 const moduleCache = new Map();
 let currentModule = null;
-
-// --- DOM Elements (will be initialized in main()) ---
-let appContainer, sidebarContainer, splashScreen;
 
 // --- Core Functions ---
 
 /**
- * Renders the sidebar navigation links from sidebar.html template.
+ * Hides the splash screen with a guaranteed, CSS-independent animation.
+ * This is a critical function to prevent the "stuck on splash screen" bug.
+ */
+function hideSplashScreen() {
+    const splash = document.getElementById('splash-screen');
+    if (splash && !splash.dataset.hiding) {
+        splash.dataset.hiding = 'true';
+        splash.style.transition = 'opacity 0.5s ease-out';
+        splash.style.opacity = '0';
+        setTimeout(() => {
+            splash.remove();
+        }, 500);
+    }
+}
+
+/**
+ * Renders the sidebar navigation from the ROUTES constant.
  */
 async function renderSidebar() {
+    const sidebarContainer = document.getElementById('sidebar-container');
+    if (!sidebarContainer) return;
+
     try {
         const response = await fetch('/global/sidebar.html');
         if (!response.ok) throw new Error('Sidebar template not found');
@@ -64,14 +84,14 @@ async function renderSidebar() {
         }
     } catch (error) {
         console.error("Failed to render sidebar:", error);
-        sidebarContainer.innerHTML = '<p style="color:red; text-align:center;">Error loading nav</p>';
+        sidebarContainer.innerHTML = '<p style="color:red;padding:1rem;">Error rendering sidebar</p>';
     }
 }
 
 /**
- * Matches a URL hash to a route config, handling dynamic segments like :id.
- * @param {string} hash - The URL hash (e.g., '#topics/science-nature').
- * @returns {object} The matched route configuration object.
+ * Matches a URL hash to a route, supporting dynamic parameters like :id.
+ * @param {string} hash - The URL hash (e.g., '#topics/science').
+ * @returns {object} The matched route configuration and any extracted params.
  */
 function matchRoute(hash) {
     const path = hash.substring(1) || 'home';
@@ -84,7 +104,7 @@ function matchRoute(hash) {
         const params = {};
         const isMatch = routeParts.every((part, i) => {
             if (part.startsWith(':')) {
-                params[part.substring(1)] = pathParts[i];
+                params[part.substring(1)] = decodeURIComponent(pathParts[i]);
                 return true;
             }
             return part === pathParts[i];
@@ -94,53 +114,50 @@ function matchRoute(hash) {
             return { ...route, params };
         }
     }
-    // Fallback to home if no match is found
-    return ROUTES.find(r => r.hash === 'home');
+    return ROUTES.find(r => r.hash === 'home'); // Fallback to home
 }
 
 /**
- * Loads and initializes a module based on its route configuration.
+ * The core module loader. Handles cleanup, fetching, rendering, and initialization.
  * @param {object} route - The route configuration object.
  */
 async function loadModule(route) {
-    if (!route || !route.module) {
-        console.error("Router error: Invalid route or module definition provided.", route);
-        appContainer.innerHTML = '<h2>Error: Page not found</h2><p>The requested module is not configured correctly.</p>';
-        hideSplashScreen(); // Hide even on this critical error
-        return;
-    }
-    
-    // Hide the splash screen as soon as we know we're loading a module.
-    // This makes the app feel much more responsive.
-    hideSplashScreen();
+    const appContainer = document.getElementById('app');
+    if (!appContainer) return;
 
+    // 1. Cleanup previous module
     appContainer.classList.add('fade-out');
-
     if (currentModule?.instance?.destroy) {
-        currentModule.instance.destroy();
+        try {
+            currentModule.instance.destroy();
+        } catch (e) {
+            console.error(`Error destroying module ${currentModule.module}:`, e);
+        }
     }
+    await new Promise(resolve => setTimeout(resolve, 200)); // Wait for fade-out
 
-    await new Promise(resolve => setTimeout(resolve, 200));
-
+    // 2. Update navigation and metadata
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.toggle('active', link.dataset.navId === route.hash.split('/')[0]);
     });
-
     updateMetaTags(route.name, route.params);
 
     try {
+        // 3. Fetch module assets (HTML, CSS, JS) if not cached
         if (!moduleCache.has(route.module)) {
-            const [html, js, cssRes] = await Promise.all([
-                fetch(`/modules/${route.module}/${route.module}.html`).then(res => res.text()),
-                import(`./modules/${route.module}/${route.module}.js`),
-                fetch(`/modules/${route.module}/${route.module}.css`)
+            const [htmlRes, cssRes, js] = await Promise.all([
+                fetch(`/modules/${route.module}/${route.module}.html`),
+                fetch(`/modules/${route.module}/${route.module}.css`),
+                import(`./modules/${route.module}/${route.module}.js`)
             ]);
+            const html = await htmlRes.text();
             const css = cssRes.ok ? await cssRes.text() : '';
             moduleCache.set(route.module, { html, css, js });
         }
 
         const { html, css, js } = moduleCache.get(route.module);
         
+        // 4. Render and initialize
         appContainer.innerHTML = `<style>${css}</style>${html}`;
         currentModule = { ...route, instance: js };
         
@@ -152,24 +169,27 @@ async function loadModule(route) {
         console.error(`Failed to load module ${route.module}:`, error);
         appContainer.innerHTML = `<h2>Error loading ${route.name}</h2><p>Please try refreshing the page.</p>`;
     } finally {
+        // 5. Finalize UI
         appContainer.classList.remove('fade-out');
         window.scrollTo(0, 0);
     }
 }
 
 /**
- * Main router function, triggered by hash changes.
+ * Handles hash changes to navigate between modules.
  */
 function handleRouteChange() {
     const hash = window.location.hash || '#home';
     const route = matchRoute(hash);
     
+    // Persist URL params to the global state for modules to access
     if (route.params) {
-        appState.context = { ...appState.context, params: route.params };
+        appState.context = { params: route.params };
     }
     
+    // Feature flag check
     if (route.featureFlag && !isFeatureEnabled(route.featureFlag)) {
-        console.warn(`Access to disabled feature "${route.featureFlag}" blocked. Redirecting.`);
+        console.warn(`Access to disabled feature "${route.featureFlag}" blocked.`);
         const placeholderRoute = ROUTES.find(r => r.hash === 'placeholder');
         loadModule(placeholderRoute);
         return;
@@ -178,77 +198,61 @@ function handleRouteChange() {
     loadModule(route);
 }
 
-function hideSplashScreen() {
-    const splash = document.getElementById('splash-screen');
-    // Use a data attribute to ensure we only run this once.
-    if (splash && !splash.dataset.hiding) {
-        splash.dataset.hiding = 'true';
-        splash.style.transition = 'opacity 0.5s ease-out';
-        splash.style.opacity = '0';
-        
-        setTimeout(() => {
-            splash.remove();
-        }, 500); // Matches the CSS transition duration
-    }
-}
-
+/**
+ * Applies user settings (theme, accessibility) to the body element.
+ */
 function applyBodySettings() {
     const settings = getAllSettings();
-    document.body.className = '';
-    document.body.classList.toggle('large-text', !!settings.largeText);
-    document.body.classList.toggle('high-contrast', !!settings.highContrast);
-    document.body.classList.toggle('dyslexia-font', !!settings.dyslexiaFont);
-    document.body.setAttribute('data-theme', settings.theme || 'cyber');
+    const body = document.body;
+    body.className = ''; // Clear existing accessibility classes
+    if (settings.largeText) body.classList.add('large-text');
+    if (settings.highContrast) body.classList.add('high-contrast');
+    if (settings.dyslexiaFont) body.classList.add('dyslexia-font');
+    body.setAttribute('data-theme', settings.theme || 'cyber');
 }
 
 /**
- * Main application initialization.
+ * Main application entry point. Initializes all core systems.
  */
-function main() {
+async function main() {
     try {
-        // --- Initialize DOM element references ---
-        appContainer = document.getElementById('app');
-        sidebarContainer = document.getElementById('sidebar-container');
-        splashScreen = document.getElementById('splash-screen');
+        // Verify essential DOM elements exist
+        const appContainer = document.getElementById('app');
+        const sidebarContainer = document.getElementById('sidebar-container');
+        if (!appContainer || !sidebarContainer) throw new Error("Core application layout elements (#app, #sidebar-container) are missing.");
 
-        if (!appContainer || !sidebarContainer || !splashScreen) {
-            throw new Error("Core application elements are missing from the DOM.");
-        }
-
-        // Apply settings immediately to prevent style flashes
+        appState.init();
         applyBodySettings();
-
-        // Set up event listeners
-        window.addEventListener('settings-changed', applyBodySettings);
-        document.body.addEventListener('click', () => soundService.init(), { once: true });
-        window.addEventListener('hashchange', handleRouteChange);
         
-        // Start loading the initial page content AND the sidebar concurrently.
-        // The router will now hide the splash screen quickly.
-        handleRouteChange();
-        renderSidebar();
+        // Listen for global events
+        window.addEventListener('settings-changed', applyBodySettings);
+        window.addEventListener('hashchange', handleRouteChange);
+        document.body.addEventListener('click', () => soundService.init(), { once: true });
+        
+        // Initial setup
+        await renderSidebar();
+        handleRouteChange(); // Load initial route
+        createIndex(); // Build search index in the background
+        hideSplashScreen();
 
-        // Build the search index in the background without blocking the UI.
-        createIndex();
     } catch (error) {
         console.error("A critical error occurred during application startup:", error);
-        hideSplashScreen();
-        if (appContainer) {
-            appContainer.innerHTML = `
-                <div style="text-align: center; padding: 4rem; color: var(--color-danger);">
-                    <h2>Oops! Something went wrong.</h2>
-                    <p>The application failed to start. Please try refreshing the page.</p>
-                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 1rem;">Error: ${error.message}</p>
-                    <button class="btn" onclick="window.location.reload()">Reload</button>
+        hideSplashScreen(); // Ensure splash is hidden even on error
+        document.body.innerHTML = `
+            <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; text-align:center; padding:2rem; color:#333; background-color:#fff; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                <h2 style="color:#d9534f; margin-bottom: 1rem;">Application Error</h2>
+                <p>The application failed to start correctly.</p>
+                <div style="font-family:monospace,monospace; font-size:0.8rem; color:#555; background:#f0f0f0; padding:1rem; border-radius:4px; margin-top:1rem; text-align:left; max-width:800px; word-wrap:break-word;">
+                    <strong>Error:</strong> ${error.message}
                 </div>
-            `;
-        }
+                <button onclick="window.location.reload()" style="padding:0.8rem 1.5rem; font-size:1rem; color:#fff; background-color:#0275d8; border:none; border-radius:4px; cursor:pointer; margin-top:1.5rem;">
+                    Reload Page
+                </button>
+            </div>
+        `;
     }
 }
 
-// --- Entry Point ---
-// CRITICAL FIX: Use the 'load' event instead of 'DOMContentLoaded'.
-// 'load' waits for all resources including stylesheets to be fully loaded,
-// preventing a race condition where the script tries to animate the splash
-// screen before its CSS is ready.
+// Start the application only after the entire page (including CSS) is loaded.
+// This is the definitive fix for the original splash screen race condition.
 window.addEventListener('load', main);
