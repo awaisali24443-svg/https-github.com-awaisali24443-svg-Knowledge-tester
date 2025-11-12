@@ -6,6 +6,8 @@ let container;
 let clearBtn;
 let emptyMessage;
 let template;
+let appStateRef; // To store appState for click handler
+let gridClickHandler; // To store the handler for removal in destroy
 
 function renderHistory() {
     const history = historyService.getHistory();
@@ -20,12 +22,15 @@ function renderHistory() {
         
         history.forEach(item => {
             const card = template.content.cloneNode(true);
+            const link = card.querySelector('.history-item');
+            link.dataset.topic = item.topic; // Set topic data attribute for click handler
+
             const scorePercent = item.totalQuestions > 0 ? Math.round((item.score / item.totalQuestions) * 100) : 0;
             
-            card.querySelector('.history-topic').textContent = item.topic;
-            card.querySelector('.history-date').textContent = new Date(item.date).toLocaleDateString();
-            card.querySelector('.history-score').textContent = `Score: ${item.score} / ${item.totalQuestions} (${scorePercent}%)`;
-            card.querySelector('.score-bar-fill').style.width = `${scorePercent}%`;
+            link.querySelector('.history-topic').textContent = item.topic;
+            link.querySelector('.history-date').textContent = new Date(item.date).toLocaleDateString();
+            link.querySelector('.history-score').textContent = `Score: ${item.score} / ${item.totalQuestions} (${scorePercent}%)`;
+            link.querySelector('.score-bar-fill').style.width = `${scorePercent}%`;
 
             container.appendChild(card);
         });
@@ -46,8 +51,26 @@ async function handleClearHistory() {
     }
 }
 
+function handleGridClick(event) {
+    const historyItem = event.target.closest('.history-item');
+    if (historyItem) {
+        event.preventDefault(); // Prevent default <a> behavior
+        const topic = historyItem.dataset.topic;
+
+        if (topic && appStateRef) {
+            appStateRef.context = {
+                topic: topic,
+                numQuestions: 10, // Default for retries
+                difficulty: 'medium' // Default for retries
+            };
+            window.location.hash = '/loading';
+        }
+    }
+}
+
 
 export function init(appState) {
+    appStateRef = appState;
     container = document.getElementById('history-grid');
     clearBtn = document.getElementById('clear-history-btn');
     emptyMessage = document.getElementById('empty-history-message');
@@ -55,11 +78,18 @@ export function init(appState) {
 
     clearBtn.addEventListener('click', handleClearHistory);
     
+    // Add event listener for retaking quizzes from the grid
+    gridClickHandler = handleGridClick;
+    container.addEventListener('click', gridClickHandler);
+    
     renderHistory();
 }
 
 export function destroy() {
     if (clearBtn) {
         clearBtn.removeEventListener('click', handleClearHistory);
+    }
+    if (container && gridClickHandler) {
+        container.removeEventListener('click', gridClickHandler);
     }
 }
