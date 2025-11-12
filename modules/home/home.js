@@ -19,7 +19,7 @@ function handlePlanetClick(target) {
 }
 
 
-export async function init(appContainer, appState) {
+export async function init(appContainer, appState, onReady) {
     console.log("Home module (Galaxy) initialized.");
     appStateRef = appState;
     const canvas = document.getElementById('galaxy-canvas');
@@ -27,8 +27,8 @@ export async function init(appContainer, appState) {
         console.error("Galaxy canvas not found!");
         return;
     }
-    // Pass the main container's dimensions for the renderer
-    await threeManager.init(canvas, handlePlanetClick);
+    // Pass the main container's dimensions and the onReady callback for the splash screen
+    await threeManager.init(canvas, handlePlanetClick, onReady);
 }
 
 export function destroy() {

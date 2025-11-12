@@ -1,5 +1,5 @@
 import { saveNewPath, getAllLearningPaths } from '../../services/learningPathService.js';
-import { generateLearningPath } from '../../services/apiService.js';
+import { generateLearningPath } from '../../services/geminiService.js';
 import { toastService } from '../../services/toastService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
@@ -20,8 +20,8 @@ async function handleFormSubmit(e) {
         const data = await generateLearningPath(goal);
         const newPath = saveNewPath({ name: goal, steps: data.path });
         
-        // Redirect to the newly created path
-        window.location.hash = `#/learning-path/${newPath.id}`;
+        // FIX: Standardize hash to work with the new router
+        window.location.hash = `learning-path/${newPath.id}`;
 
     } catch (error) {
         console.error("Path generation failed:", error);
@@ -53,7 +53,7 @@ function renderSavedPaths() {
 
     if (savedPaths.length > 0) {
         listContainer.innerHTML = savedPaths.map(path => `
-            <a href="#/learning-path/${path.id}" class="saved-path-item card">
+            <a href="#learning-path/${path.id}" class="saved-path-item card">
                 <h3>${path.name}</h3>
                 <p>${path.steps.length} steps</p>
             </a>

@@ -13,7 +13,7 @@ const STATIC_ASSETS = [
     '/services/soundService.js',
     '/services/libraryService.js',
     '/services/topicService.js',
-    '/services/apiService.js',
+    '/services/geminiService.js', // FIX: Corrected service name
     // NEW: 3D Galaxy Services
     '/services/threeManager.js',
     // Home module for GALAXY view

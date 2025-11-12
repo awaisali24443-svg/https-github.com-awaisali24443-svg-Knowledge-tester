@@ -11,7 +11,8 @@ import { getCategories } from './topicService.js';
 let camera, scene, renderer, composer, controls, sunLight;
 let clock, raycaster, mouse;
 let animationFrameId;
-let onPlanetClick;
+let onPlanetClick, onReadyCallback;
+let isFirstFrame = true;
 const interactableObjects = [];
 const planets = [];
 const orbitLines = [];
@@ -49,7 +50,10 @@ const atmosphereFragmentShader = `
     varying vec3 vPosition;
     void main() {
         vec3 viewDirection = normalize(-vPosition);
-        float fresnel = 1.0 - dot(viewDirection, vNormal);
+        // CRITICAL FIX: The result of a dot product can be negative. Passing a negative number to pow()
+        // in GLSL is undefined behavior and causes the renderer to fail, resulting in a black screen.
+        // Clamping the value to the [0, 1] range prevents this.
+        float fresnel = clamp(1.0 - dot(viewDirection, vNormal), 0.0, 1.0);
         float intensity = pow(fresnel, uPower);
         gl_FragColor = vec4(uGlowColor, 1.0) * intensity;
     }
@@ -108,8 +112,11 @@ const sunFragmentShader = `
 `;
 
 // --- Main Initialization ---
-async function init(canvas, clickCallback) {
+async function init(canvas, clickCallback, onReady) {
     onPlanetClick = clickCallback;
+    onReadyCallback = onReady;
+    isFirstFrame = true; // Reset for initialization
+
     clock = new THREE.Clock();
     raycaster = new THREE.Raycaster();
     mouse = new THREE.Vector2(-10, -10);
@@ -407,6 +414,12 @@ function animate() {
     
     controls.update();
     composer.render(delta);
+
+    // After the first frame is successfully rendered, trigger the onReady callback
+    if (isFirstFrame && onReadyCallback) {
+        onReadyCallback();
+        isFirstFrame = false;
+    }
 }
 
 function onClick(event) {
@@ -511,7 +524,7 @@ function destroy() {
     planets.length = 0;
     orbitLines.length = 0;
     camera = scene = renderer = composer = controls = sunLight = clock = raycaster = mouse = null;
-    asteroidBelt = particleSystem = hoveredPlanet = null;
+    asteroidBelt = particleSystem = hoveredPlanet = onReadyCallback = null;
     animationFrameId = undefined;
 }
 

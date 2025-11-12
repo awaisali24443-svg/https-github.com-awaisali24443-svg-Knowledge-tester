@@ -93,9 +93,12 @@ async function loadModule(moduleConfig, params = {}) {
         
         appState.setRouteParams(params);
         if (typeof js.init === 'function') {
-            // Special case for home module initialization
+            // Special case for home module initialization to handle splash screen
             if (path === 'home') {
-                 await js.init(app, appState);
+                 const hideSplash = () => {
+                    if(splashScreen) splashScreen.classList.add('fade-out');
+                 };
+                 await js.init(app, appState, hideSplash);
             } else {
                  await js.init(appState);
             }
@@ -110,6 +113,28 @@ async function loadModule(moduleConfig, params = {}) {
     }
 }
 
+// --- NEW: Robust, RegExp-based Router ---
+function findRoute(hash) {
+    for (const route of ROUTES) {
+        // Convert route hash to a regular expression
+        // e.g., 'topics/:categoryId' becomes /^topics\/([^\/]+)$/
+        const pattern = new RegExp('^' + route.hash.replace(/:[^\s/]+/g, '([^/]+)') + '$');
+        const match = hash.match(pattern);
+
+        if (match) {
+            const params = {};
+            // Extract param keys from the route hash, e.g., ['categoryId']
+            const keys = (route.hash.match(/:[^\s/]+/g) || []).map(key => key.substring(1));
+            // Assign matched values to the keys
+            keys.forEach((key, index) => {
+                params[key] = match[index + 1];
+            });
+            return { route, params };
+        }
+    }
+    return null;
+}
+
 async function handleRouteChange() {
     const hash = window.location.hash.slice(1) || 'home';
     
@@ -118,39 +143,12 @@ async function handleRouteChange() {
         threeManager.destroy();
     }
 
-    let matchedRoute = null;
-    let routeParams = {};
+    const result = findRoute(hash);
 
-    for (const route of ROUTES) {
-        const routeParts = route.hash.split('/');
-        const pathParts = hash.split('/');
-
-        if (routeParts.length !== pathParts.length) continue;
-
-        let isMatch = true;
-        let tempParams = {};
-
-        for (let i = 0; i < routeParts.length; i++) {
-            if (routeParts[i].startsWith(':')) {
-                const paramName = routeParts[i].substring(1);
-                tempParams[paramName] = pathParts[i];
-            } else if (routeParts[i] !== pathParts[i]) {
-                isMatch = false;
-                break;
-            }
-        }
-        
-        if (isMatch) {
-            matchedRoute = route;
-            routeParams = tempParams;
-            break;
-        }
-    }
-
-    if (matchedRoute) {
-        await loadModule(matchedRoute, routeParams);
-        updateActiveNavLink(matchedRoute.hash);
-        await updateMetaTags(matchedRoute.name, routeParams);
+    if (result) {
+        await loadModule(result.route, result.params);
+        updateActiveNavLink(result.route.hash);
+        await updateMetaTags(result.route.name, result.params);
     } else {
         console.warn(`No route found for hash: ${hash}`);
         window.location.hash = '#home';
@@ -224,9 +222,7 @@ function init() {
         handleRouteChange(); // Initial route
     });
     
-    setTimeout(() => {
-        if(splashScreen) splashScreen.classList.add('fade-out');
-    }, 3800);
+    // REMOVED: Fixed-timer for splash screen. It's now handled by the threeManager's onReady callback.
 }
 
 init();

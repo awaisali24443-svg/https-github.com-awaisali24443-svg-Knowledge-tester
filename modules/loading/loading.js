@@ -1,4 +1,4 @@
-import { generateQuiz } from '../../services/apiService.js';
+import { generateQuiz } from '../../services/geminiService.js';
 import { NUM_QUESTIONS } from '../../constants.js';
 
 const messages = [
