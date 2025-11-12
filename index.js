@@ -5,7 +5,6 @@ import { updateMetaTags } from './services/seoService.js';
 import { getAllSettings } from './services/configService.js';
 import { createIndex } from './services/searchService.js';
 import { soundService } from './services/soundService.js';
-import { threeManager } from './services/threeManager.js';
 import { isFeatureEnabled } from './services/featureService.js';
 
 // --- Global State ---
@@ -117,9 +116,6 @@ async function loadModule(route) {
     if (currentModule?.instance?.destroy) {
         currentModule.instance.destroy();
     }
-    if (currentModule?.hash === 'home' && route.hash !== 'home') {
-        threeManager.destroy();
-    }
 
     await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -142,7 +138,6 @@ async function loadModule(route) {
 
         const { html, css, js } = moduleCache.get(route.module);
         
-        appContainer.classList.toggle('galaxy-view', route.hash === 'home');
         appContainer.innerHTML = `<style>${css}</style>${html}`;
         currentModule = { ...route, instance: js };
         
