@@ -197,26 +197,45 @@ function applyBodySettings() {
  * Main application initialization.
  */
 function main() {
-    // --- Initialize DOM element references ---
-    appContainer = document.getElementById('app');
-    sidebarContainer = document.getElementById('sidebar-container');
-    splashScreen = document.getElementById('splash-screen');
+    try {
+        // --- Initialize DOM element references ---
+        appContainer = document.getElementById('app');
+        sidebarContainer = document.getElementById('sidebar-container');
+        splashScreen = document.getElementById('splash-screen');
 
-    // Apply settings immediately to prevent style flashes
-    applyBodySettings();
+        if (!appContainer || !sidebarContainer || !splashScreen) {
+            throw new Error("Core application elements are missing from the DOM.");
+        }
 
-    // Set up event listeners
-    window.addEventListener('settings-changed', applyBodySettings);
-    document.body.addEventListener('click', () => soundService.init(), { once: true });
-    window.addEventListener('hashchange', handleRouteChange);
-    
-    // Start loading the initial page content AND the sidebar concurrently.
-    // The router will now hide the splash screen quickly.
-    handleRouteChange();
-    renderSidebar();
+        // Apply settings immediately to prevent style flashes
+        applyBodySettings();
 
-    // Build the search index in the background without blocking the UI.
-    createIndex();
+        // Set up event listeners
+        window.addEventListener('settings-changed', applyBodySettings);
+        document.body.addEventListener('click', () => soundService.init(), { once: true });
+        window.addEventListener('hashchange', handleRouteChange);
+        
+        // Start loading the initial page content AND the sidebar concurrently.
+        // The router will now hide the splash screen quickly.
+        handleRouteChange();
+        renderSidebar();
+
+        // Build the search index in the background without blocking the UI.
+        createIndex();
+    } catch (error) {
+        console.error("A critical error occurred during application startup:", error);
+        hideSplashScreen();
+        if (appContainer) {
+            appContainer.innerHTML = `
+                <div style="text-align: center; padding: 4rem; color: var(--color-danger);">
+                    <h2>Oops! Something went wrong.</h2>
+                    <p>The application failed to start. Please try refreshing the page.</p>
+                    <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 1rem;">Error: ${error.message}</p>
+                    <button class="btn" onclick="window.location.reload()">Reload</button>
+                </div>
+            `;
+        }
+    }
 }
 
 // --- Entry Point ---
