@@ -32,10 +32,8 @@ const appState = {
 const moduleCache = new Map();
 let currentModule = null;
 
-// --- DOM Elements ---
-const appContainer = document.getElementById('app');
-const sidebarContainer = document.getElementById('sidebar-container');
-const splashScreen = document.getElementById('splash-screen');
+// --- DOM Elements (will be initialized in main()) ---
+let appContainer, sidebarContainer, splashScreen;
 
 // --- Core Functions ---
 
@@ -108,8 +106,13 @@ async function loadModule(route) {
     if (!route || !route.module) {
         console.error("Router error: Invalid route or module definition provided.", route);
         appContainer.innerHTML = '<h2>Error: Page not found</h2><p>The requested module is not configured correctly.</p>';
+        hideSplashScreen(); // Hide even on this critical error
         return;
     }
+    
+    // Hide the splash screen as soon as we know we're loading a module.
+    // This makes the app feel much more responsive.
+    hideSplashScreen();
 
     appContainer.classList.add('fade-out');
 
@@ -142,19 +145,12 @@ async function loadModule(route) {
         currentModule = { ...route, instance: js };
         
         if (js.init) {
-            // Pass appState to all modules; they can use it if they need it.
-            // This simplifies the logic and removes the special case for the home module.
             await js.init(appState);
         }
-        
-        // The router is now responsible for hiding the splash screen for all routes.
-        hideSplashScreen();
 
     } catch (error) {
         console.error(`Failed to load module ${route.module}:`, error);
         appContainer.innerHTML = `<h2>Error loading ${route.name}</h2><p>Please try refreshing the page.</p>`;
-        // Ensure splash screen is hidden even on error.
-        hideSplashScreen();
     } finally {
         appContainer.classList.remove('fade-out');
         window.scrollTo(0, 0);
@@ -200,18 +196,24 @@ function applyBodySettings() {
 /**
  * Main application initialization.
  */
-async function main() {
-    // Render the essential UI shell first.
-    await renderSidebar();
+function main() {
+    // --- Initialize DOM element references ---
+    appContainer = document.getElementById('app');
+    sidebarContainer = document.getElementById('sidebar-container');
+    splashScreen = document.getElementById('splash-screen');
+
+    // Apply settings immediately to prevent style flashes
     applyBodySettings();
 
-    // Set up event listeners.
+    // Set up event listeners
     window.addEventListener('settings-changed', applyBodySettings);
     document.body.addEventListener('click', () => soundService.init(), { once: true });
     window.addEventListener('hashchange', handleRouteChange);
     
-    // Load the initial page, which will hide the splash screen.
+    // Start loading the initial page content AND the sidebar concurrently.
+    // The router will now hide the splash screen quickly.
     handleRouteChange();
+    renderSidebar();
 
     // Build the search index in the background without blocking the UI.
     createIndex();
