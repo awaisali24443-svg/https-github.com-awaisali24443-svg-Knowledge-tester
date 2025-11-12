@@ -101,6 +101,17 @@
     pointer-events: none;
 }
 
+/* --- NEW: Vignette for Galaxy View --- */
+[data-theme="cyber"] .main-container.galaxy-view::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 150px 20px rgba(10, 15, 30, 0.8);
+    z-index: 10;
+}
+
+
 /* --- Enhanced Cyber Components --- */
 [data-theme="cyber"] h1, [data-theme="cyber"] h2, [data-theme="cyber"] h3 {
     text-shadow: 0 0 8px var(--color-glow);
