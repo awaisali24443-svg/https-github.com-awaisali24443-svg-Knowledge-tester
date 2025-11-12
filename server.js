@@ -1,3 +1,4 @@
+
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -167,7 +168,7 @@ app.post('/api/generate', apiLimiter, async (req, res) => {
 
 
 // Fallback to serve index.html for any other request (enables SPA routing)
-app.get('*', (req, res) => {
+app.get('/*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
