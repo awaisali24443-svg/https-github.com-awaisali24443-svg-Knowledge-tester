@@ -201,16 +201,20 @@ function applyBodySettings() {
  * Main application initialization.
  */
 async function main() {
+    // Render the essential UI shell first.
     await renderSidebar();
     applyBodySettings();
 
+    // Set up event listeners.
     window.addEventListener('settings-changed', applyBodySettings);
     document.body.addEventListener('click', () => soundService.init(), { once: true });
-    
-    await createIndex();
-
     window.addEventListener('hashchange', handleRouteChange);
-    handleRouteChange(); // Initial route load
+    
+    // Load the initial page, which will hide the splash screen.
+    handleRouteChange();
+
+    // Build the search index in the background without blocking the UI.
+    createIndex();
 }
 
 // --- Entry Point ---
