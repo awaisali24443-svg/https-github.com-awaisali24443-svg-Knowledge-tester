@@ -37,13 +37,21 @@ function decode(base64) {
   }
   return bytes;
 }
-async function decodeAudioData(data, ctx) {
+async function decodeAudioData(
+  data,
+  ctx,
+  sampleRate,
+  numChannels,
+) {
   const dataInt16 = new Int16Array(data.buffer);
-  const frameCount = dataInt16.length;
-  const buffer = ctx.createBuffer(1, frameCount, 24000);
-  const channelData = buffer.getChannelData(0);
-  for (let i = 0; i < frameCount; i++) {
-    channelData[i] = dataInt16[i] / 32768.0;
+  const frameCount = dataInt16.length / numChannels;
+  const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+  for (let channel = 0; channel < numChannels; channel++) {
+    const channelData = buffer.getChannelData(channel);
+    for (let i = 0; i < frameCount; i++) {
+      channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+    }
   }
   return buffer;
 }
@@ -142,21 +150,32 @@ async function startConversation() {
                     scriptProcessor.connect(inputAudioContext.destination);
                 },
                 onmessage: async (message) => {
-                    if (message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data) {
+                    const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+                    if (audioData) {
                         updateUI(STATE.SPEAKING);
-                        const audioData = message.serverContent.modelTurn.parts[0].inlineData.data;
                         const decoded = decode(audioData);
-                        const audioBuffer = await decodeAudioData(decoded, outputAudioContext);
+                        const audioBuffer = await decodeAudioData(decoded, outputAudioContext, 24000, 1);
                         
                         nextStartTime = Math.max(nextStartTime, outputAudioContext.currentTime);
                         const source = outputAudioContext.createBufferSource();
                         source.buffer = audioBuffer;
                         source.connect(outputAudioContext.destination);
-                        source.addEventListener('ended', () => sources.delete(source));
+                        source.addEventListener('ended', () => {
+                            sources.delete(source);
+                        });
                         source.start(nextStartTime);
                         nextStartTime += audioBuffer.duration;
                         sources.add(source);
                     }
+
+                    if (message.serverContent?.interrupted) {
+                        for (const source of sources.values()) {
+                            source.stop();
+                            sources.delete(source);
+                        }
+                        nextStartTime = 0;
+                    }
+
                     if (message.serverContent?.outputTranscription?.text) {
                         currentOutputTranscription += message.serverContent.outputTranscription.text;
                     }

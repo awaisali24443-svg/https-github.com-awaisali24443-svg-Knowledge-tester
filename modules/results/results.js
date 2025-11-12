@@ -2,11 +2,13 @@ import * as quizStateService from '../../services/quizStateService.js';
 import * as libraryService from '../../services/libraryService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as historyService from '../../services/historyService.js';
+import * as soundService from '../../services/soundService.js';
 import { initializeCardGlow } from '../../global/global.js';
 
 let quizState;
 let reviewContainer;
 let clickHandler;
+let historySaved = false;
 
 function animateScore(scorePercent) {
     const scoreRingFg = document.getElementById('score-ring-fg');
@@ -22,7 +24,7 @@ function animateScore(scorePercent) {
     // Animate the text
     let currentScore = 0;
     const duration = 1000;
-    const stepTime = Math.abs(Math.floor(duration / scorePercent)) || 20;
+    const stepTime = scorePercent > 0 ? Math.abs(Math.floor(duration / scorePercent)) : duration;
 
     const interval = setInterval(() => {
         currentScore++;
@@ -32,6 +34,9 @@ function animateScore(scorePercent) {
             scoreText.textContent = `${scorePercent}%`;
         }
     }, stepTime);
+    if (scorePercent === 0) {
+        scoreText.textContent = `0%`;
+    }
 }
 
 function renderSummary(scorePercent) {
@@ -97,6 +102,12 @@ export function init(appState) {
         return;
     }
 
+    // Save attempt to history as soon as results load to prevent data loss
+    if (!historySaved) {
+        historyService.addQuizAttempt(quizState);
+        historySaved = true;
+    }
+
     soundService.playSound('finish');
     const scorePercent = quizState.questions.length > 0 ? Math.round((quizState.score / quizState.questions.length) * 100) : 0;
     
@@ -122,12 +133,11 @@ export function init(appState) {
 }
 
 export function destroy() {
-    // Save attempt to history before clearing
-    historyService.addQuizAttempt(quizStateService.getQuizState());
-    
     // Crucial for cleaning up the finished quiz state
     quizStateService.endQuiz();
     if(reviewContainer && clickHandler) {
         reviewContainer.removeEventListener('click', clickHandler);
     }
+    // Reset flag for the next quiz result
+    historySaved = false;
 }
