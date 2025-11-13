@@ -1,7 +1,7 @@
-
-
-
-const CACHE_NAME = 'knowledge-tester-v2.2.2';
+// A version number is injected into the cache name.
+// Bump this version when you want to force an update of the service worker
+// and clear the old caches. This is essential after deploying new assets.
+const CACHE_NAME = 'knowledge-tester-v2.3.0';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 // The list of assets to cache during installation.
@@ -63,6 +63,9 @@ const APP_SHELL_URLS = [
 
 /**
  * Implements a Stale-While-Revalidate caching strategy.
+ * This strategy serves content from the cache immediately for speed,
+ * then fetches an updated version from the network in the background
+ * to be used for the next visit.
  * @param {string} cacheName - The name of the cache to use.
  * @param {Request} request - The request to handle.
  * @returns {Promise<Response>}
@@ -71,7 +74,10 @@ const staleWhileRevalidate = async (cacheName, request) => {
     const cache = await caches.open(cacheName);
     const cachedResponse = await cache.match(request);
     const fetchPromise = fetch(request).then((networkResponse) => {
-        cache.put(request, networkResponse.clone());
+        // Don't cache opaque responses (e.g., from no-cors requests) or errors
+        if (networkResponse.ok) {
+           cache.put(request, networkResponse.clone());
+        }
         return networkResponse;
     }).catch(err => {
         // If fetch fails (e.g., user is offline) and we have a cached response, return it.
@@ -152,27 +158,14 @@ self.addEventListener('fetch', (event) => {
         }
     }
     
-    // 3. App Shell & Local Assets: Use a Cache-First strategy.
+    // 3. App Shell & Local Assets: Use the Stale-While-Revalidate strategy.
+    // This provides a fast "from-cache" experience while ensuring assets
+    // are updated in the background for the user's next visit.
     if (url.origin === self.location.origin) {
-        event.respondWith(
-            caches.match(request).then((cachedResponse) => {
-                if (cachedResponse) {
-                    return cachedResponse; // Serve from cache if found.
-                }
-                // Otherwise, fetch from the network and add it to the cache for next time.
-                return fetch(request).then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-                        const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
-                            cache.put(request, responseToCache);
-                        });
-                    }
-                    return networkResponse;
-                });
-            })
-        );
+        event.respondWith(staleWhileRevalidate(CACHE_NAME, request));
         return;
     }
     
     // For any other requests (e.g., CDN scripts from importmap), let the browser handle them.
+    // The default behavior is to fetch from the network.
 });
