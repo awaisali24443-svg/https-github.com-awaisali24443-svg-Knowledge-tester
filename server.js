@@ -12,7 +12,7 @@ import { WebSocketServer } from 'ws';
 // --- CONSTANTS & CONFIG ---
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(filename);
+const __dirname = path.dirname(__filename);
 let topicsCache = null;
 
 // --- GEMINI API SETUP ---
