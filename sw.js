@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knowledge-tester-v2.0.3';
+const CACHE_NAME = 'knowledge-tester-v2.0.4';
 // Add assets to this list
 const APP_SHELL_URLS = [
     '/',
@@ -51,17 +51,20 @@ const APP_SHELL_URLS = [
     '/modules/settings/settings.html', '/modules/settings/settings.css', '/modules/settings/settings.js',
 ];
 
-// Install: Cache the application shell
+// Install: Cache the application shell and take control immediately
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('Service Worker: Caching app shell');
             return cache.addAll(APP_SHELL_URLS);
-        }).catch(err => console.error("Cache addAll failed: ", err))
+        }).then(() => {
+            // Force the waiting service worker to become the active service worker.
+            return self.skipWaiting();
+        }).catch(err => console.error("Cache addAll or skipWaiting failed: ", err))
     );
 });
 
-// Activate: Clean up old caches
+// Activate: Clean up old caches and claim clients
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((cacheNames) => {
@@ -73,9 +76,11 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
+        }).then(() => {
+            // Take control of all open clients immediately.
+            return self.clients.claim();
         })
     );
-    return self.clients.claim();
 });
 
 // Fetch: Serve from cache or network
