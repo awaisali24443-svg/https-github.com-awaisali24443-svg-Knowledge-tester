@@ -274,6 +274,7 @@ a:hover {
     transition: all 0.2s ease;
     background-color: var(--color-surface-hover);
     color: var(--color-text);
+    gap: 0.5rem;
 }
 .btn:hover {
     background-color: var(--color-border);
@@ -281,6 +282,11 @@ a:hover {
 .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.btn .icon {
+    width: 1em;
+    height: 1em;
 }
 
 .btn-primary {
@@ -507,6 +513,19 @@ a:hover {
 }
 
 @keyframes spin-spinner { to { transform: rotate(360deg); } }
+
+/* --- Accessibility --- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
 
 
 /* --- Responsive Design --- */
