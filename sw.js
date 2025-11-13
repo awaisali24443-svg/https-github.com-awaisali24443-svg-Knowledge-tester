@@ -1,5 +1,9 @@
-const CACHE_NAME = 'knowledge-tester-v2.0.4';
-// Add assets to this list
+
+
+const CACHE_NAME = 'knowledge-tester-v2.2.0';
+const FONT_CACHE_NAME = 'google-fonts-cache-v1';
+
+// The list of assets to cache during installation.
 const APP_SHELL_URLS = [
     '/',
     '/index.html',
@@ -20,11 +24,12 @@ const APP_SHELL_URLS = [
     '/assets/sounds/click.mp3',
     '/assets/sounds/start.mp3',
     '/assets/sounds/finish.mp3',
-    'https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Inter:wght@400;600&family=Roboto+Mono:wght@400;500&display=swap',
+    'https://fonts.googleapis.com/css2?family=Exo+2:wght@700&family=Inter:wght@400;600&family=Roboto+Mono:wght@400;500&display.swap',
     '/services/apiService.js',
     '/services/backgroundService.js',
     '/services/configService.js',
     '/services/errorService.js',
+    '/services/gamificationService.js',
     '/services/historyService.js',
     '/services/learningPathService.js',
     '/services/libraryService.js',
@@ -49,87 +54,121 @@ const APP_SHELL_URLS = [
     '/modules/learning-path-generator/learning-path-generator.html', '/modules/learning-path-generator/learning-path-generator.css', '/modules/learning-path-generator/learning-path-generator.js',
     '/modules/learning-path/learning-path.html', '/modules/learning-path/learning-path.css', '/modules/learning-path/learning-path.js',
     '/modules/settings/settings.html', '/modules/settings/settings.css', '/modules/settings/settings.js',
+    '/modules/profile/profile.html', '/modules/profile/profile.css', '/modules/profile/profile.js',
 ];
 
-// Install: Cache the application shell and take control immediately
+/**
+ * Implements a Stale-While-Revalidate caching strategy.
+ * @param {string} cacheName - The name of the cache to use.
+ * @param {Request} request - The request to handle.
+ * @returns {Promise<Response>}
+ */
+const staleWhileRevalidate = async (cacheName, request) => {
+    const cache = await caches.open(cacheName);
+    const cachedResponse = await cache.match(request);
+    const fetchPromise = fetch(request).then((networkResponse) => {
+        cache.put(request, networkResponse.clone());
+        return networkResponse;
+    }).catch(err => {
+        // If fetch fails (e.g., user is offline) and we have a cached response, return it.
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        // Re-throw if there's no cached version available.
+        throw err;
+    });
+    return cachedResponse || fetchPromise;
+};
+
+// Install: Cache the application shell and take control immediately.
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('Service Worker: Caching app shell');
             return cache.addAll(APP_SHELL_URLS);
         }).then(() => {
-            // Force the waiting service worker to become the active service worker.
             return self.skipWaiting();
         }).catch(err => console.error("Cache addAll or skipWaiting failed: ", err))
     );
 });
 
-// Activate: Clean up old caches and claim clients
+// Activate: Clean up old caches and claim clients.
 self.addEventListener('activate', (event) => {
+    const allowedCaches = [CACHE_NAME, FONT_CACHE_NAME];
     event.waitUntil(
         caches.keys().then((cacheNames) => {
             return Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
+                    if (!allowedCaches.includes(cacheName)) {
                         console.log('Service Worker: Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
         }).then(() => {
-            // Take control of all open clients immediately.
             return self.clients.claim();
         })
     );
 });
 
-// Fetch: Serve from cache or network
+// Fetch: Apply caching strategies based on the request type.
 self.addEventListener('fetch', (event) => {
     const { request } = event;
+    const url = new URL(request.url);
 
-    // API request for topics: Stale-while-revalidate
-    if (request.url.includes('/api/topics')) {
+    // 1. Google Fonts: Use Stale-While-Revalidate for both the CSS and font files.
+    if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
+        event.respondWith(staleWhileRevalidate(FONT_CACHE_NAME, request));
+        return;
+    }
+
+    // 2. API Requests: Handle differently based on the method.
+    if (url.pathname.startsWith('/api/')) {
+        // Use Stale-While-Revalidate for the GET request to fetch topics.
+        if (request.method === 'GET' && url.pathname === '/api/topics') {
+            event.respondWith(staleWhileRevalidate(CACHE_NAME, request));
+            return;
+        }
+        // For POST requests (like generating a quiz), try the network first.
+        // If offline, return a custom JSON error response.
+        if (request.method === 'POST') {
+            event.respondWith(
+                fetch(request).catch(() => {
+                    return new Response(
+                        JSON.stringify({ error: 'You are offline. This action requires an internet connection.' }),
+                        {
+                            status: 503,
+                            statusText: 'Service Unavailable',
+                            headers: { 'Content-Type': 'application/json' }
+                        }
+                    );
+                })
+            );
+            return;
+        }
+    }
+    
+    // 3. App Shell & Local Assets: Use a Cache-First strategy.
+    if (url.origin === self.location.origin) {
         event.respondWith(
-            caches.open(CACHE_NAME).then((cache) => {
-                return cache.match(request).then((cachedResponse) => {
-                    const fetchPromise = fetch(request).then((networkResponse) => {
-                        cache.put(request, networkResponse.clone());
-                        return networkResponse;
-                    });
-                    // Return cached response immediately, then update cache in background
-                    return cachedResponse || fetchPromise;
+            caches.match(request).then((cachedResponse) => {
+                if (cachedResponse) {
+                    return cachedResponse; // Serve from cache if found.
+                }
+                // Otherwise, fetch from the network and add it to the cache for next time.
+                return fetch(request).then((networkResponse) => {
+                    if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                        const responseToCache = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(request, responseToCache);
+                        });
+                    }
+                    return networkResponse;
                 });
             })
         );
         return;
     }
-
-    // Ignore other API requests (like quiz generation) and external resources
-    if (request.url.includes('/api/') || !request.url.startsWith(self.location.origin)) {
-        return;
-    }
-
-    // For all other requests: Cache-first
-    event.respondWith(
-        caches.match(request).then((response) => {
-            if (response) {
-                return response; // Serve from cache
-            }
-            // If not in cache, fetch from network and cache it
-            return fetch(request).then((networkResponse) => {
-                // Check if we received a valid response
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                    return networkResponse;
-                }
-                const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseToCache);
-                });
-                return networkResponse;
-            });
-        }).catch(error => {
-            console.error('Service Worker fetch error:', error);
-            // You could return a fallback offline page here if you have one
-        })
-    );
+    
+    // For any other requests (e.g., CDN scripts from importmap), let the browser handle them.
 });

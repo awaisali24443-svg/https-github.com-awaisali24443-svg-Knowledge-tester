@@ -1,0 +1,38 @@
+<div class="profile-container">
+    <header class="page-header">
+        <h1>Your Profile</h1>
+        <p>Track your progress and celebrate your learning milestones.</p>
+    </header>
+
+    <div class="stats-grid">
+        <div class="card stat-card">
+            <div class="stat-icon"><svg><use href="/assets/icons/feather-sprite.svg#grid"/></svg></div>
+            <div class="stat-value" id="total-quizzes-stat">0</div>
+            <div class="stat-label">Quizzes Completed</div>
+        </div>
+        <div class="card stat-card">
+            <div class="stat-icon streak-icon"><svg><use href="/assets/icons/feather-sprite.svg#zap"/></svg></div>
+            <div class="stat-value" id="current-streak-stat">0</div>
+            <div class="stat-label">Current Streak</div>
+        </div>
+    </div>
+
+    <section class="achievements-section">
+        <h2>Achievements</h2>
+        <div id="achievements-grid" class="achievements-grid">
+            <!-- Achievements will be rendered here -->
+        </div>
+    </section>
+</div>
+
+<template id="achievement-template">
+    <div class="achievement-card" tabindex="0">
+        <div class="achievement-icon-wrapper">
+            <div class="achievement-icon">
+                <svg><use/></svg>
+            </div>
+        </div>
+        <h3 class="achievement-name"></h3>
+        <p class="achievement-description"></p>
+    </div>
+</template>

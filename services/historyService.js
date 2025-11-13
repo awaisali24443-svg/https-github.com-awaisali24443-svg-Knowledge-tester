@@ -1,6 +1,8 @@
 
+
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 import { showToast } from './toastService.js';
+import * as gamificationService from './gamificationService.js';
 
 let history = [];
 
@@ -76,6 +78,9 @@ export function addQuizAttempt(quizState) {
         history.pop();
     }
     saveHistory();
+    
+    // Update gamification stats after saving the attempt
+    gamificationService.updateStatsOnQuizCompletion(quizState, getHistory());
 }
 
 /**

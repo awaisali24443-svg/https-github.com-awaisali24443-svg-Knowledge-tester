@@ -625,3 +625,31 @@ body.animations-off::after {
     }
     h1 { font-size: 2rem; }
 }
+
+/* --- Offline Indicator --- */
+.offline-indicator {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--color-error-bg);
+    color: var(--color-error);
+    padding: 0.75rem 1rem;
+    text-align: center;
+    font-family: var(--font-family-mono);
+    border-top: 1px solid var(--color-error-border);
+    z-index: 2000;
+    animation: slide-up 0.3s ease-out;
+}
+
+@keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* On mobile, make sure it doesn't overlap with bottom nav */
+@media (max-width: 768px) {
+    .offline-indicator {
+        bottom: var(--bottom-nav-height);
+    }
+}

@@ -3,12 +3,14 @@ export const LOCAL_STORAGE_KEYS = {
     LIBRARY: 'knowledge-tester-library',
     LEARNING_PATHS: 'knowledge-tester-learning-paths',
     HISTORY: 'knowledge-tester-history',
+    GAMIFICATION: 'knowledge-tester-gamification',
 };
 
 export const ROUTES = [
     { path: '/', module: 'home', name: 'Home', icon: 'home', nav: true },
     { path: '/topics', module: 'topic-list', name: 'Topics', icon: 'grid', nav: true },
     { path: '/explore', module: 'explore-topics', name: 'Explore', icon: 'search', nav: true },
+    { path: '/profile', module: 'profile', name: 'Profile', icon: 'user', nav: true },
     { path: '/custom-quiz', module: 'optional-quiz-generator', name: 'Custom Quiz', icon: 'sliders', nav: false }, // Not in nav by default, accessed from home
     { path: '/loading', module: 'loading', name: 'Loading', nav: false },
     { path: '/quiz', module: 'quiz', name: 'Quiz', nav: false },

@@ -8,6 +8,7 @@ import * as learningPathService from './services/learningPathService.js';
 import * as historyService from './services/historyService.js';
 import * as themeService from './services/themeService.js';
 import * as backgroundService from './services/backgroundService.js';
+import * as gamificationService from './services/gamificationService.js';
 
 // appState holds the current module and a context object for passing data between modules.
 const appState = {
@@ -200,6 +201,7 @@ async function main() {
         soundService.init(configService);
         learningPathService.init();
         historyService.init();
+        gamificationService.init();
 
         // Register service worker for PWA capabilities and offline functionality.
         if ('serviceWorker' in navigator) {
@@ -225,6 +227,19 @@ async function main() {
                 soundService.playSound('click');
             }
         });
+
+        // Offline status indicator
+        const offlineIndicator = document.getElementById('offline-indicator');
+        function updateOnlineStatus() {
+            if (navigator.onLine) {
+                offlineIndicator.style.display = 'none';
+            } else {
+                offlineIndicator.style.display = 'block';
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus(); // Initial check
 
 
         // Initial data fetch and page load.
