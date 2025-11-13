@@ -1,4 +1,4 @@
-const CACHE_NAME = 'knowledge-tester-v2.0.1';
+const CACHE_NAME = 'knowledge-tester-v2.0.2';
 // Add assets to this list
 const APP_SHELL_URLS = [
     '/',
