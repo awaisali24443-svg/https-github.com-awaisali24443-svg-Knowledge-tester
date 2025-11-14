@@ -7,9 +7,8 @@ let library = [];
  * Creates a simple, deterministic hash from a string to use as a unique ID.
  * @param {string} questionText - The text of the quiz question.
  * @returns {string} A unique ID for the question.
- * @private
  */
-function hashQuestion(questionText) {
+export function hashQuestion(questionText) {
     let hash = 0;
     for (let i = 0; i < questionText.length; i++) {
         const char = questionText.charCodeAt(i);

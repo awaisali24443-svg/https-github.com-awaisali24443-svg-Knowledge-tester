@@ -9,46 +9,38 @@
             </button>
         </div>
     </header>
-    <div id="path-steps-list" class="steps-list">
-        <!-- Learning path steps and overall tests will be rendered here -->
+    <div id="galaxy-map" class="galaxy-map">
+        <!-- Galaxy map will be rendered here by JS -->
     </div>
 </div>
 
 <div id="step-modal-container"></div>
 
-<template id="step-item-template">
-    <div class="step-item card">
-        <div class="step-icon">
-             <svg><use/></svg>
-        </div>
-        <div class="step-content">
-            <div class="step-details">
-                 <h3 class="step-name"></h3>
-                 <span class="step-score" style="display: none;"></span>
-            </div>
-            <div class="step-actions">
-                 <!-- Button will be injected by JS based on step state -->
-            </div>
-        </div>
+<template id="cluster-template">
+    <div class="cluster-group">
+        <h2 class="cluster-title"></h2>
+        <div class="cluster-steps"></div>
     </div>
 </template>
 
-<template id="overall-test-item-template">
-    <div class="step-item card overall-test-item">
-        <div class="step-icon">
-             <svg><use href="/assets/icons/feather-sprite.svg#award"/></svg>
+<template id="step-node-template">
+    <div class="step-node" tabindex="0" role="button">
+        <div class="step-node-core">
+            <svg class="icon"><use/></svg>
         </div>
-        <div class="step-content">
-            <div class="step-details">
-                 <h3 class="step-name"></h3>
-                 <span class="step-score" style="display: none;"></span>
-            </div>
-            <div class="step-actions">
-                 <!-- Button will be injected by JS -->
-            </div>
-        </div>
+        <div class="step-node-label"></div>
     </div>
 </template>
+
+<template id="cluster-review-template">
+     <div class="cluster-review-node" tabindex="0" role="button">
+        <div class="review-node-core">
+            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#award"/></svg>
+        </div>
+        <div class="review-node-label"></div>
+    </div>
+</template>
+
 
 <template id="step-modal-template">
     <div class="modal-backdrop"></div>

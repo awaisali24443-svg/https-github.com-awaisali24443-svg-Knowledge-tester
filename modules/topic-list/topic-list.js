@@ -1,5 +1,3 @@
-
-
 import * as apiService from '../../services/apiService.js';
 import * as searchService from '../../services/searchService.js';
 import * as learningPathService from '../../services/learningPathService.js';
@@ -24,8 +22,8 @@ async function startJourney(topic) {
     showToast(`Generating a new learning journey for "${topic}"...`);
     try {
         const result = await apiService.generateLearningPath({ goal: topic });
-        if (result && result.path) {
-            const newPath = learningPathService.addPath(topic, result.path);
+        if (result && result.clusters) {
+            const newPath = learningPathService.addPath(topic, result.clusters);
             window.location.hash = `#/learning-path/${newPath.id}`;
         } else {
             throw new Error("The AI failed to generate a valid path. Please try a different topic.");
@@ -42,7 +40,7 @@ function renderTopics(topics, query = '') {
     
     if (topics.length === 0 && query) {
         customTopicContainer.innerHTML = `
-            <div class="card topic-card custom-generator-card" data-topic="${query}" tabindex="0">
+            <div class="card topic-card custom-generator-card" data-topic="${query}" tabindex="0" role="button">
                 <div class="card-content">
                     <h3>Create a Journey for "${query}"</h3>
                     <p>The AI will build a brand new, step-by-step path for this topic.</p>
@@ -88,6 +86,16 @@ async function handleGridClick(event) {
     await startJourney(topic);
 }
 
+async function handleGridKeydown(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        const card = event.target.closest('.topic-card');
+        if (!card) return;
+        event.preventDefault(); // Prevent space from scrolling
+        const topic = card.dataset.topic;
+        await startJourney(topic);
+    }
+}
+
 export async function init(globalState) {
     appState = globalState;
     searchInput = document.getElementById('search-input');
@@ -97,7 +105,9 @@ export async function init(globalState) {
 
     searchInput.addEventListener('input', handleSearch);
     topicGrid.addEventListener('click', handleGridClick);
+    topicGrid.addEventListener('keydown', handleGridKeydown);
     customTopicContainer.addEventListener('click', handleGridClick);
+    customTopicContainer.addEventListener('keydown', handleGridKeydown);
 
     try {
         allTopics = searchService.getIndex();
@@ -109,6 +119,12 @@ export async function init(globalState) {
 
 export function destroy() {
     if (searchInput) searchInput.removeEventListener('input', handleSearch);
-    if (topicGrid) topicGrid.removeEventListener('click', handleGridClick);
-    if (customTopicContainer) customTopicContainer.removeEventListener('click', handleGridClick);
+    if (topicGrid) {
+        topicGrid.removeEventListener('click', handleGridClick);
+        topicGrid.removeEventListener('keydown', handleGridKeydown);
+    }
+    if (customTopicContainer) {
+        customTopicContainer.removeEventListener('click', handleGridClick);
+        customTopicContainer.removeEventListener('keydown', handleGridKeydown);
+    }
 }

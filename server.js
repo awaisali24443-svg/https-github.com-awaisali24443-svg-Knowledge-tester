@@ -51,22 +51,33 @@ const quizGenerationSchema = {
 };
 
 const learningPathSchema = {
-  type: Type.OBJECT,
-  properties: {
-    path: {
-      type: Type.ARRAY,
-      description: "An array of learning steps.",
-      items: {
-        type: Type.OBJECT,
-        properties: {
-          name: { type: Type.STRING, description: "The name of the learning step." },
-          topic: { type: Type.STRING, description: "A concise, URL-friendly slug or keyword for the topic of this step." }
-        },
-        required: ["name", "topic"]
-      }
-    }
-  },
-  required: ["path"]
+    type: Type.OBJECT,
+    properties: {
+        clusters: {
+            type: Type.ARRAY,
+            description: "An array of logical topic clusters, forming the learning path.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    name: { type: Type.STRING, description: "The name of this topic cluster (e.g., 'Variables and Data Types')." },
+                    steps: {
+                        type: Type.ARRAY,
+                        description: "An array of individual learning steps within this cluster.",
+                        items: {
+                            type: Type.OBJECT,
+                            properties: {
+                                name: { type: Type.STRING, description: "The name of the learning step." },
+                                topic: { type: Type.STRING, description: "A concise, URL-friendly slug or keyword for the topic of this step." }
+                            },
+                            required: ["name", "topic"]
+                        }
+                    }
+                },
+                required: ["name", "steps"]
+            }
+        }
+    },
+    required: ["clusters"]
 };
 
 const learningContentSchema = {
@@ -124,7 +135,7 @@ async function generateQuizContent(topic, numQuestions, difficulty, learningCont
  */
 async function generateLearningPathContent(goal) {
     if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-    const prompt = `Create a step-by-step learning path for someone who wants to learn about "${goal}". The path should have between 5 and 10 steps. For each step, provide a name and a concise, URL-friendly topic keyword.`;
+    const prompt = `Create a structured, step-by-step learning path for the goal: "${goal}". Organize the path into logical clusters of related topics. Each cluster should have a name and contain between 2 to 5 individual learning steps. For each step, provide a name and a concise, URL-friendly topic keyword. The entire path should consist of 2 to 4 clusters.`;
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',

@@ -28,6 +28,13 @@
     height: 100%;
     background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
     transition: width var(--transition-speed-med) ease;
+    background-size: 200% 100%;
+    animation: move-progress-gradient 2s linear infinite;
+}
+
+@keyframes move-progress-gradient {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
 }
 
 .quiz-card {

@@ -131,7 +131,43 @@
     margin: var(--space-lg) 0;
 }
 
-.review-actions { text-align: right; }
+.review-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.feedback-buttons {
+    display: flex;
+    gap: var(--space-sm);
+}
+
+.feedback-btn {
+    padding: 0.5rem;
+    line-height: 1;
+}
+
+.feedback-btn .icon {
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.feedback-btn.selected.good {
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.feedback-btn.selected.bad {
+    border-color: var(--color-error);
+    color: var(--color-error);
+}
+
+.feedback-btn:disabled {
+    cursor: not-allowed;
+    background-color: var(--color-surface-hover);
+}
+
 .save-question-btn:disabled {
     background-color: var(--color-surface-active);
     color: var(--color-text-secondary);

@@ -12,8 +12,8 @@ let elements = {};
 // State for the active step modal
 let stepSession = {
     isActive: false,
-    isOverallTest: false,
-    stepIndex: -1, // or testIndex
+    isReview: false,
+    stepIndex: -1, // Represents either step index in flat path OR cluster index
     stage: 'loading', // 'loading', 'learn', 'quiz', 'results'
     learningContent: null,
     quizQuestions: [],
@@ -26,106 +26,94 @@ let stepSession = {
 function renderPath() {
     elements.goalTitle.textContent = path.goal;
     const completedSteps = path.path.length === path.currentStep ? path.currentStep : path.currentStep;
-    elements.progressSummary.textContent = `Progress: ${completedSteps} / ${path.path.length} chapters completed`;
+    elements.progressSummary.textContent = `Progress: ${completedSteps} / ${path.path.length} steps completed`;
     
-    elements.stepsList.innerHTML = '';
-    let overallTestIndex = 1;
+    elements.galaxyMap.innerHTML = '';
+    let stepCounter = 0;
+    let isPathLocked = false;
 
-    path.path.forEach((step, index) => {
-        // --- 1. RENDER THE REGULAR STEP ---
-        const item = elements.stepItemTemplate.content.cloneNode(true);
-        const card = item.querySelector('.step-item');
-        const iconUse = item.querySelector('.step-icon use');
-        item.querySelector('.step-name').textContent = step.name;
-        const actionsContainer = item.querySelector('.step-actions');
-        
-        const score = path.stepScores ? path.stepScores[index] : null;
+    path.clusters.forEach((cluster, clusterIndex) => {
+        const clusterEl = elements.clusterTemplate.content.cloneNode(true);
+        const clusterGroup = clusterEl.querySelector('.cluster-group');
+        clusterGroup.querySelector('.cluster-title').textContent = cluster.name;
+        const stepsContainer = clusterGroup.querySelector('.cluster-steps');
 
-        // Determine step state
-        const belongsToBlock = Math.floor(index / 10);
-        const previousTestPassed = belongsToBlock === 0 || (path.overallTestScores?.[belongsToBlock] && (path.overallTestScores[belongsToBlock].score / path.overallTestScores[belongsToBlock].totalQuestions) >= 0.8);
-
-        if (index < path.currentStep) {
-            card.classList.add('completed');
-            iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#check-circle');
-            if (score) {
-                const scoreEl = item.querySelector('.step-score');
-                scoreEl.textContent = `Score: ${score.score}/${score.totalQuestions}`;
-                scoreEl.style.display = 'block';
-            }
-        } else if (index === path.currentStep && previousTestPassed) {
-            card.classList.add('current');
-            iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#target');
-            const startBtn = document.createElement('button');
-            startBtn.className = 'btn btn-primary start-step-btn';
-            startBtn.textContent = 'Start Chapter';
-            startBtn.dataset.index = index;
-            actionsContainer.appendChild(startBtn);
-        } else {
-            card.classList.add('locked');
-            iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#lock');
+        if (isPathLocked) {
+            clusterGroup.classList.add('locked');
         }
-        elements.stepsList.appendChild(item);
 
-        // --- 2. RENDER OVERALL TEST (if applicable) ---
-        if ((index + 1) % 10 === 0 && (index + 1) < path.path.length) {
-            const testItem = elements.overallTestItemTemplate.content.cloneNode(true);
-            const testCard = testItem.querySelector('.step-item');
-            const testActions = testItem.querySelector('.step-actions');
-            testItem.querySelector('.step-name').textContent = `Overall Test #${overallTestIndex} (Chapters ${index-8}-${index+1})`;
-
-            // Determine test state
-            const allPreviousStepsDone = path.currentStep >= (index + 1);
-            const testScoreInfo = path.overallTestScores?.[overallTestIndex];
-            const testPassed = testScoreInfo && (testScoreInfo.score / testScoreInfo.totalQuestions) >= 0.8;
-
-            if (testPassed) {
-                testCard.classList.add('completed');
-                const scoreEl = testItem.querySelector('.step-score');
-                scoreEl.textContent = `Score: ${testScoreInfo.score}/${testScoreInfo.totalQuestions}`;
-                scoreEl.style.display = 'block';
-            } else if (allPreviousStepsDone) {
-                testCard.classList.add('current');
-                const startTestBtn = document.createElement('button');
-                startTestBtn.className = 'btn btn-primary start-overall-test-btn';
-                startTestBtn.textContent = 'Start Test';
-                startTestBtn.dataset.testIndex = overallTestIndex;
-                startTestBtn.dataset.startIndex = index - 9;
-                startTestBtn.dataset.endIndex = index;
-                testActions.appendChild(startTestBtn);
+        cluster.steps.forEach((step) => {
+            const stepNode = elements.stepNodeTemplate.content.cloneNode(true);
+            const nodeEl = stepNode.querySelector('.step-node');
+            const iconUse = nodeEl.querySelector('use');
+            nodeEl.querySelector('.step-node-label').textContent = step.name;
+            nodeEl.dataset.index = stepCounter;
+            
+            if (isPathLocked) {
+                nodeEl.classList.add('locked');
+                iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#lock');
+            } else if (stepCounter < path.currentStep) {
+                nodeEl.classList.add('completed');
+                iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#check-circle');
+            } else if (stepCounter === path.currentStep) {
+                nodeEl.classList.add('current', 'start-step-btn');
+                iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#target');
             } else {
-                testCard.classList.add('locked');
+                nodeEl.classList.add('locked');
+                iconUse.setAttribute('href', '/assets/icons/feather-sprite.svg#lock');
             }
-            elements.stepsList.appendChild(testItem);
-            overallTestIndex++;
+            stepsContainer.appendChild(stepNode);
+            stepCounter++;
+        });
+
+        const reviewNode = elements.clusterReviewTemplate.content.cloneNode(true);
+        const reviewEl = reviewNode.querySelector('.cluster-review-node');
+        reviewEl.querySelector('.review-node-label').textContent = `Review: ${cluster.name}`;
+        reviewEl.dataset.clusterIndex = clusterIndex;
+        
+        const allStepsInClusterDone = path.currentStep >= stepCounter;
+        const reviewScore = path.clusterReviewScores?.[clusterIndex];
+        const reviewPassed = reviewScore && (reviewScore.score / reviewScore.totalQuestions) >= 0.8;
+        
+        if (isPathLocked) {
+            reviewEl.classList.add('locked');
+        } else if (reviewPassed) {
+            reviewEl.classList.add('completed');
+        } else if (allStepsInClusterDone) {
+            reviewEl.classList.add('current', 'start-cluster-review-btn');
+            isPathLocked = true;
+        } else {
+            reviewEl.classList.add('locked');
         }
+        stepsContainer.appendChild(reviewNode);
+        elements.galaxyMap.appendChild(clusterEl);
     });
 }
+
 
 // --- Step Session Modal Logic ---
 
 function resetStepSession() {
     stepSession = {
-        isActive: false, isOverallTest: false, stepIndex: -1, stage: 'loading',
+        isActive: false, isReview: false, stepIndex: -1, stage: 'loading',
         learningContent: null, quizQuestions: [], currentQuestionIndex: 0, score: 0
     };
 }
 
-function openModal(index, isTest, context = {}) {
+function openModal(index, isReview) {
     resetStepSession();
     stepSession.isActive = true;
-    stepSession.isOverallTest = isTest;
-    stepSession.stepIndex = index; // Represents chapter index or test index
+    stepSession.isReview = isReview;
+    stepSession.stepIndex = index;
 
     elements.modalContainer.innerHTML = elements.stepModalTemplate.innerHTML;
     elements.modalContainer.classList.add('visible');
     
-    // Add event listeners for the newly created modal
     elements.modalContainer.querySelector('.modal-backdrop').addEventListener('click', closeModal);
     elements.modalContainer.querySelector('.step-modal-close-btn').addEventListener('click', closeModal);
     
-    if (isTest) {
-        loadQuizStage(context);
+    if (isReview) {
+        loadQuizStage();
     } else {
         loadLearnStage();
     }
@@ -149,7 +137,7 @@ function setModalContent(title, html) {
 async function loadLearnStage() {
     stepSession.stage = 'loading';
     const step = path.path[stepSession.stepIndex];
-    setModalContent(`Chapter ${stepSession.stepIndex + 1}: ${step.name}`, `
+    setModalContent(`Step ${stepSession.stepIndex + 1}: ${step.name}`, `
         <div class="modal-view-content loading">
             <p>The AI is preparing your lesson...</p>
             <div class="spinner"></div>
@@ -187,10 +175,10 @@ async function loadLearnStage() {
     }
 }
 
-async function loadQuizStage(context = {}) {
+async function loadQuizStage() {
     stepSession.stage = 'loading';
-    const title = stepSession.isOverallTest 
-        ? `Overall Test #${stepSession.stepIndex}` 
+    const title = stepSession.isReview 
+        ? `Review: ${path.clusters[stepSession.stepIndex].name}` 
         : `Quiz: ${path.path[stepSession.stepIndex].name}`;
 
     setModalContent(title, `
@@ -202,14 +190,14 @@ async function loadQuizStage(context = {}) {
 
     try {
         let topic, numQuestions, difficulty, learningContext;
-        if (stepSession.isOverallTest) {
-            const relevantSteps = path.path.slice(context.startIndex, context.endIndex + 1);
-            topic = `A test covering: ${relevantSteps.map(s => s.name).join(', ')}`;
-            numQuestions = 15;
+        if (stepSession.isReview) {
+            const cluster = path.clusters[stepSession.stepIndex];
+            topic = `A review quiz for the topic: ${cluster.name}`;
+            numQuestions = Math.max(5, cluster.steps.length * 2);
             difficulty = 'hard';
             learningContext = (await Promise.all(
-                relevantSteps.map(step => apiService.generateLearningContent({ topic: step.topic }))
-            )).map(content => content.summary).join(' ');
+                cluster.steps.map(step => apiService.generateLearningContent({ topic: step.topic }))
+            )).map(content => content.summary).join(' \n\n ');
         } else {
             const step = path.path[stepSession.stepIndex];
             topic = step.topic;
@@ -279,7 +267,7 @@ function handleQuizAnswer(event) {
 
 function loadResultsStage() {
     stepSession.stage = 'results';
-    const passThreshold = stepSession.isOverallTest ? 0.8 : 0.8; // 80% for both
+    const passThreshold = 0.8;
     const scoreRatio = stepSession.score / stepSession.quizQuestions.length;
     const hasPassed = scoreRatio >= passThreshold;
     
@@ -287,7 +275,7 @@ function loadResultsStage() {
         <div class="modal-view-content step-results-view">
             <h3>${hasPassed ? 'Passed!' : 'Keep Trying!'}</h3>
             <p>You answered ${stepSession.score} out of ${stepSession.quizQuestions.length} questions correctly.</p>
-            ${!hasPassed && stepSession.isOverallTest ? '<p>You must score at least 80% to unlock the next chapters.</p>' : ''}
+            ${!hasPassed && stepSession.isReview ? '<p>You must score at least 80% to unlock the next cluster.</p>' : ''}
             <div class="btn-group">
                 ${hasPassed 
                     ? `<button class="btn btn-primary" id="complete-step-btn">Continue</button>`
@@ -300,27 +288,22 @@ function loadResultsStage() {
     setModalContent('Results', resultsHtml);
     
     if(hasPassed) {
-        if (stepSession.isOverallTest) {
-            learningPathService.recordOverallTestScore(path.id, stepSession.stepIndex, stepSession.score, stepSession.quizQuestions.length);
+        if (stepSession.isReview) {
+            learningPathService.recordClusterReviewScore(path.id, stepSession.stepIndex, stepSession.score, stepSession.quizQuestions.length);
         } else {
             learningPathService.recordStepScore(path.id, stepSession.stepIndex, stepSession.score, stepSession.quizQuestions.length);
         }
         elements.modalContainer.querySelector('#complete-step-btn').addEventListener('click', () => {
-            if (!stepSession.isOverallTest) {
+            if (!stepSession.isReview) {
                 learningPathService.completeStep(path.id);
             }
             closeModal();
-            path = learningPathService.getPathById(path.id);
+            path = learningPathService.getPathById(path.id); // Re-fetch path to get updated scores
             renderPath();
         });
     } else {
         elements.modalContainer.querySelector('#retry-step-btn').addEventListener('click', () => {
-            if (stepSession.isOverallTest) {
-                 const btn = document.querySelector(`.start-overall-test-btn[data-test-index='${stepSession.stepIndex}']`);
-                 openModal(stepSession.stepIndex, true, { startIndex: parseInt(btn.dataset.startIndex), endIndex: parseInt(btn.dataset.endIndex) });
-            } else {
-                 openModal(stepSession.stepIndex, false);
-            }
+            openModal(stepSession.stepIndex, stepSession.isReview);
         });
         elements.modalContainer.querySelector('#return-to-path-btn').addEventListener('click', closeModal);
     }
@@ -347,13 +330,10 @@ function handleClick(event) {
         openModal(stepIndex, false);
     }
 
-    const testBtn = event.target.closest('.start-overall-test-btn');
-    if (testBtn) {
-        const testIndex = parseInt(testBtn.dataset.testIndex, 10);
-        openModal(testIndex, true, { 
-            startIndex: parseInt(testBtn.dataset.startIndex), 
-            endIndex: parseInt(testBtn.dataset.endIndex) 
-        });
+    const reviewBtn = event.target.closest('.start-cluster-review-btn');
+    if (reviewBtn) {
+        const clusterIndex = parseInt(reviewBtn.dataset.clusterIndex, 10);
+        openModal(clusterIndex, true);
     }
 }
 
@@ -370,17 +350,18 @@ export function init(globalState) {
     elements = {
         goalTitle: document.getElementById('path-goal-title'),
         progressSummary: document.getElementById('path-progress-summary'),
-        stepsList: document.getElementById('path-steps-list'),
+        galaxyMap: document.getElementById('galaxy-map'),
         deleteBtn: document.getElementById('delete-path-btn'),
-        stepItemTemplate: document.getElementById('step-item-template'),
-        overallTestItemTemplate: document.getElementById('overall-test-item-template'),
+        clusterTemplate: document.getElementById('cluster-template'),
+        stepNodeTemplate: document.getElementById('step-node-template'),
+        clusterReviewTemplate: document.getElementById('cluster-review-template'),
         modalContainer: document.getElementById('step-modal-container'),
         stepModalTemplate: document.getElementById('step-modal-template').content,
     };
 
     renderPath();
 
-    elements.stepsList.addEventListener('click', handleClick);
+    elements.galaxyMap.addEventListener('click', handleClick);
     elements.deleteBtn.addEventListener('click', handleDeletePath);
 }
 
@@ -388,8 +369,8 @@ export function destroy() {
     if (stepSession.isActive) {
         closeModal();
     }
-    if (elements.stepsList) {
-       elements.stepsList.removeEventListener('click', handleClick);
+    if (elements.galaxyMap) {
+       elements.galaxyMap.removeEventListener('click', handleClick);
     }
     if (elements.deleteBtn) {
         elements.deleteBtn.removeEventListener('click', handleDeletePath);

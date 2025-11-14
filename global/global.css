@@ -419,6 +419,34 @@ a:hover { text-decoration: underline; }
     box-shadow: 0 0 0 3px var(--color-primary-transparent);
 }
 
+/* --- Empty State --- */
+.empty-state {
+    text-align: center;
+    margin-top: 4rem;
+    padding: var(--space-xl);
+    background-color: var(--color-surface);
+    border-radius: var(--border-radius);
+    border: 1px dashed var(--color-border);
+}
+.empty-state-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto var(--space-lg) auto;
+    background: var(--brand-gradient, linear-gradient(45deg, var(--color-primary), var(--color-secondary)));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px var(--color-primary-transparent-heavy);
+}
+.empty-state-icon svg {
+    width: 30px;
+    height: 30px;
+    color: #fff;
+}
+.empty-state h2 { margin-bottom: var(--space-sm); }
+.empty-state p { margin-bottom: var(--space-lg); }
+
 /* --- Modals & Toasts --- */
 #modal-container, #toast-container {
     position: fixed;

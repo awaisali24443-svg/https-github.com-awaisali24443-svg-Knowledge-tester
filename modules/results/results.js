@@ -3,6 +3,7 @@ import * as libraryService from '../../services/libraryService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as historyService from '../../services/historyService.js';
 import * as soundService from '../../services/soundService.js';
+import * as feedbackService from '../../services/feedbackService.js';
 
 let quizState;
 let reviewContainer;
@@ -107,9 +108,16 @@ function renderReview() {
         userAnswerEl.classList.add(isCorrect ? 'correct' : 'incorrect');
         userAnswerEl.querySelector('.answer-text').textContent = question.options[userAnswerIndex] ?? 'Not answered';
 
-        item.querySelector('.correct-answer .answer-text').textContent = question.options[question.correctAnswerIndex];
+        const correctAnswerContainer = item.querySelector('.correct-answer-container');
+        if (isCorrect) {
+            correctAnswerContainer.style.display = 'none';
+        } else {
+            correctAnswerContainer.querySelector('.answer-text').textContent = question.options[question.correctAnswerIndex];
+        }
+
         item.querySelector('.review-explanation').textContent = question.explanation;
         
+        // Handle Save to Library button state
         const saveBtn = item.querySelector('.save-question-btn');
         if (libraryService.isQuestionSaved(question)) {
             saveBtn.textContent = 'Saved';
@@ -117,6 +125,23 @@ function renderReview() {
         } else {
             saveBtn.dataset.questionIndex = index;
         }
+        
+        // Handle Feedback buttons state
+        const feedbackBtns = item.querySelectorAll('.feedback-btn');
+        const questionId = libraryService.hashQuestion(question.question);
+        const existingFeedback = feedbackService.getFeedback(questionId);
+
+        if (existingFeedback) {
+            feedbackBtns.forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.feedback === existingFeedback) {
+                    btn.classList.add('selected', existingFeedback);
+                }
+            });
+        } else {
+             feedbackBtns.forEach(btn => btn.dataset.questionId = questionId);
+        }
+
 
         reviewContainer.appendChild(item);
     });
@@ -142,16 +167,32 @@ export function init(appState) {
     
     reviewContainer = document.getElementById('review-container');
     clickHandler = (event) => {
-        const button = event.target.closest('.save-question-btn');
-        if (button && !button.disabled) {
-            const questionIndex = parseInt(button.dataset.questionIndex, 10);
+        const saveButton = event.target.closest('.save-question-btn');
+        if (saveButton && !saveButton.disabled) {
+            const questionIndex = parseInt(saveButton.dataset.questionIndex, 10);
             const question = quizState.questions[questionIndex];
             
             const saved = libraryService.saveQuestion(question);
             if (saved) {
-                button.textContent = 'Saved';
-                button.disabled = true;
+                saveButton.textContent = 'Saved';
+                saveButton.disabled = true;
             }
+        }
+
+        const feedbackButton = event.target.closest('.feedback-btn');
+        if (feedbackButton && !feedbackButton.disabled) {
+            const questionId = feedbackButton.dataset.questionId;
+            const feedback = feedbackButton.dataset.feedback;
+            feedbackService.addFeedback(questionId, feedback);
+
+            // Disable both buttons in the group
+            const buttonGroup = feedbackButton.parentElement;
+            buttonGroup.querySelectorAll('.feedback-btn').forEach(btn => {
+                btn.disabled = true;
+                if (btn.dataset.feedback === feedback) {
+                    btn.classList.add('selected', feedback);
+                }
+            });
         }
     };
     reviewContainer.addEventListener('click', clickHandler);
