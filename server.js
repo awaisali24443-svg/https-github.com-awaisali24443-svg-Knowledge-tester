@@ -12,7 +12,7 @@ import { WebSocketServer } from 'ws';
 // --- CONSTANTS & CONFIG ---
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(import.meta.url);
+const __dirname = path.dirname(__filename); // Corrected this line
 let topicsCache = null;
 
 // --- GEMINI API SETUP ---
@@ -591,5 +591,5 @@ app.use((err, req, res, next) => {
 
 // --- SERVER START ---
 server.listen(PORT, () => {
-    console.log(`Server listening at http://localhost:PORT}`);
+    console.log(`Server listening at http://localhost:${PORT}`);
 });
