@@ -71,14 +71,24 @@ body::after {
     inset: 0;
     background: radial-gradient(circle at 20% 20%, var(--color-primary-transparent) 0%, transparent 25%),
                 radial-gradient(circle at 80% 70%, var(--color-secondary-transparent) 0%, transparent 25%);
+    background-size: 200% 200%, 150% 150%;
     opacity: 0.5;
     z-index: -1;
     pointer-events: none;
+    animation: move-glows 45s linear infinite;
 }
 
 @keyframes pan-grid {
     0% { background-position: 0 0; }
     100% { background-position: 50px 50px; }
+}
+
+@keyframes move-glows {
+    0% { background-position: 0% 50%, 50% 100%; }
+    25% { background-position: 50% 100%, 100% 50%; }
+    50% { background-position: 100% 0%, 50% 0%; }
+    75% { background-position: 50% 0%, 0% 50%; }
+    100% { background-position: 0% 50%, 50% 100%; }
 }
 
 /* --- App Layout --- */
@@ -210,7 +220,7 @@ body::after {
     height: 24px;
     margin-right: 24px;
     transition: filter var(--transition-speed-fast), transform var(--transition-speed-fast);
-    stroke: url(#brand-gradient-icon);
+    stroke: currentColor;
 }
 
 .sidebar-link:hover .icon,

@@ -1,4 +1,6 @@
 let canvas, ctx, particles, animationFrameId, configSvc;
+let particleColor = 'rgba(0, 184, 212, 0.5)';
+let lineColor = 'rgba(0, 184, 212, 0.3)';
 
 const PARTICLE_CONFIG = {
     count: 80,
@@ -28,7 +30,7 @@ class Particle {
     draw() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 184, 212, 0.5)'; // Use theme primary color
+        ctx.fillStyle = particleColor;
         ctx.fill();
     }
 }
@@ -49,15 +51,26 @@ function connectParticles() {
 
             if (distance < PARTICLE_CONFIG.lineDistance) {
                 const opacity = 1 - (distance / PARTICLE_CONFIG.lineDistance);
-                ctx.beginPath();
-                ctx.moveTo(particles[i].x, particles[i].y);
-                ctx.lineTo(particles[j].x, particles[j].y);
-                ctx.strokeStyle = `rgba(0, 184, 212, ${opacity * 0.3})`;
-                ctx.stroke();
+                try {
+                    const baseColorMatch = lineColor.match(/rgba\((\d+,\s*\d+,\s*\d+),/);
+                    if (baseColorMatch && baseColorMatch[1]) {
+                        const baseColor = baseColorMatch[1];
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(${baseColor}, ${opacity * 0.3})`;
+                        ctx.stroke();
+                    }
+                } catch (e) {
+                    // fallback if regex fails
+                    ctx.strokeStyle = `rgba(0, 184, 212, ${opacity * 0.1})`;
+                    ctx.stroke();
+                }
             }
         }
     }
 }
+
 
 function animate() {
     if (!ctx || !canvas) return; // Guard against missing canvas
@@ -87,6 +100,35 @@ function handleResize() {
 
     createParticles();
 }
+
+function updateColors() {
+    const computedStyle = getComputedStyle(document.documentElement);
+    let primaryColor = computedStyle.getPropertyValue('--color-primary').trim();
+    
+    let r, g, b;
+
+    try {
+        if (primaryColor.startsWith('#')) {
+            const hex = primaryColor.substring(1);
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
+        } else if (primaryColor.startsWith('rgb')) {
+            [r, g, b] = primaryColor.match(/\d+/g).map(Number);
+        } else {
+            // Fallback for named colors, etc.
+            throw new Error('Unsupported color format');
+        }
+
+        particleColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+        lineColor = `rgba(${r}, ${g}, ${b}, 0.3)`;
+    } catch (e) {
+        console.warn("Could not parse color from CSS variable:", primaryColor, e);
+        particleColor = 'rgba(0, 184, 212, 0.5)';
+        lineColor = 'rgba(0, 184, 212, 0.3)';
+    }
+}
+
 
 function updateAnimationState() {
     if (!configSvc || !canvas) return;
@@ -124,6 +166,14 @@ function updateAnimationState() {
     }
 }
 
+function onSettingsChanged() {
+    // The theme CSS might take a moment to apply.
+    setTimeout(() => {
+        updateColors();
+        updateAnimationState();
+    }, 100);
+}
+
 export function init(configService) {
     configSvc = configService;
     canvas = document.getElementById('particle-canvas');
@@ -133,10 +183,11 @@ export function init(configService) {
     }
     ctx = canvas.getContext('2d');
     
+    updateColors();
     updateAnimationState();
 
     window.addEventListener('resize', handleResize);
-    window.addEventListener('settings-changed', updateAnimationState);
+    window.addEventListener('settings-changed', onSettingsChanged);
 }
 
 export function destroy() {
@@ -145,5 +196,5 @@ export function destroy() {
        animationFrameId = null;
     }
     window.removeEventListener('resize', handleResize);
-    window.removeEventListener('settings-changed', updateAnimationState);
+    window.removeEventListener('settings-changed', onSettingsChanged);
 }
