@@ -1,7 +1,10 @@
 import * as gamificationService from '../../services/gamificationService.js';
 import * as historyService from '../../services/historyService.js';
 import * as learningPathService from '../../services/learningPathService.js';
+import * as apiService from '../../services/apiService.js';
 import { getXpForNextLevel } from '../../services/gamificationService.js';
+
+let appState;
 
 function renderStats() {
     const stats = gamificationService.getStats();
@@ -76,12 +79,63 @@ function renderLearningJourneys() {
     }
 }
 
-export function init(appState) {
+async function loadSmartReview() {
+    const history = historyService.getHistory();
+    const section = document.getElementById('smart-review-section');
+    if (!section || history.length < 3) {
+        return; // Don't show the feature if there isn't enough data
+    }
+    
+    try {
+        const analysis = await apiService.analyzePerformance(history);
+        if (analysis && analysis.weakTopics && analysis.weakTopics.length > 0) {
+            renderSmartReviewCard(analysis.weakTopics);
+        }
+    } catch (error) {
+        console.warn('Could not load smart review feature.', error);
+        section.style.display = 'none';
+    }
+}
+
+function renderSmartReviewCard(topics) {
+    const section = document.getElementById('smart-review-section');
+    const template = document.getElementById('smart-review-template');
+    
+    const card = template.content.cloneNode(true);
+    card.querySelector('.smart-review-description').textContent = "The AI has analyzed your quiz history and suggests reviewing these topics:";
+    
+    const topicsList = card.querySelector('.weak-topics-list');
+    topics.forEach(topic => {
+        const tag = document.createElement('span');
+        tag.className = 'weak-topic-tag';
+        tag.textContent = topic;
+        topicsList.appendChild(tag);
+    });
+
+    card.querySelector('.start-review-btn').addEventListener('click', () => {
+        appState.context = {
+            topic: topics.join(', '),
+            numQuestions: 10,
+            difficulty: 'medium',
+            learningContext: `This is a personalized review quiz focusing on topics the user has struggled with. The questions should test foundational concepts from these topics: ${topics.join(', ')}.`
+        };
+        window.location.hash = '/loading';
+    });
+
+    section.innerHTML = '';
+    section.appendChild(card);
+    section.style.display = 'block';
+}
+
+
+export function init(globalState) {
+    appState = globalState;
     renderStats();
     renderLearningJourneys();
     renderAchievements();
+    loadSmartReview();
 }
 
 export function destroy() {
-    // No dynamic event listeners to remove
+    // No dynamic event listeners to remove that are directly on module container
 }

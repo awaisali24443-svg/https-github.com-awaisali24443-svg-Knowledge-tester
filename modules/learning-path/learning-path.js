@@ -22,6 +22,20 @@ function startQuiz(index) {
     window.location.hash = '/loading';
 }
 
+function startAuralTutor(index) {
+    if (index < 0 || index >= path.path.length) return;
+    const step = path.path[index];
+    
+    // Set a context for the Aural module
+    appState.context.auralContext = {
+        systemInstruction: `You are a friendly and knowledgeable tutor specializing in "${step.name}". Your goal is to help the user understand this topic through a conversation. Keep your explanations clear and simple. Start by saying hello and asking what they'd like to know about "${step.name}".`,
+        from: `learning-path/${path.id}` // Where to return to
+    };
+
+    window.location.hash = '/aural';
+}
+
+
 function render() {
     if (!path) return;
     const { currentStep, goal, path: steps } = path;
@@ -85,37 +99,69 @@ async function openLevelModal(index) {
     elements.modalFooter.innerHTML = '';
 
     const isCompleted = index < path.currentStep;
+    const quizButtonText = isCompleted ? 'Retake Quiz' : 'Start Quiz';
+    const learnButtonText = isCompleted ? 'Review Summary' : 'Read Summary';
 
-    if (isCompleted) {
-        elements.modalFooter.innerHTML = `
-            <button class="btn" id="modal-learn-btn">Review Content</button>
-            <button class="btn btn-primary" id="modal-quiz-btn">Retake Quiz</button>
-        `;
-    } else {
-         elements.modalFooter.innerHTML = `
-            <button class="btn" id="modal-learn-btn">Learn Topic</button>
-            <button class="btn btn-primary" id="modal-quiz-btn">Start Quiz</button>
-        `;
-    }
-
+    elements.modalFooter.innerHTML = `
+        <button class="btn" id="modal-learn-btn">
+            <svg class="icon"><use href="assets/icons/feather-sprite.svg#book-open"/></svg>
+            <span>${learnButtonText}</span>
+        </button>
+        <button class="btn" id="modal-tutor-btn">
+            <svg class="icon"><use href="assets/icons/feather-sprite.svg#mic"/></svg>
+            <span>Talk to Tutor</span>
+        </button>
+        <button class="btn btn-primary" id="modal-quiz-btn">
+             <svg class="icon"><use href="assets/icons/feather-sprite.svg#play"/></svg>
+            <span>${quizButtonText}</span>
+        </button>
+    `;
+    
     document.getElementById('modal-learn-btn').onclick = handleLearn;
+    document.getElementById('modal-tutor-btn').onclick = () => startAuralTutor(index);
     document.getElementById('modal-quiz-btn').onclick = () => startQuiz(index);
 }
 
 async function handleLearn() {
-    elements.modalBody.innerHTML = '<div class="spinner"></div><p>Generating learning material...</p>';
-    elements.modalFooter.innerHTML = ''; // Hide buttons while loading
-    try {
-        const content = await apiService.generateLearningContent({ topic: currentModalStep.topic });
-        elements.modalBody.innerHTML = markdownService.render(content.summary);
+    elements.modalBody.innerHTML = `
+        <div id="modal-image-container" class="modal-image-container loading"></div>
+        <div id="modal-text-content">
+            <div class="spinner"></div>
+            <p>Generating learning material...</p>
+        </div>
+    `;
+    elements.modalFooter.innerHTML = '';
+
+    const modalImageContainer = document.getElementById('modal-image-container');
+    const modalTextContent = document.getElementById('modal-text-content');
+    
+    const [imageResult, contentResult] = await Promise.allSettled([
+        apiService.generateImage({ topic: currentModalStep.topic }),
+        apiService.generateLearningContent({ topic: currentModalStep.topic })
+    ]);
+
+    if (imageResult.status === 'fulfilled' && imageResult.value.imageData) {
+        const img = document.createElement('img');
+        img.src = `data:image/jpeg;base64,${imageResult.value.imageData}`;
+        img.alt = `AI-generated illustration for ${currentModalStep.topic}`;
+        modalImageContainer.innerHTML = '';
+        modalImageContainer.appendChild(img);
+    } else {
+        if (imageResult.status === 'rejected') console.warn("Could not generate image, proceeding without it.", imageResult.reason);
+        modalImageContainer.style.display = 'none';
+    }
+    modalImageContainer.classList.remove('loading');
+
+    if (contentResult.status === 'fulfilled') {
+        modalTextContent.innerHTML = markdownService.render(contentResult.value.summary);
         elements.modalFooter.innerHTML = `
             <button class="btn btn-primary" id="modal-quiz-btn">Start Quiz</button>
         `;
         const index = path.path.findIndex(step => step.name === currentModalStep.name);
         document.getElementById('modal-quiz-btn').onclick = () => startQuiz(index);
-
-    } catch (e) {
-        elements.modalBody.innerHTML = `<p>Error generating content. Please try again.</p>`;
+    } else {
+        modalTextContent.innerHTML = `<p>Error generating content. Please try again.</p>`;
+        modalImageContainer.style.display = 'none';
         elements.modalFooter.innerHTML = `<button class="btn" id="modal-close-btn-footer">Close</button>`;
         document.getElementById('modal-close-btn-footer').onclick = closeModal;
     }
@@ -191,4 +237,7 @@ export function init(globalState) {
 
 export function destroy() {
     // DOM is destroyed, so no need to remove listeners
+    if (appState && appState.context.auralContext) {
+        delete appState.context.auralContext;
+    }
 }

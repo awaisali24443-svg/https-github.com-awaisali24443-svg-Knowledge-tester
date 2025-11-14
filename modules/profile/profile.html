@@ -37,6 +37,10 @@
         </div>
     </div>
 
+    <section id="smart-review-section" class="smart-review-section" style="display: none;">
+        <!-- AI-powered review content will be injected here -->
+    </section>
+
     <section class="learning-journeys-section">
         <h2>My Learning Journeys</h2>
         <div id="journeys-list" class="journeys-list">
@@ -85,4 +89,21 @@
             </div>
         </div>
     </a>
+</template>
+
+<template id="smart-review-template">
+     <div class="card smart-review-card">
+        <div class="smart-review-icon">
+            <svg><use href="/assets/icons/feather-sprite.svg#cpu"/></svg>
+        </div>
+        <div class="smart-review-content">
+            <h2>Personalized Review</h2>
+            <p class="smart-review-description"></p>
+            <div class="weak-topics-list"></div>
+            <button class="btn btn-primary start-review-btn">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#play"/></svg>
+                <span>Start Smart Review</span>
+            </button>
+        </div>
+    </div>
 </template>

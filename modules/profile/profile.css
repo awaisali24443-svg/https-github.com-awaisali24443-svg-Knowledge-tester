@@ -70,6 +70,52 @@
     color: var(--color-text-secondary);
 }
 
+.smart-review-section {
+    margin-bottom: var(--space-xxl);
+    animation: fade-slide-in 0.5s ease-out 0.1s forwards;
+    opacity: 0;
+}
+
+.smart-review-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    padding: var(--space-xl);
+    border-color: var(--color-accent);
+    background: linear-gradient(145deg, var(--color-surface), hsl(from var(--color-surface) h s l+4));
+}
+.smart-review-icon {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--color-accent), var(--color-secondary));
+    color: #fff;
+    box-shadow: 0 0 20px -5px var(--color-accent);
+}
+.smart-review-icon svg { width: 30px; height: 30px; }
+.smart-review-content h2 { margin-bottom: var(--space-sm); color: var(--color-text); }
+.smart-review-description { margin-bottom: var(--space-lg); }
+
+.weak-topics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+.weak-topic-tag {
+    background-color: var(--color-secondary-transparent);
+    color: var(--color-secondary);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 50px;
+    font-family: var(--font-family-mono);
+    font-size: var(--fs-sm);
+}
+
+
 .achievements-section, .learning-journeys-section {
     animation: fade-slide-in 0.5s ease-out 0.2s forwards;
     opacity: 0;
@@ -217,5 +263,12 @@
 @media (max-width: 600px) {
     .level-info {
         flex-direction: column;
+    }
+    .smart-review-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    .weak-topics-list {
+        justify-content: center;
     }
 }

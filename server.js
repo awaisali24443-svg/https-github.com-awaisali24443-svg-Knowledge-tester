@@ -82,6 +82,18 @@ const learningContentSchema = {
     required: ["title", "summary"]
 };
 
+const performanceAnalysisSchema = {
+    type: Type.OBJECT,
+    properties: {
+        weakTopics: {
+            type: Type.ARRAY,
+            description: "An array of up to 3 topic names where the user has shown the weakest performance.",
+            items: { type: Type.STRING }
+        }
+    },
+    required: ["weakTopics"]
+};
+
 
 // --- GEMINI SERVICE FUNCTIONS ---
 /**
@@ -166,13 +178,74 @@ async function generateLearningContent(topic) {
     }
 }
 
+/**
+ * Generates an image using the Gemini API.
+ * @param {string} topic - The topic for the image.
+ * @returns {Promise<string>} The base64 encoded image data.
+ */
+async function generateImageContent(topic) {
+    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
+    const prompt = `A vibrant and artistic digital illustration representing the concept of "${topic}". The style should be modern, abstract, and visually engaging, suitable for educational material. Avoid text and complex scenes. Focus on core concepts.`;
+    try {
+        const response = await ai.models.generateImages({
+            model: 'imagen-4.0-generate-001',
+            prompt: prompt,
+            config: {
+                numberOfImages: 1,
+                outputMimeType: 'image/jpeg',
+                aspectRatio: '16:9',
+            },
+        });
+
+        if (!response.generatedImages || response.generatedImages.length === 0) {
+            throw new Error("AI did not return an image.");
+        }
+        
+        return response.generatedImages[0].image.imageBytes;
+    } catch (error) {
+        console.error('Gemini API Error (Image Generation):', error);
+        throw new Error('Failed to generate image. The AI may have refused to generate content for this topic.');
+    }
+}
+
+/**
+ * Analyzes user quiz history to find weak topics.
+ * @param {Array<object>} history - The user's quiz history.
+ * @returns {Promise<object>} The parsed analysis.
+ */
+async function analyzeUserPerformance(history) {
+    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
+
+    const historySummary = history.map(item =>
+        `Topic: "${item.topic}", Score: ${item.score}/${item.totalQuestions}`
+    ).join('; ');
+
+    const prompt = `Analyze the following user quiz history to identify areas for improvement. Based on the data, determine the top 2-3 topics where the user has the lowest average score or seems to be struggling the most. If all scores are high, return an empty array. History: [${historySummary}]. Return only a JSON object matching the provided schema.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: performanceAnalysisSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error('Gemini API Error (Performance Analysis):', error);
+        throw new Error('Failed to analyze user performance.');
+    }
+}
+
+
 // --- EXPRESS APP SETUP ---
 const app = express();
 const server = http.createServer(app);
 
 // --- MIDDLEWARE ---
 app.set('trust proxy', 1);
-app.use(express.json());
+app.use(express.json({ limit: '2mb' })); // Increase limit for history payload
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -251,6 +324,38 @@ async function handleGenerateLearningContent(req, res, next) {
     }
 }
 
+/**
+ * Handles POST /api/generate-image
+ */
+async function handleGenerateImage(req, res, next) {
+    const { topic } = req.body;
+    if (!topic) {
+        return res.status(400).json({ error: 'Missing required parameter: topic.' });
+    }
+    try {
+        const imageData = await generateImageContent(topic);
+        res.json({ imageData }); // Send as base64 string
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * Handles POST /api/analyze-performance
+ */
+async function handleAnalyzePerformance(req, res, next) {
+    const { history } = req.body;
+    if (!history || !Array.isArray(history)) {
+        return res.status(400).json({ error: 'Missing or invalid required parameter: history.' });
+    }
+    try {
+        const analysisData = await analyzeUserPerformance(history);
+        res.json(analysisData);
+    } catch (error) {
+        next(error);
+    }
+}
+
 
 // --- API ROUTER ---
 const apiRouter = express.Router();
@@ -258,6 +363,8 @@ apiRouter.get('/topics', handleGetTopics);
 apiRouter.post('/generate', handleGenerateQuiz);
 apiRouter.post('/generate-path', handleGeneratePath);
 apiRouter.post('/generate-learning-content', handleGenerateLearningContent);
+apiRouter.post('/generate-image', handleGenerateImage);
+apiRouter.post('/analyze-performance', handleAnalyzePerformance);
 app.use('/api', apiRouter);
 
 

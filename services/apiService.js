@@ -97,3 +97,46 @@ export async function generateLearningPath({ goal }) {
         throw error;
     }
 }
+
+/**
+ * Sends a request to the backend to generate an illustrative image for a topic.
+ * @param {object} params - The parameters.
+ * @param {string} params.topic - The topic for the image.
+ * @returns {Promise<object>} A promise that resolves to the generated image data.
+ * @throws {Error} If the generation fails.
+ */
+export async function generateImage({ topic }) {
+    try {
+        const response = await fetch('/api/generate-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        // Don't show a toast for this, let the caller handle UI.
+        console.error('Image generation failed:', error.message);
+        throw error;
+    }
+}
+
+/**
+ * Sends the user's quiz history to the backend for analysis.
+ * @param {Array<object>} history - The user's quiz history.
+ * @returns {Promise<object>} A promise that resolves to the analysis (e.g., weak topics).
+ * @throws {Error} If the analysis fails.
+ */
+export async function analyzePerformance(history) {
+    try {
+        const response = await fetch('/api/analyze-performance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ history })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.error('Performance analysis failed:', error.message);
+        // Silently fail, don't show a toast. Let caller handle UI.
+        throw error;
+    }
+}
