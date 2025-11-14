@@ -1,4 +1,3 @@
-import { initializeCardGlow } from '../../global/global.js';
 import { FEATURES } from '../../constants.js';
 import * as gamificationService from '../../services/gamificationService.js';
 
@@ -23,7 +22,6 @@ export function init(appState) {
             learningPathCard.style.display = 'flex';
         }
     }
-    initializeCardGlow(document.querySelector('.home-container'));
     renderStreak();
 }
 

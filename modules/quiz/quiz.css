@@ -51,12 +51,13 @@
     width: 100%;
     justify-content: flex-start;
     text-align: left;
-    padding: 1rem 1.5rem;
+    padding: 1rem 1.5rem 1rem 3rem;
     font-size: 1.05rem;
     font-family: var(--font-family-body);
     font-weight: 400;
     opacity: 0;
     animation: fade-slide-in 0.5s ease-out forwards;
+    position: relative;
 }
 .options-grid .option-btn:nth-child(1) { animation-delay: 0.1s; }
 .options-grid .option-btn:nth-child(2) { animation-delay: 0.2s; }
@@ -66,6 +67,19 @@
 .option-btn:not(:disabled):hover {
     background-color: var(--color-primary-transparent);
     border-color: var(--color-primary);
+}
+
+.option-btn::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--color-border);
+    transition: all 0.2s ease;
 }
 
 .option-btn.correct {
@@ -79,6 +93,27 @@
     border-color: var(--color-error-border);
     color: var(--color-error);
 }
+
+.option-btn.correct::before {
+    content: '✔';
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    line-height: 20px;
+}
+
+.option-btn.incorrect::before {
+    content: '✖';
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    line-height: 20px;
+}
+
 
 .option-btn:disabled {
     cursor: default;

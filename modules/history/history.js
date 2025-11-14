@@ -1,5 +1,4 @@
 import * as historyService from '../../services/historyService.js';
-import { initializeCardGlow } from '../../global/global.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 
 let container;
@@ -34,7 +33,6 @@ function renderHistory() {
 
             container.appendChild(card);
         });
-        initializeCardGlow(container);
     }
 }
 

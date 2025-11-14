@@ -1,6 +1,5 @@
 import * as learningPathService from '../../services/learningPathService.js';
 import { generateLearningPath } from '../../services/apiService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let form, goalInput, generateBtn, btnText, btnSpinner, savedPathsList, noPathsMessage, template;
 
@@ -25,7 +24,6 @@ function renderSavedPaths() {
 
             savedPathsList.appendChild(card);
         });
-        initializeCardGlow(savedPathsList);
     }
 }
 

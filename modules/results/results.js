@@ -1,10 +1,10 @@
 
+
 import * as quizStateService from '../../services/quizStateService.js';
 import * as libraryService from '../../services/libraryService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as historyService from '../../services/historyService.js';
 import * as soundService from '../../services/soundService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let quizState;
 let reviewContainer;
@@ -91,7 +91,6 @@ function renderReview() {
 
         reviewContainer.appendChild(item);
     });
-    initializeCardGlow(reviewContainer);
 }
 
 export function init(appState) {

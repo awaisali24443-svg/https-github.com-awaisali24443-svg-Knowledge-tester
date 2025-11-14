@@ -65,7 +65,7 @@
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, var(--color-primary), var(--color-secondary));
     position: relative;
-    box-shadow: 0 0 50px var(--color-primary-transparent-heavy);
+    box-shadow: 0 0 50px var(--color-primary-transparent-heavy), inset 0 0 20px var(--color-secondary-transparent-heavy);
     transition: transform 0.3s ease;
 }
 .orb::before, .orb::after {
@@ -110,11 +110,15 @@
     100% { transform: scale(1); opacity: 0.5; }
 }
 @keyframes listening-pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); box-shadow: 0 0 50px var(--color-primary-transparent-heavy), inset 0 0 20px var(--color-secondary-transparent-heavy); }
+    50% { transform: scale(1.05); box-shadow: 0 0 60px var(--color-primary-transparent-heavy), inset 0 0 20px var(--color-secondary-transparent-heavy); }
+    100% { transform: scale(1); box-shadow: 0 0 50px var(--color-primary-transparent-heavy), inset 0 0 20px var(--color-secondary-transparent-heavy); }
 }
-@keyframes thinking-swirl { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes thinking-swirl {
+    from { transform: rotate(0deg) scale(1); }
+    50% { transform: scale(0.9); }
+    to { transform: rotate(360deg) scale(1); }
+}
 @keyframes speaking-beat {
     0%, 20%, 100% { transform: scale(1) translateY(0); }
     10% { transform: scale(1.05) translateY(-5px); }

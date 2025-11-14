@@ -1,5 +1,4 @@
 import * as libraryService from '../../services/libraryService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let container;
 let clickHandler;
@@ -28,7 +27,6 @@ function renderLibrary() {
             card.querySelector('.remove-btn').dataset.id = q.id;
             container.appendChild(card);
         });
-        initializeCardGlow(container);
     }
 }
 

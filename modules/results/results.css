@@ -11,6 +11,7 @@
     width: 150px;
     height: 150px;
     flex-shrink: 0;
+    filter: drop-shadow(0 4px 10px var(--color-primary-transparent-heavy));
 }
 .score-ring-svg {
     width: 100%;
@@ -67,6 +68,38 @@
     display: grid;
     gap: var(--space-sm);
 }
+
+.review-answer {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.review-answer::before {
+    content: '';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    color: white;
+    font-size: 12px;
+}
+.user-answer.correct::before {
+    content: '✔';
+    background-color: var(--color-success);
+}
+.user-answer.incorrect::before {
+    content: '✖';
+    background-color: var(--color-error);
+}
+.correct-answer::before {
+    content: '✔';
+    background-color: var(--color-success);
+}
+
+
 .review-answer .answer-text {
     padding: var(--space-sm);
     border-radius: var(--border-radius);

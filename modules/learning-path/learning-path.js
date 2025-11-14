@@ -1,5 +1,4 @@
 import * as learningPathService from '../../services/learningPathService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let appState;
 let path;
@@ -36,7 +35,6 @@ function renderPath() {
         }
         stepsList.appendChild(item);
     });
-    initializeCardGlow(stepsList);
 }
 
 export function init(globalState) {

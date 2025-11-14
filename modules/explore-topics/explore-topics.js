@@ -1,5 +1,4 @@
 import * as searchService from '../../services/searchService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let appState;
 let searchInput;
@@ -21,7 +20,6 @@ function renderResults(topics) {
         
         resultsContainer.appendChild(card);
     });
-    initializeCardGlow(resultsContainer);
 }
 
 

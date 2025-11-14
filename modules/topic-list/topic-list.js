@@ -1,5 +1,4 @@
 import { fetchTopics } from '../../services/apiService.js';
-import { initializeCardGlow } from '../../global/global.js';
 
 let container;
 let clickHandler;
@@ -38,8 +37,6 @@ function renderTopics(appState) {
             container.appendChild(card);
         });
         
-        initializeCardGlow(container);
-
         clickHandler = (event) => {
             if (event.target.classList.contains('topic-button')) {
                 event.preventDefault();
