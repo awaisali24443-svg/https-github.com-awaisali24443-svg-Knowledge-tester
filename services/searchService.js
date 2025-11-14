@@ -22,6 +22,7 @@ export async function createIndex() {
         console.log('Search index created.');
     } catch (error) {
         console.error('Failed to create search index:', error);
+        throw error; // Re-throw to allow the main app loop to catch it and show a fatal error
     }
 }
 

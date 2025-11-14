@@ -14,11 +14,11 @@ let isInitialized = false;
  */
 function loadSounds() {
     try {
-        sounds.correct = new Audio('/assets/sounds/correct.mp3');
-        sounds.incorrect = new Audio('/assets/sounds/incorrect.mp3');
-        sounds.click = new Audio('/assets/sounds/click.mp3');
-        sounds.start = new Audio('/assets/sounds/start.mp3');
-        sounds.finish = new Audio('/assets/sounds/finish.mp3');
+        sounds.correct = new Audio('assets/sounds/correct.mp3');
+        sounds.incorrect = new Audio('assets/sounds/incorrect.mp3');
+        sounds.click = new Audio('assets/sounds/click.mp3');
+        sounds.start = new Audio('assets/sounds/start.mp3');
+        sounds.finish = new Audio('assets/sounds/finish.mp3');
 
         // Set a default volume for all loaded sounds.
         Object.values(sounds).forEach(sound => {

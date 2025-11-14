@@ -31,9 +31,9 @@ async function fetchModule(moduleName) {
     }
     try {
         const [html, css, js] = await Promise.all([
-            fetch(`/modules/${moduleName}/${moduleName}.html`).then(res => res.text()),
-            fetch(`/modules/${moduleName}/${moduleName}.css`).then(res => res.text()),
-            import(`/modules/${moduleName}/${moduleName}.js`)
+            fetch(`./modules/${moduleName}/${moduleName}.html`).then(res => res.text()),
+            fetch(`./modules/${moduleName}/${moduleName}.css`).then(res => res.text()),
+            import(`./modules/${moduleName}/${moduleName}.js`)
         ]);
         const moduleData = { html, css, js };
         moduleCache.set(moduleName, moduleData);
@@ -153,7 +153,7 @@ async function loadModule(route) {
             <div class="error-page card">
                 <h2>Error Loading Module</h2>
                 <p>${error.message}</p>
-                <a href="/#" class="btn">Go Home</a>
+                <a href="#" class="btn">Go Home</a>
             </div>
         `;
     } finally {
@@ -206,7 +206,7 @@ async function main() {
         // Register service worker for PWA capabilities and offline functionality.
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
+                navigator.serviceWorker.register('sw.js')
                     .then(reg => console.log('Service Worker registered', reg))
                     .catch(err => console.error('Service Worker registration failed', err));
             });

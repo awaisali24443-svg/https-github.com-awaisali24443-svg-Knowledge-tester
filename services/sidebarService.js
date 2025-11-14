@@ -10,7 +10,7 @@ function createNavLink(route) {
     return `
         <a href="#${route.path}" class="sidebar-link" data-path="${route.path}" aria-label="${route.name}">
             <svg class="icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <use href="/assets/icons/feather-sprite.svg#${route.icon}"/>
+                <use href="assets/icons/feather-sprite.svg#${route.icon}"/>
             </svg>
             <span class="text">${route.name}</span>
         </a>
