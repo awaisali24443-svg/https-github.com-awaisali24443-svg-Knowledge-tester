@@ -1,5 +1,4 @@
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
-import { showToast } from './toastService.js';
 
 let learningPaths = [];
 
@@ -93,7 +92,7 @@ export function addPath(goal, path) {
     };
     learningPaths.unshift(newPath); // Add to the beginning for chronological display
     savePaths();
-    showToast('New learning path saved!');
+    // showToast('New learning path saved!'); // Replaced by navigation, so toast is redundant
     return newPath;
 }
 
@@ -125,12 +124,12 @@ export function completeStep(pathId) {
     if (path && path.currentStep < path.path.length - 1) {
         path.currentStep += 1;
         savePaths();
-        showToast('Level completed! Well done.');
+        // showToast('Level completed! Well done.'); // Toast is handled by UI transition
     } else if (path && path.currentStep === path.path.length - 1) {
         // This was the last step, mark the entire path as complete
         path.currentStep = path.path.length;
         savePaths();
-        showToast('Learning path completed! Congratulations!', 'success');
+        // showToast('Learning path completed! Congratulations!', 'success'); // Toast is handled by UI transition
     }
 }
 
@@ -141,5 +140,5 @@ export function completeStep(pathId) {
 export function deletePath(pathId) {
     learningPaths = learningPaths.filter(p => p.id !== pathId);
     savePaths();
-    showToast('Learning path deleted.');
+    // showToast('Learning path deleted.'); // Handled by navigation
 }

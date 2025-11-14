@@ -1,40 +1,52 @@
 [
   {
-    "category": "Technology",
-    "description": "Dive into the innovations driving our future.",
-    "icon": "sliders",
+    "category": "Core IT Concepts",
+    "description": "Build a strong foundation in information technology.",
+    "icon": "cpu",
     "topics": [
-      { "name": "Machine Learning", "difficulty": "Hard" },
-      { "name": "Blockchain & Crypto", "difficulty": "Medium" },
-      { "name": "Cybersecurity", "difficulty": "Medium" },
-      { "name": "Cloud Computing", "difficulty": "Easy" },
-      { "name": "Game Development", "difficulty": "Medium" },
-      { "name": "Quantum Computing", "difficulty": "Hard" }
+      { "name": "Computer Networking", "difficulty": "Medium" },
+      { "name": "Operating Systems", "difficulty": "Medium" },
+      { "name": "Cybersecurity Fundamentals", "difficulty": "Easy" },
+      { "name": "Cloud Computing (IaaS, PaaS, SaaS)", "difficulty": "Medium" },
+      { "name": "Database Management", "difficulty": "Medium" },
+      { "name": "IT Hardware & Peripherals", "difficulty": "Easy" }
     ]
   },
   {
-    "category": "Arts & Literature",
-    "description": "Discover the masterpieces of human creativity.",
-    "icon": "feather",
+    "category": "Programming Fundamentals",
+    "description": "Start your coding journey with these essential languages.",
+    "icon": "git-branch",
     "topics": [
-      { "name": "Shakespearean Plays", "difficulty": "Medium" },
-      { "name": "Impressionist Art", "difficulty": "Easy" },
-      { "name": "Modernist Poetry", "difficulty": "Hard" },
-      { "name": "History of Jazz", "difficulty": "Medium" },
-      { "name": "Gothic Architecture", "difficulty": "Hard" },
-      { "name": "Russian Literature", "difficulty": "Medium" }
+      { "name": "Python Basics", "difficulty": "Easy" },
+      { "name": "JavaScript Fundamentals", "difficulty": "Easy" },
+      { "name": "Java for Beginners", "difficulty": "Medium" },
+      { "name": "C++ Core Concepts", "difficulty": "Medium" },
+      { "name": "SQL for Data Querying", "difficulty": "Easy" },
+      { "name": "HTML & CSS", "difficulty": "Easy" }
     ]
   },
   {
-    "category": "Hot & Trending",
-    "description": "Stay current with quizzes on today's most talked-about subjects.",
+    "category": "Web Development",
+    "description": "Learn to build modern websites and applications.",
+    "icon": "grid",
+    "topics": [
+      { "name": "Frontend Frameworks (React, Vue)", "difficulty": "Hard" },
+      { "name": "Backend Development (Node.js, Django)", "difficulty": "Hard" },
+      { "name": "REST APIs", "difficulty": "Medium" },
+      { "name": "Web Security (OWASP Top 10)", "difficulty": "Medium" },
+      { "name": "Responsive Web Design", "difficulty": "Easy" }
+    ]
+  },
+  {
+    "category": "Data & AI",
+    "description": "Explore the world of data science and artificial intelligence.",
     "icon": "trending-up",
     "topics": [
-      { "name": "AI Assistants (ChatGPT, Gemini)", "difficulty": "Easy" },
-      { "name": "Sustainable Energy Solutions", "difficulty": "Medium" },
-      { "name": "The Metaverse & VR", "difficulty": "Medium" },
-      { "name": "CRISPR Gene Editing", "difficulty": "Hard" },
-      { "name": "Modern Web Frameworks", "difficulty": "Hard" }
+      { "name": "Introduction to Machine Learning", "difficulty": "Hard" },
+      { "name": "Data Analysis with Pandas", "difficulty": "Medium" },
+      { "name": "Big Data Concepts", "difficulty": "Medium" },
+      { "name": "Neural Networks Basics", "difficulty": "Hard" },
+      { "name": "Natural Language Processing (NLP)", "difficulty": "Hard" }
     ]
   }
 ]

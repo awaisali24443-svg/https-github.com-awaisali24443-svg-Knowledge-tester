@@ -10,7 +10,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 export const ROUTES = [
     { path: '/', module: 'home', name: 'Home', icon: 'home', nav: true },
-    { path: '/topics', module: 'topic-list', name: 'Journeys', icon: 'grid', nav: true },
+    { path: '/topics', module: 'topic-list', name: 'Explore', icon: 'grid', nav: true },
     { path: '/profile', module: 'profile', name: 'Profile', icon: 'user', nav: true },
     { path: '/loading', module: 'loading', name: 'Loading', nav: false },
     { path: '/quiz', module: 'quiz', name: 'Quiz', nav: false },
@@ -20,6 +20,7 @@ export const ROUTES = [
     { path: '/study', module: 'study', name: 'Study', nav: false },
     { path: '/aural', module: 'aural', name: 'Aural', icon: 'mic', nav: true, fullBleed: true },
     { path: '/learning-path/:id', module: 'learning-path', name: 'Learning Path', nav: false },
+    { path: '/socratic', module: 'socratic', name: 'Socratic Gauntlet', nav: false, fullBleed: true },
     { path: '/settings', module: 'settings', name: 'Settings', icon: 'settings', nav: true, footer: true },
 ];
 

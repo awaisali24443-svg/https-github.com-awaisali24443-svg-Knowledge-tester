@@ -55,6 +55,7 @@ const APP_SHELL_URLS = [
     'modules/study/study.html', 'modules/study/study.css', 'modules/study/study.js',
     'modules/aural/aural.html', 'modules/aural/aural.css', 'modules/aural/aural.js',
     'modules/learning-path/learning-path.html', 'modules/learning-path/learning-path.css', 'modules/learning-path/learning-path.js',
+    'modules/socratic/socratic.html', 'modules/socratic/socratic.css', 'modules/socratic/socratic.js',
     'modules/settings/settings.html', 'modules/settings/settings.css', 'modules/settings/settings.js',
     'modules/profile/profile.html', 'modules/profile/profile.css', 'modules/profile/profile.js',
 ];

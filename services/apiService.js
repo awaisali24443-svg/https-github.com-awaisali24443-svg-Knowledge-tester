@@ -57,15 +57,15 @@ export async function generateQuiz({ topic, numQuestions, difficulty, learningCo
 }
 
 /**
- * Sends a request to the backend to generate learning content for a topic.
+ * Sends a request to the backend to generate a "synthesis package" for a topic.
  * @param {object} params - The parameters.
  * @param {string} params.topic - The topic to learn about.
  * @returns {Promise<object>} A promise that resolves to the generated learning content.
  * @throws {Error} If the generation fails.
  */
-export async function generateLearningContent({ topic }) {
+export async function generateSynthesis({ topic }) {
     try {
-        const response = await fetch('/api/generate-learning-content', {
+        const response = await fetch('/api/generate-synthesis', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic })
@@ -76,6 +76,28 @@ export async function generateLearningContent({ topic }) {
         throw error;
     }
 }
+
+/**
+ * Sends a request to the backend to generate audio from text.
+ * @param {object} params - The parameters.
+ * @param {string} params.text - The text to convert to speech.
+ * @returns {Promise<object>} A promise that resolves to the generated audio data.
+ * @throws {Error} If the generation fails.
+ */
+export async function generateSpeech({ text }) {
+     try {
+        const response = await fetch('/api/generate-speech', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        console.warn('Could not generate speech, proceeding without it.', error.message);
+        throw error;
+    }
+}
+
 
 /**
  * Sends a request to the backend to generate a new learning path.
@@ -99,28 +121,6 @@ export async function generateLearningPath({ goal }) {
 }
 
 /**
- * Sends a request to the backend to generate an illustrative image for a topic.
- * @param {object} params - The parameters.
- * @param {string} params.topic - The topic for the image.
- * @returns {Promise<object>} A promise that resolves to the generated image data.
- * @throws {Error} If the generation fails.
- */
-export async function generateImage({ topic }) {
-    try {
-        const response = await fetch('/api/generate-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        // Don't show a toast for this, let the caller handle UI.
-        console.error('Image generation failed:', error.message);
-        throw error;
-    }
-}
-
-/**
  * Sends the user's quiz history to the backend for analysis.
  * @param {Array<object>} history - The user's quiz history.
  * @returns {Promise<object>} A promise that resolves to the analysis (e.g., weak topics).
@@ -137,6 +137,27 @@ export async function analyzePerformance(history) {
     } catch (error) {
         console.error('Performance analysis failed:', error.message);
         // Silently fail, don't show a toast. Let caller handle UI.
+        throw error;
+    }
+}
+
+/**
+ * Sends a message to the Socratic chat endpoint.
+ * @param {string} summary - The lesson summary for context.
+ * @param {Array<object>} history - The current chat history.
+ * @returns {Promise<object>} A promise that resolves to the AI's response.
+ * @throws {Error} If the request fails.
+ */
+export async function sendSocraticMessage({ summary, history }) {
+    try {
+        const response = await fetch('/api/socratic-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ summary, history })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        // Let the Socratic module handle displaying the error
         throw error;
     }
 }

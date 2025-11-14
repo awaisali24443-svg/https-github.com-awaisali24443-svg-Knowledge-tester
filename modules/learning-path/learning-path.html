@@ -33,13 +33,35 @@
         <div id="modal-backdrop" class="modal-backdrop"></div>
         <div class="modal-content card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <header class="modal-header">
-                <h2 id="modal-title"></h2>
+                <div class="modal-header-text">
+                    <h2 id="modal-title"></h2>
+                    <p id="modal-subtitle" class="modal-subtitle"></p>
+                </div>
                 <button id="modal-close-btn" class="btn" aria-label="Close modal">
                     <svg class="icon"><use href="assets/icons/feather-sprite.svg#x-circle"/></svg>
                 </button>
             </header>
-            <main id="modal-body" class="modal-body">
-                <!-- Content injected by JS -->
+            <div id="modal-loading-state" class="modal-loading-state">
+                <div class="spinner"></div>
+                <p>Synthesizing knowledge...</p>
+            </div>
+            <main id="modal-body" class="modal-body" style="display: none;">
+                <div class="modal-toolbar">
+                    <div id="synthesis-tabs" class="synthesis-tabs" role="tablist" aria-label="Synthesis Views">
+                        <button id="tab-summary" role="tab" aria-selected="true" aria-controls="panel-summary" class="btn active">Summary</button>
+                        <button id="tab-mindmap" role="tab" aria-selected="false" aria-controls="panel-mindmap" class="btn">Mind Map</button>
+                        <button id="tab-analogies" role="tab" aria-selected="false" aria-controls="panel-analogies" class="btn">Analogies</button>
+                    </div>
+                    <button id="play-audio-btn" class="btn" disabled>
+                        <svg class="icon"><use href="/assets/icons/feather-sprite.svg#mic"/></svg>
+                        <span>Audio Primer</span>
+                    </button>
+                </div>
+                <div class="tab-panels">
+                    <div id="panel-summary" role="tabpanel" tabindex="0" aria-labelledby="tab-summary"></div>
+                    <div id="panel-mindmap" role="tabpanel" tabindex="0" aria-labelledby="tab-mindmap" class="hidden"></div>
+                    <div id="panel-analogies" role="tabpanel" tabindex="0" aria-labelledby="tab-analogies" class="hidden"></div>
+                </div>
             </main>
             <footer id="modal-footer" class="modal-footer">
                 <!-- Buttons injected by JS -->

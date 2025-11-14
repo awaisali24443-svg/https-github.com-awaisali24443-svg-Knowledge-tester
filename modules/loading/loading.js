@@ -6,7 +6,7 @@ let cancelBtn;
 let cancelTimer;
 
 async function startGeneration() {
-    const { topic, numQuestions, difficulty, learningPathId, learningContext } = appState.context;
+    const { topic, numQuestions, difficulty, learningPathId, learningPathStepIndex, learningContext } = appState.context;
 
     if (!topic) {
         window.location.hash = '/';
@@ -22,9 +22,12 @@ async function startGeneration() {
             throw new Error("The AI returned an empty or invalid quiz.");
         }
         
-        // If this quiz is part of a learning path, attach the ID
+        // Attach learning path context if it exists
         if (learningPathId) {
             quizData.learningPathId = learningPathId;
+        }
+        if (learningPathStepIndex !== undefined) {
+            quizData.learningPathStepIndex = learningPathStepIndex;
         }
 
         quizData.topic = topic; // Add topic to quiz data for history

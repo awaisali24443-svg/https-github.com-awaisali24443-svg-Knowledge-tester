@@ -6,34 +6,43 @@ import * as markdownService from '../../services/markdownService.js';
 let appState;
 let path;
 let elements;
-let currentModalStep = null;
+let currentModalStepIndex = null;
+let synthesisContent = null;
+let audioContext, audioBuffer;
 
-function startQuiz(index, learningContext = null) {
-    if (index < 0 || index >= path.path.length) return;
-
-    const step = path.path[index];
-    appState.context = {
-        topic: step.topic,
-        numQuestions: 5,
-        difficulty: 'medium',
-        learningPathId: path.id,
-        learningPathStepIndex: index,
-        learningContext: learningContext
-    };
-    window.location.hash = '/loading';
+// --- Audio Decoding ---
+function decode(base64) {
+  const binaryString = atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
+}
+async function decodeAudioData(data, ctx) {
+  const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
+  const frameCount = dataInt16.length / 1; // Assuming mono channel
+  const buffer = ctx.createBuffer(1, frameCount, 24000);
+  const channelData = buffer.getChannelData(0);
+  for (let i = 0; i < frameCount; i++) {
+    channelData[i] = dataInt16[i] / 32768.0;
+  }
+  return buffer;
 }
 
-function startAuralTutor(index) {
-    if (index < 0 || index >= path.path.length) return;
-    const step = path.path[index];
-    
-    // Set a context for the Aural module
-    appState.context.auralContext = {
-        systemInstruction: `You are a friendly and knowledgeable tutor specializing in "${step.name}". Your goal is to help the user understand this topic through a conversation. Keep your explanations clear and simple. Start by saying hello and asking what they'd like to know about "${step.name}".`,
-        from: `learning-path/${path.id}` // Where to return to
-    };
 
-    window.location.hash = '/aural';
+function startSocraticTest(index) {
+    if (index < 0 || index >= path.path.length || !synthesisContent) return;
+
+    const step = path.path[index];
+    appState.context.socraticContext = {
+        topic: step.topic,
+        summary: synthesisContent.summary,
+        learningPathId: path.id,
+        learningPathStepIndex: index
+    };
+    window.location.hash = '/socratic';
 }
 
 
@@ -90,88 +99,109 @@ function render() {
     }
 }
 
+function renderMindMap(node) {
+    const ul = document.createElement('ul');
+    const li = document.createElement('li');
+    const span = document.createElement('span');
+    span.textContent = node.name;
+    span.className = 'mind-map-node';
+    li.appendChild(span);
+    
+    if (node.children && node.children.length > 0) {
+        const childrenUl = document.createElement('ul');
+        node.children.forEach(child => {
+            const childLi = renderMindMap(child).querySelector('li');
+            childrenUl.appendChild(childLi);
+        });
+        li.appendChild(childrenUl);
+    }
+    ul.appendChild(li);
+    return ul;
+}
+
+async function playAudio() {
+    if (!audioBuffer) return;
+    if (!audioContext || audioContext.state === 'closed') {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+    }
+    
+    const source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+    source.start(0);
+
+    elements.playAudioBtn.classList.add('playing');
+    source.onended = () => {
+        elements.playAudioBtn.classList.remove('playing');
+    };
+}
+
+
 async function openLevelModal(index) {
-    currentModalStep = path.path[index];
+    const currentModalStep = path.path[index];
+    currentModalStepIndex = index;
     if (!currentModalStep) return;
 
     elements.modal.style.display = 'flex';
-    elements.modalTitle.textContent = `Level ${index + 1}: ${currentModalStep.name}`;
-    elements.modalBody.innerHTML = '';
+    elements.modalTitle.textContent = `Level ${index + 1}`;
+    elements.modalSubtitle.textContent = currentModalStep.name;
+    elements.modalLoadingState.style.display = 'block';
+    elements.modalBody.style.display = 'none';
     elements.modalFooter.innerHTML = '';
-
-    const isCompleted = index < path.currentStep;
-    const quizButtonText = isCompleted ? 'Retake Quiz' : 'Start Quiz';
-    const learnButtonText = isCompleted ? 'Review Summary' : 'Read Summary';
-
-    elements.modalFooter.innerHTML = `
-        <button class="btn" id="modal-learn-btn">
-            <svg class="icon"><use href="assets/icons/feather-sprite.svg#book-open"/></svg>
-            <span>${learnButtonText}</span>
-        </button>
-        <button class="btn" id="modal-tutor-btn">
-            <svg class="icon"><use href="assets/icons/feather-sprite.svg#mic"/></svg>
-            <span>Talk to Tutor</span>
-        </button>
-        <button class="btn btn-primary" id="modal-quiz-btn">
-             <svg class="icon"><use href="assets/icons/feather-sprite.svg#play"/></svg>
-            <span>${quizButtonText}</span>
-        </button>
-    `;
+    elements.playAudioBtn.disabled = true;
     
-    document.getElementById('modal-learn-btn').onclick = handleLearn;
-    document.getElementById('modal-tutor-btn').onclick = () => startAuralTutor(index);
-    document.getElementById('modal-quiz-btn').onclick = () => startQuiz(index);
-}
+    synthesisContent = null;
+    audioBuffer = null;
 
-async function handleLearn() {
-    elements.modalBody.innerHTML = `
-        <div id="modal-image-container" class="modal-image-container loading"></div>
-        <div id="modal-text-content">
-            <div class="spinner"></div>
-            <p>Generating learning material...</p>
-        </div>
-    `;
-    elements.modalFooter.innerHTML = '';
+    try {
+        synthesisContent = await apiService.generateSynthesis({ topic: currentModalStep.topic });
 
-    const modalImageContainer = document.getElementById('modal-image-container');
-    const modalTextContent = document.getElementById('modal-text-content');
-    
-    const [imageResult, contentResult] = await Promise.allSettled([
-        apiService.generateImage({ topic: currentModalStep.topic }),
-        apiService.generateLearningContent({ topic: currentModalStep.topic })
-    ]);
+        try {
+            const speechResult = await apiService.generateSpeech({ text: synthesisContent.title });
+            const audioData = speechResult.audioData;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+            audioBuffer = await decodeAudioData(decode(audioData), audioContext);
+            elements.playAudioBtn.disabled = false;
+        } catch (speechError) {
+            console.warn('Speech generation failed, but content is loaded:', speechError);
+        }
 
-    if (imageResult.status === 'fulfilled' && imageResult.value.imageData) {
-        const img = document.createElement('img');
-        img.src = `data:image/jpeg;base64,${imageResult.value.imageData}`;
-        img.alt = `AI-generated illustration for ${currentModalStep.topic}`;
-        modalImageContainer.innerHTML = '';
-        modalImageContainer.appendChild(img);
-    } else {
-        if (imageResult.status === 'rejected') console.warn("Could not generate image, proceeding without it.", imageResult.reason);
-        modalImageContainer.style.display = 'none';
-    }
-    modalImageContainer.classList.remove('loading');
+        elements.summaryPanel.innerHTML = markdownService.render(synthesisContent.summary);
+        const mindMapEl = renderMindMap(synthesisContent.mind_map.root);
+        mindMapEl.querySelector('.mind-map-node').classList.add('mind-map-root');
+        elements.mindmapPanel.innerHTML = '';
+        elements.mindmapPanel.appendChild(mindMapEl);
+        elements.analogiesPanel.innerHTML = synthesisContent.analogies.map(a => 
+            `<div class="analogy-card"><p>"${a}"</p></div>`
+        ).join('');
 
-    if (contentResult.status === 'fulfilled') {
-        const summaryText = contentResult.value.summary;
-        modalTextContent.innerHTML = markdownService.render(summaryText);
+    } catch (synthesisError) {
+        console.error("Synthesis generation failed:", synthesisError);
+        elements.summaryPanel.innerHTML = '<p class="error">Error loading content. Please try again.</p>';
+    } finally {
+        elements.modalLoadingState.style.display = 'none';
+        elements.modalBody.style.display = 'block';
+
+        const isCompleted = index < path.currentStep;
+        const buttonText = isCompleted ? 'Retake Test' : 'Test My Understanding';
         elements.modalFooter.innerHTML = `
-            <button class="btn btn-primary" id="modal-quiz-btn">Start Quiz</button>
+            <button class="btn btn-primary" id="modal-socratic-btn">
+                 <svg class="icon"><use href="/assets/icons/feather-sprite.svg#message-circle"/></svg>
+                <span>${buttonText}</span>
+            </button>
         `;
-        const index = path.path.findIndex(step => step.name === currentModalStep.name);
-        document.getElementById('modal-quiz-btn').onclick = () => startQuiz(index, summaryText);
-    } else {
-        modalTextContent.innerHTML = `<p>Error generating content. Please try again.</p>`;
-        modalImageContainer.style.display = 'none';
-        elements.modalFooter.innerHTML = `<button class="btn" id="modal-close-btn-footer">Close</button>`;
-        document.getElementById('modal-close-btn-footer').onclick = closeModal;
+        document.getElementById('modal-socratic-btn').onclick = () => startSocraticTest(index);
     }
 }
+
 
 function closeModal() {
     elements.modal.style.display = 'none';
-    currentModalStep = null;
+    currentModalStepIndex = null;
+    synthesisContent = null;
+    if (audioContext && audioContext.state !== 'closed') {
+        audioContext.close();
+    }
 }
 
 async function handleDeletePath() {
@@ -184,6 +214,26 @@ async function handleDeletePath() {
         learningPathService.deletePath(path.id);
         window.location.hash = '/profile';
     }
+}
+
+function handleTabClick(event) {
+    const clickedTab = event.target.closest('button[role="tab"]');
+    if (!clickedTab) return;
+
+    elements.tabs.forEach(tab => { 
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+    });
+    clickedTab.classList.add('active');
+    clickedTab.setAttribute('aria-selected', 'true');
+
+    elements.panels.forEach(panel => {
+        if (panel.id === clickedTab.getAttribute('aria-controls')) {
+            panel.classList.remove('hidden');
+        } else {
+            panel.classList.add('hidden');
+        }
+    });
 }
 
 function handleGridClick(event) {
@@ -217,9 +267,18 @@ export function init(globalState) {
         modal: document.getElementById('level-modal'),
         modalBackdrop: document.getElementById('modal-backdrop'),
         modalTitle: document.getElementById('modal-title'),
+        modalSubtitle: document.getElementById('modal-subtitle'),
+        modalLoadingState: document.getElementById('modal-loading-state'),
         modalBody: document.getElementById('modal-body'),
         modalFooter: document.getElementById('modal-footer'),
         modalCloseBtn: document.getElementById('modal-close-btn'),
+        tabContainer: document.getElementById('synthesis-tabs'),
+        playAudioBtn: document.getElementById('play-audio-btn'),
+        summaryPanel: document.getElementById('panel-summary'),
+        mindmapPanel: document.getElementById('panel-mindmap'),
+        analogiesPanel: document.getElementById('panel-analogies'),
+        tabs: document.querySelectorAll('#synthesis-tabs button'),
+        panels: document.querySelectorAll('.tab-panels [role="tabpanel"]'),
     };
 
     render();
@@ -235,11 +294,13 @@ export function init(globalState) {
     elements.deleteBtn.addEventListener('click', handleDeletePath);
     elements.modalCloseBtn.addEventListener('click', closeModal);
     elements.modalBackdrop.addEventListener('click', closeModal);
+    elements.tabContainer.addEventListener('click', handleTabClick);
+    elements.playAudioBtn.addEventListener('click', playAudio);
 }
 
 export function destroy() {
-    // DOM is destroyed, so no need to remove listeners
-    if (appState && appState.context.auralContext) {
-        delete appState.context.auralContext;
+    closeModal();
+    if (appState && appState.context.socraticContext) {
+        delete appState.context.socraticContext;
     }
 }
