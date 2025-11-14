@@ -37,7 +37,10 @@ export function renderSidebar(container) {
     });
 
     const html = `
-        <div class="sidebar-logo">KT</div>
+        <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
+            <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="sidebar-logo-img">
+            <span class="sidebar-logo-text">Knowledge Tester</span>
+        </a>
         <ul class="sidebar-links">
             ${filteredMainLinks.map(createNavLink).join('')}
         </ul>

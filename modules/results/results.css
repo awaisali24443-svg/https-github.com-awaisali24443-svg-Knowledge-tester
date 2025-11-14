@@ -43,6 +43,21 @@
 .summary-text { flex-grow: 1; }
 #summary-title { margin-bottom: var(--space-sm); }
 #summary-details { margin-bottom: var(--space-lg); }
+
+.summary-stat {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--color-text-secondary);
+    margin-bottom: var(--space-lg);
+    font-family: var(--font-family-mono);
+}
+.summary-stat .icon {
+    width: 1.2em;
+    height: 1.2em;
+    stroke: currentColor;
+}
+
 .results-actions { display: flex; gap: var(--space-md); }
 
 .review-title {

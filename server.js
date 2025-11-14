@@ -291,7 +291,7 @@ function setupWebSocketConnection(ws) {
                         prebuiltVoiceConfig: { voiceName: 'Kore' },
                     },
                 },
-                systemInstruction: 'You are a friendly and empathetic assistant. Converse with natural human emotion in your voice. You must converse only in Urdu. Do not use Hindi.',
+                systemInstruction: 'You are a friendly and empathetic assistant. Converse with natural human emotion in your voice. You should primarily use Urdu.',
             },
             callbacks: {
                 onopen: () => ws.send(JSON.stringify({ type: 'socket_open' })),

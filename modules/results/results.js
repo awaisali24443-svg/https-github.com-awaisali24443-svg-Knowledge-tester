@@ -68,6 +68,13 @@ function renderSummary(scorePercent) {
         title.textContent = "Keep Practicing!";
     }
     details.textContent = `You answered ${quizState.score} out of ${quizState.questions.length} questions correctly.`;
+
+    // Calculate and display duration
+    const durationMs = quizState.endTime - quizState.startTime;
+    const minutes = Math.floor(durationMs / 60000);
+    const seconds = ((durationMs % 60000) / 1000).toFixed(0);
+    const durationFormatted = `${minutes}:${seconds.padStart(2, '0')}`;
+    document.getElementById('summary-time').textContent = durationFormatted;
 }
 
 function renderReview() {
