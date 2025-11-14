@@ -19,22 +19,32 @@ function animateScore(scorePercent) {
         scoreRingFg.style.strokeDasharray = `${scorePercent}, 100`;
     }, 100);
 
-    // Animate the text
-    let currentScore = 0;
-    const duration = 1000;
-    const stepTime = scorePercent > 0 ? Math.abs(Math.floor(duration / scorePercent)) : duration;
+    // Animate the text with requestAnimationFrame for smoothness
+    let startTimestamp = null;
+    const duration = 1200; // Animation duration in milliseconds
 
-    const interval = setInterval(() => {
-        currentScore++;
-        scoreText.textContent = `${currentScore}%`;
-        if (currentScore >= scorePercent) {
-            clearInterval(interval);
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = timestamp - startTimestamp;
+        const currentPercentage = Math.min(Math.floor(scorePercent * (progress / duration)), scorePercent);
+        
+        scoreText.textContent = `${currentPercentage}%`;
+
+        if (progress < duration) {
+            requestAnimationFrame(step);
+        } else {
+            // Ensure final value is accurate
             scoreText.textContent = `${scorePercent}%`;
         }
-    }, stepTime);
+    };
+
+    // Handle the case of a zero score without animation
     if (scorePercent === 0) {
-        scoreText.textContent = `0%`;
+        scoreText.textContent = '0%';
+        return;
     }
+
+    requestAnimationFrame(step);
 }
 
 function renderSummary(scorePercent) {

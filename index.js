@@ -242,8 +242,13 @@ async function main() {
         updateOnlineStatus(); // Initial check
 
 
-        // Initial data fetch and page load.
-        await searchService.createIndex();
+        // Initial data fetch and page load with a timeout to prevent hangs.
+        const createIndexPromise = searchService.createIndex();
+        const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Initial data load timed out. Please check your connection.")), 10000)
+        );
+        await Promise.race([createIndexPromise, timeoutPromise]);
+        
         handleRouteChange();
 
 

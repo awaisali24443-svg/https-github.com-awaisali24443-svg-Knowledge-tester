@@ -4,6 +4,7 @@
     /* Primary Colors */
     --color-primary: #007b8a;   /* Darker Teal for contrast */
     --color-secondary: #862197; /* Darker Violet */
+    --color-accent: #fd7e14;    /* Bright Orange */
 
     /* Background & Surface Colors */
     --color-background: #f0f2f8; /* Light Bluish Gray */
@@ -34,5 +35,5 @@
     --color-error-border: rgba(220, 53, 69, 0.5);
     
     /* Brand Gradient */
-    --brand-gradient: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+    --brand-gradient: linear-gradient(45deg, var(--color-primary), var(--color-secondary), var(--color-accent));
 }

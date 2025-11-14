@@ -8,15 +8,19 @@ const animationLevels = ['off', 'subtle', 'full'];
 
 /**
  * Updates the visual state of the segmented theme toggle control.
- * Moves the indicator and sets ARIA attributes.
+ * Moves the indicator and sets ARIA attributes and tabindex for accessibility.
  * @param {HTMLElement} button - The theme button that should be active.
  * @param {boolean} [instant=false] - If true, applies changes without transition.
  */
 function setActiveThemeButton(button, instant = false) {
     if (!button) return;
 
-    elements.themeToggleButtons.forEach(btn => btn.setAttribute('aria-checked', 'false'));
+    elements.themeToggleButtons.forEach(btn => {
+        btn.setAttribute('aria-checked', 'false');
+        btn.tabIndex = -1; // Make non-selected buttons unfocusable via Tab
+    });
     button.setAttribute('aria-checked', 'true');
+    button.tabIndex = 0; // Make selected button focusable
 
     const indicator = elements.themeToggle.querySelector('.segmented-control-indicator');
     const containerRect = elements.themeToggle.getBoundingClientRect();
@@ -64,6 +68,29 @@ function handleThemeToggle(event) {
     }
 }
 
+function handleThemeToggleKeydown(event) {
+    const { key } = event;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
+
+    event.preventDefault(); // Prevent page scroll
+
+    const buttons = Array.from(elements.themeToggleButtons);
+    const checkedButton = elements.themeToggle.querySelector('button[aria-checked="true"]');
+    let currentIndex = buttons.indexOf(checkedButton);
+
+    if (key === 'ArrowLeft') {
+        currentIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+    } else if (key === 'ArrowRight') {
+        currentIndex = (currentIndex + 1) % buttons.length;
+    }
+
+    const newButton = buttons[currentIndex];
+    newButton.focus(); // Move focus to the new button
+    const newTheme = newButton.dataset.theme;
+    setActiveThemeButton(newButton);
+    configService.setConfig({ theme: newTheme });
+}
+
 async function handleClearData() {
     const confirmed = await showConfirmationModal({
         title: 'Confirm Data Deletion',
@@ -96,12 +123,16 @@ export function init(appState) {
     elements.animationSlider.addEventListener('input', handleAnimationChange);
     elements.clearDataBtn.addEventListener('click', handleClearData);
     elements.themeToggle.addEventListener('click', handleThemeToggle);
+    elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
 }
 
 export function destroy() {
-    if(elements.soundToggle) elements.soundToggle.removeEventListener('change', handleSoundToggle);
-    if(elements.animationSlider) elements.animationSlider.removeEventListener('input', handleAnimationChange);
-    if(elements.clearDataBtn) elements.clearDataBtn.removeEventListener('click', handleClearData);
-    if(elements.themeToggle) elements.themeToggle.removeEventListener('click', handleThemeToggle);
+    if (elements.soundToggle) elements.soundToggle.removeEventListener('change', handleSoundToggle);
+    if (elements.animationSlider) elements.animationSlider.removeEventListener('input', handleAnimationChange);
+    if (elements.clearDataBtn) elements.clearDataBtn.removeEventListener('click', handleClearData);
+    if (elements.themeToggle) {
+        elements.themeToggle.removeEventListener('click', handleThemeToggle);
+        elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
+    }
     elements = {};
 }

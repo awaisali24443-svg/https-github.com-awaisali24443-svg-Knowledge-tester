@@ -186,7 +186,18 @@ async function startConversation() {
                 addTranscriptionEntry(currentOutputTranscription, 'model');
                 currentInputTranscription = '';
                 currentOutputTranscription = '';
-                updateUI(STATE.LISTENING);
+                
+                // Wait for any queued audio to finish playing before switching back to LISTENING
+                const checkPlaybackAndSetListening = () => {
+                    // Check if context exists and if current time has passed the scheduled end time
+                    if (outputAudioContext && outputAudioContext.currentTime + 0.1 >= nextStartTime) {
+                        updateUI(STATE.LISTENING);
+                    } else {
+                        // If audio is still playing, check again shortly
+                        setTimeout(checkPlaybackAndSetListening, 100);
+                    }
+                };
+                checkPlaybackAndSetListening();
             }
         };
         

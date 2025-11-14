@@ -4,6 +4,7 @@
     /* Primary Colors */
     --color-primary: #00b8d4;   /* Electric Teal */
     --color-secondary: #9c27b0; /* Vibrant Violet */
+    --color-accent: #ff4081;    /* Hot Pink Accent */
 
     /* Background & Surface Colors */
     --color-background: #0c0e1a; /* Deep Indigo */
@@ -34,5 +35,5 @@
     --color-error-border: rgba(244, 67, 54, 0.5);
 
     /* Brand Gradient */
-    --brand-gradient: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
+    --brand-gradient: linear-gradient(45deg, var(--color-primary), var(--color-secondary), var(--color-accent));
 }

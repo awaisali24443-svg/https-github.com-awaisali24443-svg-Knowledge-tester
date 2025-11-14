@@ -8,12 +8,15 @@ export function showFatalError(error) {
     const appWrapper = document.getElementById('app-wrapper');
     if (appWrapper) appWrapper.style.display = 'none';
 
+    // Ensure we can handle non-Error objects being thrown.
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
     splash.innerHTML = `
         <div class="fatal-error-container">
             <div class="logo">KT</div>
             <h2>Application Error</h2>
             <p>A critical error occurred and the application cannot start.</p>
-            <pre>${error.message}</pre>
+            <pre>${errorMessage}</pre>
             <p>Please try refreshing the page. If the problem persists, contact support.</p>
         </div>
     `;
