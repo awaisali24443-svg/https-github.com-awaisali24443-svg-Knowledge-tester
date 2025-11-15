@@ -15,6 +15,7 @@ export const ROUTES = [
     { path: '/loading', module: 'loading', name: 'Loading', nav: false },
     { path: '/quiz', module: 'quiz', name: 'Quiz', nav: false },
     { path: '/results', module: 'results', name: 'Results', nav: false },
+    { path: '/quiz-levels', module: 'quiz-levels', name: 'Quiz Levels', nav: false },
     { path: '/library', module: 'library', name: 'Library', icon: 'book', nav: true },
     { path: '/history', module: 'history', name: 'History', icon: 'archive', nav: true },
     { path: '/study', module: 'study', name: 'Study', nav: false },

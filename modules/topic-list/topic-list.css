@@ -170,17 +170,3 @@
 @media (max-width: 600px) {
     .modal-body { grid-template-columns: 1fr; }
 }
-
-/* Quiz Setup Modal Form Styles */
-#quiz-setup-modal .modal-body {
-    display: block; /* Override grid layout */
-    padding: var(--space-lg) var(--space-xl);
-}
-
-#quiz-setup-form .form-group {
-    margin-bottom: var(--space-lg);
-}
-
-#quiz-setup-form button {
-    margin-top: var(--space-lg);
-}

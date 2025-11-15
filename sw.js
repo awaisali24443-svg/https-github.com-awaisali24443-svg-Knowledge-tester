@@ -50,6 +50,7 @@ const APP_SHELL_URLS = [
     'modules/loading/loading.html', 'modules/loading/loading.css', 'modules/loading/loading.js',
     'modules/quiz/quiz.html', 'modules/quiz/quiz.css', 'modules/quiz/quiz.js',
     'modules/results/results.html', 'modules/results/results.css', 'modules/results/results.js',
+    'modules/quiz-levels/quiz-levels.html', 'modules/quiz-levels/quiz-levels.css', 'modules/quiz-levels/quiz-levels.js',
     'modules/library/library.html', 'modules/library/library.css', 'modules/library/library.js',
     'modules/history/history.html', 'modules/history/history.css', 'modules/history/history.js',
     'modules/study/study.html', 'modules/study/study.css', 'modules/study/study.js',
