@@ -10,16 +10,29 @@ let activeTopic = null;
 
 // --- Action Handlers ---
 
-function startQuickQuiz() {
+function handleQuizSetupSubmit(event) {
+    event.preventDefault();
     if (!activeTopic) return;
 
+    const numQuestions = elements.numQuestionsSelect.value;
+    const difficulty = elements.difficultySelect.value;
+    
     appState.context = {
         topic: activeTopic.name,
-        numQuestions: 10,
-        difficulty: 'medium',
+        numQuestions: parseInt(numQuestions, 10),
+        difficulty: difficulty,
     };
     window.location.hash = '/loading';
     closeModal();
+}
+
+function startQuickQuiz() {
+    if (!activeTopic) return;
+    
+    // Hide action modal, show quiz setup modal
+    elements.actionModal.style.display = 'none';
+    elements.quizSetupModal.style.display = 'flex';
+    elements.quizSetupTitle.textContent = `Quiz Setup: ${activeTopic.name}`;
 }
 
 async function startJourney(forceCreate = false) {
@@ -53,7 +66,7 @@ async function startJourney(forceCreate = false) {
 
 function openModal(topic, isCustom) {
     activeTopic = { name: topic }; // Stash the topic for modal actions
-    elements.modal.style.display = 'flex';
+    elements.actionModal.style.display = 'flex';
     elements.modalTopicTitle.textContent = topic;
 
     // Remove old listeners and add new ones to prevent multiple triggers
@@ -70,7 +83,8 @@ function openModal(topic, isCustom) {
 }
 
 function closeModal() {
-    elements.modal.style.display = 'none';
+    elements.actionModal.style.display = 'none';
+    elements.quizSetupModal.style.display = 'none';
     activeTopic = null;
 }
 
@@ -143,12 +157,18 @@ export async function init(globalState) {
     template = document.getElementById('topic-card-template');
 
     elements = {
-        modal: document.getElementById('action-modal'),
-        modalBackdrop: document.querySelector('.modal-backdrop'),
+        actionModal: document.getElementById('action-modal'),
         modalTopicTitle: document.getElementById('modal-topic-title'),
         modalCloseBtn: document.getElementById('modal-close-btn'),
         startJourneyBtn: document.getElementById('start-journey-btn'),
         startQuizBtn: document.getElementById('start-quiz-btn'),
+        
+        quizSetupModal: document.getElementById('quiz-setup-modal'),
+        quizSetupTitle: document.getElementById('quiz-setup-title'),
+        quizSetupCloseBtn: document.getElementById('quiz-setup-close-btn'),
+        quizSetupForm: document.getElementById('quiz-setup-form'),
+        numQuestionsSelect: document.getElementById('num-questions-select'),
+        difficultySelect: document.getElementById('difficulty-select'),
     };
 
     searchInput.addEventListener('input', handleSearch);
@@ -156,8 +176,15 @@ export async function init(globalState) {
     topicGrid.addEventListener('keydown', handleGridInteraction);
     customTopicContainer.addEventListener('click', handleGridInteraction);
     customTopicContainer.addEventListener('keydown', handleGridInteraction);
+    
+    // Action Modal Listeners
     elements.modalCloseBtn.addEventListener('click', closeModal);
-    elements.modalBackdrop.addEventListener('click', closeModal);
+    elements.actionModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+    // Quiz Setup Modal Listeners
+    elements.quizSetupCloseBtn.addEventListener('click', closeModal);
+    elements.quizSetupModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+    elements.quizSetupForm.addEventListener('submit', handleQuizSetupSubmit);
 
     try {
         const allTopics = searchService.getIndex();
