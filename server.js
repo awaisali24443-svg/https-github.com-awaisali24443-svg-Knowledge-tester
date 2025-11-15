@@ -12,7 +12,7 @@ import { WebSocketServer } from 'ws';
 // --- CONSTANTS & CONFIG ---
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename); // Corrected this line
+const __dirname = path.dirname(__filename);
 let topicsCache = null;
 
 // --- GEMINI API SETUP ---
@@ -29,112 +29,31 @@ try {
 }
 
 // --- GEMINI SCHEMAS ---
-const quizGenerationSchema = {
+
+const levelGenerationSchema = {
     type: Type.OBJECT,
     properties: {
+        lesson: {
+            type: Type.STRING,
+            description: "A very short, single-paragraph lesson for this specific level, formatted in Markdown. It should build upon previous levels and be very focused."
+        },
         questions: {
             type: Type.ARRAY,
-            description: "An array of quiz questions.",
+            description: "An array of 2-3 multiple-choice questions based *only* on the provided lesson text.",
             items: {
                 type: Type.OBJECT,
                 properties: {
-                    question: { type: Type.STRING, description: "The question text." },
+                    question: { type: Type.STRING },
                     options: { type: Type.ARRAY, items: { type: Type.STRING }, description: "An array of 4 possible answers." },
-                    correctAnswerIndex: { type: Type.INTEGER, description: "The 0-based index of the correct answer in the options array." },
-                    explanation: { type: Type.STRING, description: "A brief explanation for why the correct answer is correct." }
+                    correctAnswerIndex: { type: Type.INTEGER },
+                    explanation: { type: Type.STRING }
                 },
                 required: ["question", "options", "correctAnswerIndex", "explanation"]
             }
         }
     },
-    required: ["questions"]
+    required: ["lesson", "questions"]
 };
-
-const learningPathSchema = {
-    type: Type.OBJECT,
-    properties: {
-        path: {
-            type: Type.ARRAY,
-            description: "A comprehensive, granular array of learning steps.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    name: { type: Type.STRING, description: "The name of the learning step/level." },
-                    topic: { type: Type.STRING, description: "A concise, URL-friendly slug or keyword for the topic of this step." }
-                },
-                required: ["name", "topic"]
-            }
-        }
-    },
-    required: ["path"]
-};
-
-
-const mindMapNodeSchema = {
-    type: Type.OBJECT,
-    properties: {
-        name: { type: Type.STRING, description: "The name of this node or concept." },
-        children: {
-            type: Type.ARRAY,
-            description: "An array of child nodes, representing sub-concepts.",
-            items: {
-                type: Type.OBJECT, // Self-referential structure
-                properties: {
-                    name: { type: Type.STRING },
-                    children: {
-                        type: Type.ARRAY,
-                        items: {
-                            type: Type.OBJECT,
-                            properties: {
-                                name: { type: Type.STRING },
-                                children: { type: Type.ARRAY, items: { type: Type.OBJECT, properties: { name: { type: Type.STRING } } } } // Limit depth for schema simplicity
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    required: ["name"]
-};
-
-const synthesisGenerationSchema = {
-    type: Type.OBJECT,
-    properties: {
-        title: { type: Type.STRING, description: "A concise, engaging title for the learning content." },
-        summary: {
-            type: Type.STRING,
-            description: "A detailed summary of the key concepts, formatted in Markdown. Use headings (#), lists (*), and bold text (**).",
-        },
-        analogies: {
-            type: Type.ARRAY,
-            description: "An array of 2-3 powerful and relatable analogies that relate this complex topic to simpler, well-understood concepts.",
-            items: { type: Type.STRING }
-        },
-        mind_map: {
-            type: Type.OBJECT,
-            description: "A hierarchical mind map of the topic, with a central root node and nested children.",
-            properties: {
-                root: mindMapNodeSchema
-            },
-            required: ["root"]
-        }
-    },
-    required: ["title", "summary", "analogies", "mind_map"]
-};
-
-
-const socraticAssessmentSchema = {
-    type: Type.OBJECT,
-    properties: {
-        isComplete: { type: Type.BOOLEAN, description: "True if the Socratic dialogue should end, false otherwise." },
-        passed: { type: Type.BOOLEAN, description: "If isComplete is true, this indicates if the user demonstrated sufficient understanding." },
-        assessment: { type: Type.STRING, description: "If isComplete is true, this is a final, qualitative summary of the user's understanding." },
-        nextQuestion: { type: Type.STRING, description: "If isComplete is false, this is the next Socratic question to ask the user." },
-    },
-    required: ["isComplete"]
-};
-
 
 const performanceAnalysisSchema = {
     type: Type.OBJECT,
@@ -150,148 +69,24 @@ const performanceAnalysisSchema = {
 
 
 // --- GEMINI SERVICE FUNCTIONS ---
-/**
- * Generates a quiz using the Gemini API.
- * @param {string} topic - The quiz topic.
- * @param {number} numQuestions - The number of questions.
- * @param {string} difficulty - The difficulty level.
- * @param {string} [learningContext] - Optional text to base the quiz on.
- * @returns {Promise<object>} The parsed quiz data.
- */
-async function generateQuizContent(topic, numQuestions, difficulty, learningContext) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-
-    const toneInstruction = "Your tone should be friendly, encouraging, and natural, as if a helpful tutor is speaking. Phrase everything in simple, easy-to-understand language.";
-
-    let prompt;
-    if (learningContext && learningContext.trim()) {
-        prompt = `${toneInstruction} Generate a ${difficulty} level multiple-choice quiz with exactly ${numQuestions} questions about "${topic}". The questions must be based *only* on the information provided in the following text: "${learningContext}". For each question, provide 4 options, the 0-based index of the correct answer, and a brief explanation. Ensure the content is accurate and educational.`;
-    } else {
-        prompt = `${toneInstruction} Generate a ${difficulty} level multiple-choice quiz with exactly ${numQuestions} questions about "${topic}". For each question, provide 4 options, the 0-based index of the correct answer, and a brief explanation. Ensure the content is accurate and educational.`;
-    }
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: quizGenerationSchema,
-            }
-        });
-        return JSON.parse(response.text);
-    } catch (error) {
-        console.error('Gemini API Error (Quiz Generation):', error);
-        throw new Error('Failed to generate quiz. The AI may have refused to generate content for this topic.');
-    }
-}
 
 /**
- * Generates a learning path using the Gemini API.
- * @param {string} goal - The learning goal.
- * @returns {Promise<object>} The parsed learning path data.
+ * Generates a game level (lesson + quiz) using the Gemini API.
+ * @param {string} topic - The overall topic.
+ * @param {number} level - The level number (1-100).
+ * @returns {Promise<object>} The parsed level data.
  */
-async function generateLearningPathContent(goal) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-    const prompt = `Create a comprehensive, highly granular, step-by-step learning path for the goal: "${goal}". Break the topic down into at least 30 small, distinct, and logically ordered learning levels. For each level, provide a friendly and encouraging name and a concise, URL-friendly topic keyword. The output should be a single flat array of these levels. Do not group them into clusters.`;
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: learningPathSchema,
-            }
-        });
-        return JSON.parse(response.text);
-    } catch (error) {
-        console.error('Gemini API Error (Learning Path):', error);
-        throw new Error('Failed to generate learning path.');
-    }
-}
-
-/**
- * Generates a full synthesis package for a topic.
- * @param {string} topic - The learning topic.
- * @returns {Promise<object>} The parsed synthesis content.
- */
-async function generateSynthesisContent(topic) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-    const prompt = `Adopt the persona of a friendly, enthusiastic, and patient tutor. Generate a comprehensive synthesis package for the topic: "${topic}". The entire package should be written in a natural, conversational, and easy-to-understand language, avoiding jargon where possible or explaining it simply. It must include a detailed summary in Markdown, 2-3 powerful and relatable analogies, and a hierarchical mind map with a root node and nested children.`;
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: synthesisGenerationSchema,
-            }
-        });
-        return JSON.parse(response.text);
-    } catch (error) {
-        console.error('Gemini API Error (Synthesis Generation):', error);
-        throw new Error('Failed to generate synthesis package.');
-    }
-}
-
-/**
- * Generates speech from text using the Gemini API.
- * @param {string} text - The text to convert to speech.
- * @returns {Promise<string>} The base64 encoded audio data.
- */
-async function generateSpeechContent(text) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-    const prompt = `As a friendly tutor, say the following in an encouraging and clear voice: ${text}`;
-    try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash-preview-tts",
-            contents: [{ parts: [{ text: prompt }] }],
-            config: {
-                responseModalities: [Modality.AUDIO],
-                speechConfig: {
-                    voiceConfig: {
-                        prebuiltVoiceConfig: { voiceName: 'Kore' },
-                    },
-                },
-            },
-        });
-        const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-        if (!audioData) {
-            throw new Error("API did not return audio data.");
-        }
-        return audioData;
-    } catch (error) {
-        console.error('Gemini API Error (Speech Generation):', error);
-        throw new Error('Failed to generate audio.');
-    }
-}
-
-/**
- * Generates the next turn in a Socratic dialogue.
- * @param {string} summary - The lesson summary for context.
- * @param {Array<object>} history - The chat history.
- * @returns {Promise<object>} The parsed Socratic response.
- */
-async function generateSocraticResponse(summary, history) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-    const historyString = history.map(m => `${m.role}: ${m.parts[0].text}`).join('\n');
-
-    const prompt = `You are a Socratic Tutor AI. Your goal is to test a user's understanding of a topic through a brief, 3-turn dialogue. You must be friendly, encouraging, and guide the user to discover concepts themselves rather than giving direct answers.
-    
-    CONTEXT: The user has just studied the following summary: "${summary}"
+async function generateLevelContent(topic, level) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    const prompt = `You are a friendly and encouraging AI tutor creating a 100-level learning game about "${topic}". The user, who is a complete beginner, is on Level ${level}.
     
     RULES:
-    1.  Your dialogue must not exceed 3 AI turns.
-    2.  Start with a broad, open-ended question based on the summary.
-    3.  Analyze the user's responses to ask insightful follow-up questions that probe their reasoning.
-    4.  On your THIRD turn, you MUST end the conversation. Set "isComplete" to true.
-    5.  When "isComplete" is true, you MUST provide a final "assessment" of the user's understanding and a boolean "passed" status. Passing requires a demonstrated grasp of the core concepts, not just keyword matching. Be encouraging even if they don't pass.
-    6.  If the conversation is not complete, provide the "nextQuestion".
+    1. The difficulty must increase very gradually. Level 1 should be extremely simple. Level 100 should be for an expert.
+    2. Generate a bite-sized, single-paragraph lesson for Level ${level}. This lesson MUST build upon the knowledge of the previous levels and introduce ONE new, small concept.
+    3. Generate 2-3 simple multiple-choice questions that test understanding of *only the concepts in this specific lesson*.
+    4. Your tone must be super encouraging, like a game.
     
-    Current chat history:
-    ${historyString}
-    
-    Generate the next response based on these rules and the provided schema.`;
+    Generate the lesson and questions based on these rules and the provided JSON schema.`;
 
     try {
         const response = await ai.models.generateContent({
@@ -299,13 +94,13 @@ async function generateSocraticResponse(summary, history) {
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
-                responseSchema: socraticAssessmentSchema,
+                responseSchema: levelGenerationSchema,
             }
         });
         return JSON.parse(response.text);
     } catch (error) {
-        console.error('Gemini API Error (Socratic Chat):', error);
-        throw new Error('Failed to generate Socratic response.');
+        console.error(`Gemini API Error (Level ${level} Generation for ${topic}):`, error);
+        throw new Error('Failed to generate the next level. The AI may be busy or the topic is restricted.');
     }
 }
 
@@ -374,71 +169,18 @@ app.get('/api/topics', async (req, res) => {
     }
 });
 
-app.post('/api/generate', async (req, res) => {
-    const { topic, numQuestions, difficulty, learningContext } = req.body;
-    if (!topic || !numQuestions || !difficulty) {
+app.post('/api/generate-level', async (req, res) => {
+    const { topic, level } = req.body;
+    if (!topic || level === undefined) {
         return res.status(400).json({ error: 'Missing required parameters.' });
     }
     try {
-        const quizData = await generateQuizContent(topic, numQuestions, difficulty, learningContext);
-        res.json(quizData);
+        const levelData = await generateLevelContent(topic, parseInt(level, 10));
+        res.json(levelData);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
-app.post('/api/generate-path', async (req, res) => {
-    const { goal } = req.body;
-    if (!goal) {
-        return res.status(400).json({ error: 'Missing goal parameter.' });
-    }
-    try {
-        const pathData = await generateLearningPathContent(goal);
-        res.json(pathData);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/generate-synthesis', async (req, res) => {
-    const { topic } = req.body;
-    if (!topic) {
-        return res.status(400).json({ error: 'Missing topic parameter.' });
-    }
-    try {
-        const synthesisData = await generateSynthesisContent(topic);
-        res.json(synthesisData);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/generate-speech', async (req, res) => {
-    const { text } = req.body;
-    if (!text) {
-        return res.status(400).json({ error: 'Missing text parameter.' });
-    }
-    try {
-        const audioData = await generateSpeechContent(text);
-        res.json({ audioData });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/socratic-chat', async (req, res) => {
-    const { summary, history } = req.body;
-    if (!summary || !history) {
-        return res.status(400).json({ error: 'Missing summary or history.' });
-    }
-    try {
-        const socraticData = await generateSocraticResponse(summary, history);
-        res.json(socraticData);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 
 app.post('/api/analyze-performance', async (req, res) => {
     const { history } = req.body;

@@ -33,92 +33,27 @@ export async function fetchTopics() {
 }
 
 /**
- * Sends a request to the backend to generate a new quiz, potentially based on provided context.
- * @param {object} params - The quiz generation parameters.
- * @param {string} params.topic - The topic of the quiz.
- * @param {number} params.numQuestions - The number of questions for the quiz.
- * @param {string} params.difficulty - The difficulty level of the quiz.
- * @param {string} [params.learningContext] - Optional learning text to base the quiz on.
- * @returns {Promise<object>} A promise that resolves to the generated quiz data.
- * @throws {Error} If the quiz generation fails.
+ * Sends a request to the backend to generate content for a specific game level.
+ * @param {object} params - The level generation parameters.
+ * @param {string} params.topic - The topic of the game.
+ * @param {number} params.level - The level number.
+ * @returns {Promise<object>} A promise that resolves to the generated level data (lesson and questions).
+ * @throws {Error} If the generation fails.
  */
-export async function generateQuiz({ topic, numQuestions, difficulty, learningContext }) {
+export async function generateLevel({ topic, level }) {
     try {
-        const response = await fetch('/api/generate', {
+        const response = await fetch('/api/generate-level', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic, numQuestions, difficulty, learningContext })
+            body: JSON.stringify({ topic, level })
         });
         return await handleResponse(response);
     } catch (error) {
-        // The error will be handled by the loading module
+        // Errors will be handled by the calling game-level module
         throw error;
     }
 }
 
-/**
- * Sends a request to the backend to generate a "synthesis package" for a topic.
- * @param {object} params - The parameters.
- * @param {string} params.topic - The topic to learn about.
- * @returns {Promise<object>} A promise that resolves to the generated learning content.
- * @throws {Error} If the generation fails.
- */
-export async function generateSynthesis({ topic }) {
-    try {
-        const response = await fetch('/api/generate-synthesis', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        showToast(error.message || 'Failed to generate learning content.', 'error');
-        throw error;
-    }
-}
-
-/**
- * Sends a request to the backend to generate audio from text.
- * @param {object} params - The parameters.
- * @param {string} params.text - The text to convert to speech.
- * @returns {Promise<object>} A promise that resolves to the generated audio data.
- * @throws {Error} If the generation fails.
- */
-export async function generateSpeech({ text }) {
-     try {
-        const response = await fetch('/api/generate-speech', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.warn('Could not generate speech, proceeding without it.', error.message);
-        throw error;
-    }
-}
-
-
-/**
- * Sends a request to the backend to generate a new learning path.
- * @param {object} params - The learning path generation parameters.
- * @param {string} params.goal - The learning goal.
- * @returns {Promise<object>} A promise that resolves to the generated learning path data.
- * @throws {Error} If the generation fails.
- */
-export async function generateLearningPath({ goal }) {
-     try {
-        const response = await fetch('/api/generate-path', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ goal })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        showToast(error.message || 'Failed to generate learning path.', 'error');
-        throw error;
-    }
-}
 
 /**
  * Sends the user's quiz history to the backend for analysis.

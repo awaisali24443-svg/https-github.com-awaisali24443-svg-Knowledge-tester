@@ -1,0 +1,34 @@
+<div class="page-container game-map-container">
+    <header class="page-header">
+        <h1 id="game-map-title">Loading Journey...</h1>
+        <p id="game-map-progress-text">Completed 0 of 100 levels</p>
+    </header>
+    <main class="game-map-viewport">
+        <div class="parallax-bg">
+            <div class="parallax-layer layer-1"></div>
+            <div class="parallax-layer layer-2"></div>
+            <div class="parallax-layer layer-3"></div>
+        </div>
+        <div id="game-map-path" class="game-map-path">
+            <!-- Level nodes will be rendered here by JS -->
+        </div>
+        <div class="fog-of-war"></div>
+    </main>
+    <footer class="game-map-footer">
+        <a href="#/topics" class="btn">
+            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-left"/></svg>
+            <span>Change Topic</span>
+        </a>
+    </footer>
+</div>
+
+<template id="level-node-template">
+    <div class="level-node-wrapper">
+        <div class="level-node" tabindex="0" role="button">
+            <span class="level-node-number"></span>
+            <div class="level-node-icon">
+                <svg class="icon"><use/></svg>
+            </div>
+        </div>
+    </div>
+</template>

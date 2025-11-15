@@ -1,0 +1,59 @@
+<div class="game-level-container">
+    
+    <!-- State 1: Loading -->
+    <div id="level-loading-state" class="game-level-state active">
+        <div class="state-content">
+            <h1 id="loading-title"></h1>
+            <p>The AI is crafting your next challenge...</p>
+            <div class="spinner"></div>
+            <button id="cancel-generation-btn" class="btn">Cancel</button>
+        </div>
+    </div>
+
+    <!-- State 2: Lesson -->
+    <div id="level-lesson-state" class="game-level-state">
+        <div class="state-content card">
+            <header class="lesson-header">
+                <h1 id="lesson-title"></h1>
+            </header>
+            <main id="lesson-body" class="lesson-body"></main>
+            <footer class="lesson-footer">
+                <button id="start-quiz-btn" class="btn btn-primary">
+                    <span>Let's Go!</span>
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-right"/></svg>
+                </button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- State 3: Quiz -->
+    <div id="level-quiz-state" class="game-level-state">
+         <div class="state-content card">
+             <header class="quiz-header">
+                <div id="quiz-progress-text" class="progress-text"></div>
+                <div class="progress-bar">
+                    <div id="quiz-progress-bar-fill" class="progress-bar-fill"></div>
+                </div>
+            </header>
+            <main class="quiz-main">
+                <h2 id="quiz-question-text"></h2>
+                <div id="quiz-options-container" class="options-grid"></div>
+            </main>
+            <footer id="quiz-explanation-container" class="explanation-container" style="display: none;">
+                <p id="quiz-explanation-text"></p>
+                <button id="next-question-btn" class="btn btn-primary">Next</button>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- State 4: Results -->
+    <div id="level-results-state" class="game-level-state">
+        <div class="state-content card results-content">
+            <div id="results-icon" class="results-icon"></div>
+            <h1 id="results-title"></h1>
+            <p id="results-details"></p>
+            <div id="results-actions" class="results-actions"></div>
+        </div>
+    </div>
+
+</div>

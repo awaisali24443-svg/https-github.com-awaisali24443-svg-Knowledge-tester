@@ -1,7 +1,7 @@
 <div class="page-container topic-list-container">
     <header class="page-header">
-        <h1>Explore</h1>
-        <p>Discover a new skill. Select any topic to begin your adventure.</p>
+        <h1>Select Your Challenge</h1>
+        <p>Discover a new skill. Select any topic to begin your 100-level adventure.</p>
     </header>
     <div class="search-bar-container">
         <svg class="search-icon" viewBox="0 0 24 24"><use href="/assets/icons/feather-sprite.svg#search"/></svg>
@@ -24,30 +24,3 @@
         </div>
     </div>
 </template>
-
-<!-- Modal for choosing action -->
-<div id="action-modal" class="action-modal-container" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modal-topic-title">
-    <div class="modal-backdrop"></div>
-    <div class="modal-content-wrapper">
-        <div class="modal-content card">
-            <header class="modal-header">
-                <h2 id="modal-topic-title"></h2>
-                <button id="modal-close-btn" class="btn" aria-label="Close">
-                    <svg class="icon"><use href="assets/icons/feather-sprite.svg#x-circle"/></svg>
-                </button>
-            </header>
-            <div class="modal-body">
-                <div class="action-choice-card" id="start-journey-btn" tabindex="0" role="button">
-                    <div class="action-icon"><svg><use href="/assets/icons/feather-sprite.svg#git-branch"/></svg></div>
-                    <h3>Start Learning Journey</h3>
-                    <p>A step-by-step path with lessons and quizzes.</p>
-                </div>
-                <div class="action-choice-card" id="start-quiz-btn" tabindex="0" role="button">
-                    <div class="action-icon"><svg><use href="/assets/icons/feather-sprite.svg#zap"/></svg></div>
-                    <h3>Take a Quick Quiz</h3>
-                    <p>Test your knowledge with a variety of challenges.</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>

@@ -1,77 +1,7 @@
-import * as apiService from '../../services/apiService.js';
 import * as searchService from '../../services/searchService.js';
-import * as learningPathService from '../../services/learningPathService.js';
-import { showToast } from '../../services/toastService.js';
 
 let appState;
 let searchInput, topicGrid, customTopicContainer, template;
-let elements = {};
-let activeTopic = null;
-
-// --- Action Handlers ---
-
-function startQuickQuiz() {
-    if (!activeTopic) return;
-    
-    // Set context and navigate to the level selection page
-    appState.context = {
-        topic: activeTopic.name,
-    };
-    window.location.hash = '/quiz-levels';
-    closeModal();
-}
-
-async function startJourney(forceCreate = false) {
-    if (!activeTopic) return;
-    closeModal();
-    showToast(`Checking for journey: "${activeTopic.name}"...`, 'info');
-
-    if (!forceCreate) {
-        let path = learningPathService.getPathByGoal(activeTopic.name);
-        if (path) {
-            window.location.hash = `#/learning-path/${path.id}`;
-            return;
-        }
-    }
-
-    showToast(`Generating a new learning journey...`);
-    try {
-        const result = await apiService.generateLearningPath({ goal: activeTopic.name });
-        if (result && result.path) {
-            const newPath = learningPathService.addPath(activeTopic.name, result.path);
-            window.location.hash = `#/learning-path/${newPath.id}`;
-        } else {
-            throw new Error("The AI failed to generate a valid path. Please try a different topic.");
-        }
-    } catch (error) {
-        showToast(error.message, 'error');
-    }
-}
-
-// --- Modal Logic ---
-
-function openModal(topic, isCustom) {
-    activeTopic = { name: topic }; // Stash the topic for modal actions
-    elements.actionModal.style.display = 'flex';
-    elements.modalTopicTitle.textContent = topic;
-
-    // Remove old listeners and add new ones to prevent multiple triggers
-    const newJourneyBtn = elements.startJourneyBtn.cloneNode(true);
-    elements.startJourneyBtn.parentNode.replaceChild(newJourneyBtn, elements.startJourneyBtn);
-    elements.startJourneyBtn = newJourneyBtn;
-
-    const newQuizBtn = elements.startQuizBtn.cloneNode(true);
-    elements.startQuizBtn.parentNode.replaceChild(newQuizBtn, elements.startQuizBtn);
-    elements.startQuizBtn = newQuizBtn;
-
-    elements.startJourneyBtn.addEventListener('click', () => startJourney(isCustom));
-    elements.startQuizBtn.addEventListener('click', startQuickQuiz);
-}
-
-function closeModal() {
-    elements.actionModal.style.display = 'none';
-    activeTopic = null;
-}
 
 // --- UI Rendering & Event Listeners ---
 
@@ -83,8 +13,8 @@ function renderTopics(topics, query = '') {
         customTopicContainer.innerHTML = `
             <div class="card topic-card custom-generator-card" data-topic="${query}" tabindex="0" role="button">
                 <div class="card-content">
-                    <h3>Create content for "${query}"</h3>
-                    <p>The AI can build a journey or a quiz for any topic you can imagine.</p>
+                    <h3>Start a journey for "${query}"</h3>
+                    <p>The AI can build a 100-level game for any topic you can imagine.</p>
                 </div>
             </div>
         `;
@@ -123,14 +53,16 @@ function handleSearch() {
 
 function handleGridInteraction(event) {
     if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-    event.preventDefault();
-
+    
     const card = event.target.closest('.topic-card');
     if (!card) return;
-    
+
+    event.preventDefault();
     const topic = card.dataset.topic;
-    const isCustom = card.classList.contains('custom-generator-card');
-    openModal(topic, isCustom);
+    
+    // Set context and navigate to the game map for the selected topic
+    appState.context = { topic };
+    window.location.hash = `#/game/${encodeURIComponent(topic)}`;
 }
 
 
@@ -141,24 +73,12 @@ export async function init(globalState) {
     customTopicContainer = document.getElementById('custom-topic-container');
     template = document.getElementById('topic-card-template');
 
-    elements = {
-        actionModal: document.getElementById('action-modal'),
-        modalTopicTitle: document.getElementById('modal-topic-title'),
-        modalCloseBtn: document.getElementById('modal-close-btn'),
-        startJourneyBtn: document.getElementById('start-journey-btn'),
-        startQuizBtn: document.getElementById('start-quiz-btn'),
-    };
-
     searchInput.addEventListener('input', handleSearch);
     topicGrid.addEventListener('click', handleGridInteraction);
     topicGrid.addEventListener('keydown', handleGridInteraction);
     customTopicContainer.addEventListener('click', handleGridInteraction);
     customTopicContainer.addEventListener('keydown', handleGridInteraction);
     
-    // Action Modal Listeners
-    elements.modalCloseBtn.addEventListener('click', closeModal);
-    elements.actionModal.querySelector('.modal-backdrop').addEventListener('click', closeModal);
-
     try {
         const allTopics = searchService.getIndex();
         renderTopics(allTopics);

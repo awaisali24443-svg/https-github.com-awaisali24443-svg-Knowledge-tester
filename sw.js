@@ -1,7 +1,7 @@
 // A version number is injected into the cache name.
 // Bump this version when you want to force an update of the service worker
 // and clear the old caches. This is essential after deploying new assets.
-const CACHE_NAME = 'knowledge-tester-v2.8.2';
+const CACHE_NAME = 'knowledge-tester-v2.8.3';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 // The list of assets to cache during installation.
@@ -32,14 +32,12 @@ const APP_SHELL_URLS = [
     'services/backgroundService.js',
     'services/configService.js',
     'services/errorService.js',
-    'services/feedbackService.js',
     'services/gamificationService.js',
     'services/historyService.js',
     'services/learningPathService.js',
     'services/libraryService.js',
     'services/markdownService.js',
     'services/modalService.js',
-    'services/quizStateService.js',
     'services/searchService.js',
     'services/sidebarService.js',
     'services/soundService.js',
@@ -47,18 +45,15 @@ const APP_SHELL_URLS = [
     'services/toastService.js',
     'modules/home/home.html', 'modules/home/home.css', 'modules/home/home.js',
     'modules/topic-list/topic-list.html', 'modules/topic-list/topic-list.css', 'modules/topic-list/topic-list.js',
-    'modules/loading/loading.html', 'modules/loading/loading.css', 'modules/loading/loading.js',
-    'modules/quiz/quiz.html', 'modules/quiz/quiz.css', 'modules/quiz/quiz.js',
-    'modules/results/results.html', 'modules/results/results.css', 'modules/results/results.js',
-    'modules/quiz-levels/quiz-levels.html', 'modules/quiz-levels/quiz-levels.css', 'modules/quiz-levels/quiz-levels.js',
     'modules/library/library.html', 'modules/library/library.css', 'modules/library/library.js',
     'modules/history/history.html', 'modules/history/history.css', 'modules/history/history.js',
     'modules/study/study.html', 'modules/study/study.css', 'modules/study/study.js',
     'modules/aural/aural.html', 'modules/aural/aural.css', 'modules/aural/aural.js',
-    'modules/learning-path/learning-path.html', 'modules/learning-path/learning-path.css', 'modules/learning-path/learning-path.js',
-    'modules/socratic/socratic.html', 'modules/socratic/socratic.css', 'modules/socratic/socratic.js',
-    'modules/settings/settings.html', 'modules/settings/settings.css', 'modules/settings/settings.js',
-    'modules/profile/profile.html', 'modules/profile/profile.css', 'modules/profile/profile.js',
+    'modules/settings/settings.html', 'modules/settings/settings.css', 'modules/settings.js',
+    'modules/profile/profile.html', 'modules/profile/profile.css', 'modules/profile.js',
+    // New modules
+    'modules/game-map/game-map.html', 'modules/game-map/game-map.css', 'modules/game-map/game-map.js',
+    'modules/game-level/game-level.html', 'modules/game-level/game-level.css', 'modules/game-level/game-level.js',
 ];
 
 /**
