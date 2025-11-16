@@ -1,250 +1,91 @@
-.profile-container {
-    max-width: 900px;
-    padding-bottom: 8rem; /* Space for footer */
-}
-
-.card {
+.settings-group {
     margin-bottom: var(--space-xl);
-}
-
-/* Profile Summary Card */
-.profile-summary-card {
-    padding: var(--space-xl);
-}
-
-.profile-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    padding-bottom: var(--space-xl);
-    margin-bottom: var(--space-xl);
-    border-bottom: 1px solid var(--color-border);
-}
-
-.profile-avatar-wrapper {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.profile-avatar {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 3px solid var(--color-surface);
-    box-shadow: 0 0 0 3px var(--color-primary);
-}
-
-.online-indicator {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 16px;
-    height: 16px;
-    background-color: var(--color-success);
-    border-radius: 50%;
-    border: 2px solid var(--color-surface);
-}
-
-.profile-name {
-    margin: 0 0 var(--space-sm) 0;
-    font-size: var(--fs-h2);
-}
-
-.edit-profile-btn {
-    padding: var(--space-xs) var(--space-md);
-    font-size: var(--fs-sm);
-    background-color: var(--color-surface-hover);
-}
-.edit-profile-btn .icon {
-    width: 1em;
-    height: 1em;
-}
-
-.profile-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: var(--space-lg);
-    text-align: center;
-}
-
-.profile-stat .stat-value {
-    font-size: var(--fs-h2);
-    font-weight: 700;
-    font-family: var(--font-family-heading);
-    color: var(--color-text);
-}
-
-.profile-stat .stat-label {
-    font-size: var(--fs-sm);
-    color: var(--color-text-secondary);
-}
-
-/* App Preferences Card */
-.app-preferences-card {
-    padding: var(--space-md) var(--space-xl);
-}
-.app-preferences-card h2 {
-    font-size: 1.2rem;
-    margin-bottom: var(--space-sm);
-    padding-bottom: var(--space-md);
-    border-bottom: 1px solid var(--color-border);
+    padding: var(--space-sm) var(--space-xl);
 }
 
 .setting-item {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    padding: var(--space-md) 0;
+    padding: var(--space-lg) 0;
+    gap: var(--space-xl);
 }
-.app-preferences-card .setting-item:not(:last-child) {
+.settings-group .setting-item:not(:last-child) {
     border-bottom: 1px solid var(--color-border);
 }
 
-.setting-info {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-}
-
-.setting-info .icon {
-    width: 24px;
-    height: 24px;
-    color: var(--color-text-secondary);
-}
-
-.setting-info label {
+.setting-info label, .setting-info h3 {
+    font-size: 1.1rem;
     font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: var(--space-xs);
+    display: block;
 }
 
-/* Quiz History Card */
-.quiz-history-card {
-    padding: var(--space-xl);
-}
-.quiz-history-card h2, .quiz-history-card h3 {
-    font-size: 1.2rem;
-    margin-bottom: var(--space-md);
-}
-.quiz-history-card h3 {
-    margin-top: var(--space-xl);
-    color: var(--color-text-secondary);
-    font-size: 1rem;
-}
-
-.progress-section {
-    margin-bottom: var(--space-lg);
-}
-.progress-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: var(--space-sm);
-    font-size: var(--fs-sm);
-}
-.progress-labels span:last-child {
-    font-family: var(--font-family-mono);
-}
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: var(--color-surface-active);
-    border-radius: 4px;
-    overflow: hidden;
-}
-.progress-bar-fill {
-    height: 100%;
-    background: var(--brand-gradient);
-    border-radius: 4px;
-    transition: width 0.5s ease;
-}
-
-.recent-quizzes-list {
-    list-style: none;
-}
-.recent-quiz-item {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-    padding: var(--space-md) 0;
-}
-.recent-quizzes-list li:not(:last-child) .recent-quiz-item {
-     border-bottom: 1px solid var(--color-border);
-}
-.quiz-item-icon {
-    width: 40px;
-    height: 40px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    background-color: var(--color-surface-active);
-}
-.quiz-item-icon svg { color: var(--color-primary); }
-.quiz-item-details { flex-grow: 1; }
-.quiz-item-details p { margin: 0; }
-.quiz-item-topic { font-weight: 600; }
-.quiz-item-meta { font-size: var(--fs-sm); color: var(--color-text-secondary); }
-.quiz-item-meta span:not(:last-child)::after {
-    content: '•';
-    margin: 0 0.5ch;
-}
-
-/* Footer */
-.profile-footer {
-    position: fixed;
-    bottom: 0;
-    left: var(--sidebar-width-collapsed); /* Match sidebar */
-    right: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--space-md) var(--space-xl);
-    background-color: var(--color-surface);
-    border-top: 1px solid var(--color-border);
+.setting-info p {
     font-size: var(--fs-sm);
     color: var(--color-text-secondary);
-    z-index: 50;
-    transition: left var(--transition-speed-med) ease;
+    margin: 0;
+    max-width: 400px;
 }
-#sidebar:hover ~ #app-container .profile-footer {
-    left: var(--sidebar-width-expanded);
-}
-.footer-links {
+
+.setting-control { justify-self: end; }
+
+/* Segmented Control for Theme Toggle */
+.segmented-control {
     display: flex;
-    gap: var(--space-lg);
+    position: relative;
+    background-color: var(--color-surface-active);
+    border-radius: var(--border-radius);
+    padding: 4px;
+}
+
+.segmented-control-indicator {
     position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-}
-.footer-links a { color: var(--color-text-secondary); }
-
-@media (max-width: 768px) {
-    .profile-header {
-        flex-direction: column;
-        text-align: center;
-    }
-    .profile-stats-grid {
-        grid-template-columns: 1fr;
-    }
-    .setting-item {
-        flex-direction: column;
-        gap: var(--space-md);
-        padding: var(--space-lg) 0;
-    }
-    .profile-footer {
-        left: 0;
-        bottom: var(--bottom-nav-height); /* Above mobile nav */
-        flex-direction: column;
-        gap: var(--space-sm);
-    }
-    .footer-links {
-        position: static;
-        transform: none;
-        order: -1; /* Move to top */
-    }
+    top: 4px;
+    bottom: 4px;
+    background-color: var(--color-primary);
+    border-radius: calc(var(--border-radius) - 4px);
+    transition: left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 0 10px var(--color-primary-transparent-heavy);
 }
 
+.segmented-control button {
+    position: relative;
+    z-index: 1;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    background-color: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    font-family: var(--font-family-mono);
+    font-weight: 500;
+}
+.segmented-control button[aria-checked="true"] { color: #fff; }
 
-/* Toggle Switch CSS from global styles */
+/* Danger Zone */
+.danger-zone {
+    border-color: var(--color-error-border);
+}
+.danger-zone .setting-info h3 { color: var(--color-error); }
+
+.app-version {
+    text-align: center;
+    font-family: var(--font-family-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    margin-top: var(--space-xl);
+    opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+    .setting-item { grid-template-columns: 1fr; gap: var(--space-md); text-align: center; }
+    .setting-info p { margin: 0 auto 1rem auto; }
+    .setting-control { justify-self: center; }
+}
+
+/* Toggle Switch CSS */
 .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
 .switch input { opacity: 0; width: 0; height: 0; }
 .slider {
@@ -264,3 +105,39 @@ input:focus + .slider { box-shadow: 0 0 1px var(--color-primary); }
 input:checked + .slider:before { transform: translateX(22px); }
 .slider.round { border-radius: 34px; }
 .slider.round:before { border-radius: 50%; }
+
+/* Custom Range Slider */
+.range-slider-control { width: 200px; }
+.range-slider-labels {
+    display: flex; justify-content: space-between;
+    font-size: var(--fs-sm); color: var(--color-text-secondary);
+    margin-top: var(--space-sm); font-family: var(--font-family-mono);
+}
+input[type=range] {
+    width: 100%; margin: 7.3px 0;
+    background-color: transparent; -webkit-appearance: none;
+}
+input[type=range]:focus { outline: none; }
+input[type=range]::-webkit-slider-runnable-track {
+    background: var(--color-surface-active); border-radius: 5px;
+    width: 100%; height: 8px; cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+    margin-top: -8px; width: 24px; height: 24px;
+    background: var(--color-primary);
+    border-radius: 50%; cursor: pointer; -webkit-appearance: none;
+    transition: transform 0.2s ease;
+}
+input[type=range]:focus::-webkit-slider-thumb {
+    box-shadow: 0 0 10px var(--color-primary-transparent-heavy);
+    transform: scale(1.1);
+}
+/* FF & MS styles */
+input[type=range]::-moz-range-track {
+    background: var(--color-surface-active); border-radius: 5px;
+    width: 100%; height: 8px; cursor: pointer; border: none;
+}
+input[type=range]::-moz-range-thumb {
+    width: 24px; height: 24px; background: var(--color-primary);
+    border-radius: 50%; cursor: pointer; border: none;
+}

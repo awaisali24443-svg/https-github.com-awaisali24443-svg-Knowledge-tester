@@ -238,7 +238,7 @@ async function handleQuit() {
 }
 
 function goHome() {
-    window.location.hash = `#/game/${encodeURIComponent(appState.context.topic)}`;
+    window.location.hash = `/#/`;
 }
 
 export function init(globalState) {

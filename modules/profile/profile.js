@@ -1,142 +1,140 @@
-import * as gamificationService from '../../services/gamificationService.js';
-import * as historyService from '../../services/historyService.js';
-import * as learningPathService from '../../services/learningPathService.js';
 import * as configService from '../../services/configService.js';
+import { showConfirmationModal } from '../../services/modalService.js';
+import { LOCAL_STORAGE_KEYS } from '../../constants.js';
 import { showToast } from '../../services/toastService.js';
+import * as levelCacheService from '../../services/levelCacheService.js';
 
 let elements = {};
+const animationLevels = ['off', 'subtle', 'full'];
 
 /**
- * Calculates the time elapsed since a given date and returns a human-readable string.
- * @param {string} dateString - An ISO 8601 date string.
- * @returns {string} A relative time string (e.g., "2 days ago").
+ * Updates the visual state of the segmented theme toggle control.
+ * Moves the indicator and sets ARIA attributes and tabindex for accessibility.
+ * @param {HTMLElement} button - The theme button that should be active.
+ * @param {boolean} [instant=false] - If true, applies changes without transition.
  */
-function timeAgo(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const seconds = Math.round((now - date) / 1000);
-    const minutes = Math.round(seconds / 60);
-    const hours = Math.round(minutes / 60);
-    const days = Math.round(hours / 24);
-    const weeks = Math.round(days / 7);
+function setActiveThemeButton(button, instant = false) {
+    if (!button) return;
 
-    if (seconds < 60) return "Just now";
-    if (minutes < 60) return `${minutes} min ago`;
-    if (hours < 24) return `${hours} hr ago`;
-    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
-    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+    elements.themeToggleButtons.forEach(btn => {
+        btn.setAttribute('aria-checked', 'false');
+        btn.tabIndex = -1; // Make non-selected buttons unfocusable via Tab
+    });
+    button.setAttribute('aria-checked', 'true');
+    button.tabIndex = 0; // Make selected button focusable
+
+    const indicator = elements.themeToggle.querySelector('.segmented-control-indicator');
+    const containerRect = elements.themeToggle.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    
+    const left = buttonRect.left - containerRect.left;
+    const width = buttonRect.width;
+    
+    if (instant) indicator.style.transition = 'none';
+
+    indicator.style.left = `${left}px`;
+    indicator.style.width = `${width}px`;
+    
+    if (instant) setTimeout(() => { indicator.style.transition = ''; }, 50);
 }
 
-function renderProfileStats() {
-    const history = historyService.getHistory();
-    const profileStats = gamificationService.getProfileStats(history);
-    const journeys = learningPathService.getAllJourneys();
-
-    const levelsCleared = journeys.reduce((total, journey) => {
-        return total + (journey.currentLevel > 1 ? journey.currentLevel - 1 : 0);
-    }, 0);
-
-    elements.quizzesTaken.textContent = profileStats.totalQuizzes;
-    elements.accuracy.textContent = `${profileStats.averageScore}%`;
-    elements.levelsCleared.textContent = levelsCleared;
-}
-
-function renderPreferences() {
+/**
+ * Loads current settings from the config service and updates the UI.
+ */
+function loadSettings() {
     const config = configService.getConfig();
     elements.soundToggle.checked = config.enableSound;
-    // Theme is 'dark-cyber' (on) or 'light-cyber' (off)
-    elements.themeToggle.checked = config.theme === 'dark-cyber';
-}
 
-function renderHistoryAndProgress() {
-    // Overall Progress
-    const journeys = learningPathService.getAllJourneys();
-    const totalCompleted = journeys.reduce((sum, j) => sum + (j.currentLevel > 1 ? j.currentLevel - 1 : 0), 0);
-    const totalPossible = journeys.reduce((sum, j) => sum + j.totalLevels, 0);
+    const activeThemeButton = elements.themeToggle.querySelector(`button[data-theme="${config.theme}"]`);
+    setActiveThemeButton(activeThemeButton, true); // Instant update on load
     
-    if (totalPossible > 0) {
-        const progressPercent = Math.round((totalCompleted / totalPossible) * 100);
-        elements.levelsProgressText.textContent = `${totalCompleted} / ${totalPossible} (${progressPercent}%)`;
-        elements.levelsProgressBar.style.width = `${progressPercent}%`;
-    } else {
-        elements.levelsProgressText.textContent = `0 / 0 (0%)`;
-        elements.levelsProgressBar.style.width = `0%`;
-    }
-
-    // Recent Quizzes
-    const recentHistory = historyService.getRecentHistory(3);
-    elements.recentQuizzesList.innerHTML = '';
-
-    if (recentHistory.length === 0) {
-        elements.noHistoryMessage.style.display = 'block';
-    } else {
-        elements.noHistoryMessage.style.display = 'none';
-        recentHistory.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div class="recent-quiz-item">
-                    <div class="quiz-item-icon">
-                        <svg class="icon"><use href="assets/icons/feather-sprite.svg#zap"/></svg>
-                    </div>
-                    <div class="quiz-item-details">
-                        <p class="quiz-item-topic">${item.topic}</p>
-                        <p class="quiz-item-meta">
-                            <span>${item.score}/${item.totalQuestions}</span>
-                            <span>${timeAgo(item.date)}</span>
-                        </p>
-                    </div>
-                    <a href="#/game/${encodeURIComponent(item.topic.replace(/ - Level \d+$/, '').trim())}" class="btn">View Details</a>
-                </div>
-            `;
-            elements.recentQuizzesList.appendChild(li);
-        });
-    }
+    elements.animationSlider.value = animationLevels.indexOf(config.animationIntensity);
 }
 
 function handleSoundToggle() {
     configService.setConfig({ enableSound: elements.soundToggle.checked });
-    showToast(`Sound effects ${elements.soundToggle.checked ? 'enabled' : 'disabled'}.`, 'info');
 }
 
-function handleThemeToggle() {
-    const newTheme = elements.themeToggle.checked ? 'dark-cyber' : 'light-cyber';
+function handleAnimationChange() {
+    const level = animationLevels[elements.animationSlider.value];
+    configService.setConfig({ animationIntensity: level });
+}
+
+function handleThemeToggle(event) {
+    const button = event.target.closest('button[data-theme]');
+    if (button && button.getAttribute('aria-checked') !== 'true') {
+        const newTheme = button.dataset.theme;
+        setActiveThemeButton(button);
+        configService.setConfig({ theme: newTheme });
+    }
+}
+
+function handleThemeToggleKeydown(event) {
+    const { key } = event;
+    if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
+
+    event.preventDefault(); // Prevent page scroll
+
+    const buttons = Array.from(elements.themeToggleButtons);
+    const checkedButton = elements.themeToggle.querySelector('button[aria-checked="true"]');
+    let currentIndex = buttons.indexOf(checkedButton);
+
+    if (key === 'ArrowLeft') {
+        currentIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+    } else if (key === 'ArrowRight') {
+        currentIndex = (currentIndex + 1) % buttons.length;
+    }
+
+    const newButton = buttons[currentIndex];
+    newButton.focus(); // Move focus to the new button
+    const newTheme = newButton.dataset.theme;
+    setActiveThemeButton(newButton);
     configService.setConfig({ theme: newTheme });
-    showToast(`Theme switched to ${elements.themeToggle.checked ? 'Dark' : 'Light'} Mode.`, 'info');
 }
 
-function addEventListeners() {
-    elements.soundToggle.addEventListener('change', handleSoundToggle);
-    elements.themeToggle.addEventListener('change', handleThemeToggle);
-}
+async function handleClearData() {
+    const confirmed = await showConfirmationModal({
+        title: 'Confirm Data Deletion',
+        message: 'Are you sure you want to delete all your saved questions, learning paths, quiz history, and application settings? This action cannot be undone.',
+        confirmText: 'Yes, Delete Everything',
+        cancelText: 'Cancel'
+    });
 
-function removeEventListeners() {
-    elements.soundToggle.removeEventListener('change', handleSoundToggle);
-    elements.themeToggle.removeEventListener('change', handleThemeToggle);
+    if (confirmed) {
+        Object.values(LOCAL_STORAGE_KEYS).forEach(key => {
+            localStorage.removeItem(key);
+        });
+        levelCacheService.clearAllLevels();
+        showToast('All application data has been cleared.', 'success');
+        setTimeout(() => window.location.reload(), 1000);
+    }
 }
 
 export function init(appState) {
     elements = {
-        // Profile Stats
-        quizzesTaken: document.getElementById('quizzes-taken-stat'),
-        accuracy: document.getElementById('accuracy-stat'),
-        levelsCleared: document.getElementById('levels-cleared-stat'),
-        // Preferences
         soundToggle: document.getElementById('sound-toggle'),
-        themeToggle: document.getElementById('theme-toggle'),
-        // History & Progress
-        levelsProgressText: document.getElementById('levels-progress-text'),
-        levelsProgressBar: document.getElementById('levels-progress-bar'),
-        recentQuizzesList: document.getElementById('recent-quizzes-list'),
-        noHistoryMessage: document.getElementById('no-history-message'),
+        animationSlider: document.getElementById('animation-slider'),
+        clearDataBtn: document.getElementById('clear-data-btn'),
+        themeToggle: document.getElementById('theme-toggle-group'),
+        themeToggleButtons: document.querySelectorAll('#theme-toggle-group button'),
     };
 
-    renderProfileStats();
-    renderPreferences();
-    renderHistoryAndProgress();
-    addEventListeners();
+    loadSettings();
+
+    elements.soundToggle.addEventListener('change', handleSoundToggle);
+    elements.animationSlider.addEventListener('input', handleAnimationChange);
+    elements.clearDataBtn.addEventListener('click', handleClearData);
+    elements.themeToggle.addEventListener('click', handleThemeToggle);
+    elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
 }
 
 export function destroy() {
-    removeEventListeners();
+    if (elements.soundToggle) elements.soundToggle.removeEventListener('change', handleSoundToggle);
+    if (elements.animationSlider) elements.animationSlider.removeEventListener('input', handleAnimationChange);
+    if (elements.clearDataBtn) elements.clearDataBtn.removeEventListener('click', handleClearData);
+    if (elements.themeToggle) {
+        elements.themeToggle.removeEventListener('click', handleThemeToggle);
+        elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
+    }
     elements = {};
 }
