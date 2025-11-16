@@ -102,6 +102,8 @@ function checkAchievements(quizState, history) {
             if (achievement.condition(stats, history, quizState)) {
                 stats.unlockedAchievements.push(key);
                 showToast(`Achievement Unlocked: ${achievement.name}!`, 'success');
+                // Dispatch a global event for other modules (like soundService) to listen to
+                window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { ...achievement, id: key } }));
             }
         }
     });

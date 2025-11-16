@@ -1,4 +1,5 @@
 import * as libraryService from '../../services/libraryService.js';
+import * as soundService from '../../services/soundService.js';
 
 let questions = [];
 let currentIndex = 0;
@@ -58,6 +59,7 @@ export function init(appState) {
 
     elements.flashcard.addEventListener('click', () => {
         elements.flashcard.classList.toggle('is-flipped');
+        soundService.playSound('flip');
     });
 
     elements.nextBtn.addEventListener('click', showNextCard);

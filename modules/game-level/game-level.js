@@ -1,3 +1,4 @@
+
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -17,6 +18,7 @@ let timerInterval = null;
 let timeLeft = 60;
 
 const PASS_THRESHOLD = 0.8; // 80% to pass
+const LEVELS_PER_CHAPTER = 50; // Align with game-map logic
 
 function switchState(targetStateId) {
     document.querySelectorAll('.game-level-state').forEach(s => s.classList.remove('active'));
@@ -24,19 +26,30 @@ function switchState(targetStateId) {
 }
 
 async function startLevel() {
-    const { topic, level, journeyId } = appState.context;
+    const { topic, level, journeyId, isBoss } = appState.context;
     if (!topic || !level || !journeyId) {
         window.location.hash = '/topics';
         return;
     }
     
-    elements.loadingTitle.textContent = `Level ${level}: ${topic}`;
+    // Update loading screen text based on whether it's a boss battle
+    if (isBoss) {
+        elements.loadingTitle.textContent = `Boss Battle!`;
+        elements.loadingTitle.nextElementSibling.textContent = 'Prepare for a cumulative challenge!';
+    } else {
+        elements.loadingTitle.textContent = `Level ${level}: ${topic}`;
+    }
     switchState('level-loading-state');
 
+    // Check cache first. A cached boss battle will not have a 'lesson' property.
     const cachedLevel = levelCacheService.getLevel(topic, level);
     if (cachedLevel) {
         levelData = cachedLevel;
-        renderLesson();
+        if (isBoss) {
+            startQuiz();
+        } else {
+            renderLesson();
+        }
         return;
     }
 
@@ -49,12 +62,22 @@ async function startLevel() {
     }
     
     try {
-        levelData = await apiService.generateLevel({ topic, level });
-        if (!levelData || !levelData.lesson || !levelData.questions || levelData.questions.length === 0) {
-            throw new Error("AI failed to generate valid level content.");
+        if (isBoss) {
+            const chapter = Math.ceil(level / LEVELS_PER_CHAPTER);
+            levelData = await apiService.generateBossBattle({ topic, chapter });
+            if (!levelData || !levelData.questions || levelData.questions.length === 0) {
+                 throw new Error("AI failed to generate a valid boss battle.");
+            }
+            levelCacheService.saveLevel(topic, level, levelData);
+            startQuiz(); // Boss battles go straight to the quiz
+        } else {
+            levelData = await apiService.generateLevel({ topic, level });
+            if (!levelData || !levelData.lesson || !levelData.questions || levelData.questions.length === 0) {
+                throw new Error("AI failed to generate valid level content.");
+            }
+            levelCacheService.saveLevel(topic, level, levelData);
+            renderLesson();
         }
-        levelCacheService.saveLevel(topic, level, levelData);
-        renderLesson();
     } catch (error) {
         elements.loadingTitle.textContent = 'Error';
         elements.loadingTitle.nextElementSibling.textContent = error.message;
@@ -62,6 +85,7 @@ async function startLevel() {
         elements.cancelBtn.textContent = 'Back to Map';
     }
 }
+
 
 function renderLesson() {
     elements.lessonTitle.textContent = `Level ${appState.context.level}: ${appState.context.topic}`;

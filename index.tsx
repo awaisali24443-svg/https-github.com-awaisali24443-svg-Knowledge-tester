@@ -245,6 +245,9 @@ async function main(): Promise<void> {
         // Set up event listeners for routing and global settings changes.
         window.addEventListener('hashchange', handleRouteChange);
         window.addEventListener('settings-changed', (e: Event) => applyAppSettings((e as CustomEvent).detail));
+        window.addEventListener('achievement-unlocked', () => {
+            soundService.playSound('achievement');
+        });
 
         
         // Global click sound handler
@@ -254,6 +257,15 @@ async function main(): Promise<void> {
                 soundService.playSound('click');
             }
         });
+        
+        // Global hover sound handler
+        document.body.addEventListener('mouseover', (event: MouseEvent) => {
+            const target = event.target as HTMLElement;
+            if (target.closest('.btn:not(:disabled), .sidebar-link, .topic-card, .level-card:not(.locked), .chapter-card:not(.locked), .flashcard')) {
+                soundService.playSound('hover');
+            }
+        });
+
 
         // Offline status indicator
         const offlineIndicator = document.getElementById('offline-indicator');
@@ -275,8 +287,22 @@ async function main(): Promise<void> {
         handleRouteChange();
 
 
-        // Hide the splash screen once the app is ready.
-        document.getElementById('splash-screen')?.classList.add('hidden');
+        // Hide and then remove the splash screen once the app is ready.
+        const splashScreen = document.getElementById('splash-screen');
+        if (splashScreen) {
+            const onTransitionEnd = () => {
+                splashScreen.remove();
+            };
+            splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
+            splashScreen.classList.add('hidden');
+            
+            // Fallback in case transitionend doesn't fire (e.g., animations disabled)
+            setTimeout(() => {
+                if (document.body.contains(splashScreen)) {
+                    splashScreen.remove();
+                }
+            }, 600); // Duration should be slightly longer than the CSS transition
+        }
 
     } catch (error) {
         console.error("A critical error occurred during application startup:", error);
