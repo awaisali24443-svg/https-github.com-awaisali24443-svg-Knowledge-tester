@@ -68,6 +68,50 @@
     border-radius: 4px;
     font-family: var(--font-family-mono);
 }
+.lesson-body ul {
+    list-style-position: inside;
+    padding-left: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+.lesson-body h3 {
+    margin-top: var(--space-lg);
+}
+
+/* --- NEW Code Block Styles --- */
+.lesson-body pre {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: calc(var(--border-radius) / 2);
+    padding: var(--space-lg) var(--space-md) var(--space-md) var(--space-md);
+    overflow-x: auto;
+    margin: var(--space-lg) 0;
+    position: relative;
+    font-size: 0.95rem;
+}
+.lesson-body pre::before {
+    content: attr(data-lang);
+    position: absolute;
+    top: 0;
+    right: var(--space-md);
+    padding: 2px 8px;
+    font-family: var(--font-family-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+    background-color: var(--color-border);
+    border-radius: 0 0 4px 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.lesson-body pre[data-lang=""]::before {
+    display: none;
+}
+.lesson-body pre code {
+    background-color: transparent;
+    padding: 0;
+    white-space: pre;
+}
+
+
 .lesson-footer { margin-top: var(--space-xl); }
 
 /* --- NEW QUIZ DESIGN --- */

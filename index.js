@@ -1,6 +1,7 @@
 
 
-import { ROUTES } from './constants.js';
+
+import { ROUTES, LOCAL_STORAGE_KEYS } from './constants.js';
 import * as configService from './services/configService.js';
 import { renderSidebar } from './services/sidebarService.js';
 import { showFatalError } from './services/errorService.js';
@@ -200,6 +201,37 @@ function applyAppSettings(config) {
     themeService.applyAnimationSetting(config.animationIntensity);
 }
 
+/**
+ * Shows the one-time welcome screen for new users.
+ */
+function showWelcomeScreen() {
+    const welcomeScreen = document.getElementById('welcome-screen');
+    const startBtn = document.getElementById('welcome-get-started-btn');
+    if (!welcomeScreen || !startBtn) return;
+
+    welcomeScreen.style.display = 'flex';
+    // Use a timeout to allow the display property to apply before adding the class for transition
+    setTimeout(() => {
+        welcomeScreen.classList.add('visible');
+    }, 10);
+    
+    startBtn.addEventListener('click', () => {
+        localStorage.setItem(LOCAL_STORAGE_KEYS.WELCOME_COMPLETED, 'true');
+        welcomeScreen.classList.remove('visible');
+        
+        welcomeScreen.addEventListener('transitionend', () => {
+            welcomeScreen.remove();
+        }, { once: true });
+        
+        // Fallback removal
+        setTimeout(() => {
+            if (document.body.contains(welcomeScreen)) {
+                welcomeScreen.remove();
+            }
+        }, 500);
+    }, { once: true });
+}
+
 
 /**
  * The main entry point for the application.
@@ -278,6 +310,11 @@ async function main() {
         if (splashScreen) {
             const onTransitionEnd = () => {
                 splashScreen.remove();
+                // Check if we need to show the welcome screen
+                const hasBeenWelcomed = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_COMPLETED);
+                if (!hasBeenWelcomed) {
+                    showWelcomeScreen();
+                }
             };
             splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
             splashScreen.classList.add('hidden');
@@ -285,7 +322,7 @@ async function main() {
             // Fallback in case transitionend doesn't fire (e.g., animations disabled)
             setTimeout(() => {
                 if (document.body.contains(splashScreen)) {
-                    splashScreen.remove();
+                     onTransitionEnd();
                 }
             }, 600); // Duration should be slightly longer than the CSS transition
         }

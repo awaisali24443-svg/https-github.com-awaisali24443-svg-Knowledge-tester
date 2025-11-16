@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -44,6 +45,29 @@
         <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="splash-logo">
         <div class="spinner" role="status">
             <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    <div id="welcome-screen" style="display: none;">
+        <div class="welcome-content card">
+            <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="welcome-logo">
+            <h1>Welcome to Knowledge Tester</h1>
+            <p>Your personal AI-powered learning companion. Master any topic, one level at a time.</p>
+            <ul class="features-list">
+                <li>
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#cpu"/></svg>
+                    <span>AI-Powered Learning Paths</span>
+                </li>
+                <li>
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#git-branch"/></svg>
+                    <span>Custom Journey Creation</span>
+                </li>
+                <li>
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#star"/></svg>
+                    <span>Track Your Progress</span>
+                </li>
+            </ul>
+            <button id="welcome-get-started-btn" class="btn btn-primary">Let's Get Started</button>
         </div>
     </div>
 

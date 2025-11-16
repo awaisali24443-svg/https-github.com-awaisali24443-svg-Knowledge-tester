@@ -1,7 +1,7 @@
 // A version number is injected into the cache name.
 // Bump this version when you want to force an update of the service worker
 // and clear the old caches. This is essential after deploying new assets.
-const CACHE_NAME = 'knowledge-tester-v3.1.6';
+const CACHE_NAME = 'knowledge-tester-v3.1.7';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 // The list of assets to cache during installation.
@@ -128,22 +128,31 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Strategy 1: Stale-While-Revalidate for Google Fonts.
-    // Serve from cache for speed, update in background.
+    // --- Caching Strategy Router ---
+    // The logic below determines the appropriate caching strategy based on the request type.
+
+    // Strategy 1: Stale-While-Revalidate for external, non-critical assets (Google Fonts).
+    // This serves fonts from the cache immediately for fast rendering, then updates them
+    // in the background. This ensures the UI is usable quickly without waiting for fonts.
     if (url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com') {
         event.respondWith(staleWhileRevalidate(FONT_CACHE_NAME, request));
         return;
     }
 
-    // Strategy 2: Handle API requests.
+    // Strategy 2: API Request Handling.
+    // API calls require specific online/offline handling.
     if (url.pathname.startsWith('/api/')) {
-        // For GET /api/topics, use Stale-While-Revalidate for fast, offline-first data.
+        // For GET /api/topics, use Stale-While-Revalidate. This is static data that doesn't
+        // change often, so serving from cache first makes the app feel faster and work offline.
         if (request.method === 'GET' && url.pathname === '/api/topics') {
             event.respondWith(staleWhileRevalidate(CACHE_NAME, request));
             return;
         }
-        // For POST requests, go network-first. If offline, return a structured error.
-        // This allows the frontend to gracefully handle offline mutations.
+        
+        // For POST requests (and other non-GET API calls), always go to the network first.
+        // These requests modify data, so they must not be served from a cache.
+        // If the network fails (offline), we return a structured JSON error response,
+        // which the frontend can parse and use to display a user-friendly message.
         if (request.method === 'POST') {
             event.respondWith(
                 fetch(request).catch(() => {
@@ -159,31 +168,38 @@ self.addEventListener('fetch', (event) => {
             );
             return;
         }
-        // Other API GET requests will pass through to the network by default.
-        return;
+        
+        // For any other API GET requests, we let them pass through to the network without caching.
+        // This is the default safe behavior for API data that might be dynamic.
+        return; // This falls through to the browser's default network handling.
     }
     
-    // Strategy 3: Handle App Shell, Navigation, and Local Assets.
+    // Strategy 3: App Shell, Navigation, and Local Assets (same origin).
+    // This is the core logic for making the app work offline.
     if (url.origin === self.location.origin) {
-        // For navigation requests (e.g., loading the page), use a "Network falling back to Cache" strategy.
-        // This ensures the user gets the latest version of the app shell if online, but the app still
-        // loads from cache if they are offline, making it a reliable PWA.
+        
+        // For navigation requests (e.g., loading the page itself or navigating to a new URL),
+        // we use a "Network falling back to Cache" strategy. This ensures the user always gets
+        // the latest version of the app if they are online, but the app still loads from the
+        // cache if they are offline, making it a reliable PWA.
         if (request.mode === 'navigate') {
             event.respondWith(
                 fetch(request).catch(() => {
-                    // Fallback to the cached index.html for any failed navigation.
-                    return caches.match('/index.html', { cacheName: CACHE_NAME });
+                    // If the network fetch fails, we serve the main entry point from the cache.
+                    return caches.match('/', { cacheName: CACHE_NAME });
                 })
             );
             return;
         }
 
-        // For all other local assets (JS, CSS, images), use Stale-While-Revalidate.
-        // This provides the best performance by serving assets from cache immediately.
+        // For all other local assets (JS, CSS, images, etc.), use Stale-While-Revalidate.
+        // This provides the best performance by serving assets from cache immediately, making
+        // subsequent page loads and interactions feel instant. The assets are updated
+        // in the background for the next visit.
         event.respondWith(staleWhileRevalidate(CACHE_NAME, request));
         return;
     }
     
-    // For any other cross-origin requests, let the browser handle them.
-    // The default behavior is to fetch from the network without caching here.
+    // For any other cross-origin requests that haven't been handled, let the browser handle them.
+    // The default behavior is to fetch from the network without involving the service worker's cache.
 });

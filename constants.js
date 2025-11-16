@@ -1,12 +1,14 @@
 
 
 
+
 export const LOCAL_STORAGE_KEYS = {
     CONFIG: 'knowledge-tester-config',
     LIBRARY: 'knowledge-tester-library',
     GAME_PROGRESS: 'knowledge-tester-game-progress',
     HISTORY: 'knowledge-tester-history',
     GAMIFICATION: 'knowledge-tester-gamification',
+    WELCOME_COMPLETED: 'knowledge-tester-welcome-completed',
 };
 
 // Re-enabling all features and routes for the full application experience.
