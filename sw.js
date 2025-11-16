@@ -8,7 +8,7 @@ const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 const APP_SHELL_URLS = [
     '/',
     'index.html',
-    'index.tsx', // App entry point is now TypeScript
+    'index.js', // App entry point is now JavaScript
     'constants.js',
     'manifest.json',
     'data/topics.json', // Added topics data for offline access
