@@ -1,31 +1,13 @@
-.search-bar-container {
-    margin-bottom: var(--space-xxl);
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    position: relative;
-}
 
-.search-icon {
-    position: absolute;
-    left: 1.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+.topic-list-container h2 {
+    margin-bottom: var(--space-lg);
+    font-size: var(--fs-h3);
     color: var(--color-text-secondary);
-    pointer-events: none;
-}
-
-#search-input {
-    padding: 1rem 1.5rem 1rem 4rem;
-    font-size: 1.1rem;
-    border-radius: 50px;
 }
 
 .topic-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--space-lg);
 }
 
@@ -34,60 +16,63 @@
     animation: fade-slide-in 0.3s ease-out forwards;
     opacity: 0;
     transform: translateY(10px);
-}
-
-.topic-card .card-content {
+    aspect-ratio: 16 / 10;
     display: flex;
     flex-direction: column;
-    height: 100%;
+    justify-content: flex-end;
+    padding: var(--space-lg);
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+    border-radius: var(--border-radius);
+    background-size: cover;
+    background-position: center;
+}
+
+.topic-card:hover {
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.topic-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 20%, transparent 70%);
+    z-index: 1;
+    transition: background var(--transition-speed-fast) ease;
+}
+
+.topic-card:hover::before {
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, transparent 80%);
+}
+
+.topic-card-content {
+    position: relative;
+    z-index: 2;
 }
 
 .topic-name {
-    flex-grow: 1;
-    margin-bottom: var(--space-md);
-    color: var(--color-text);
-    font-size: 1.2rem;
-}
-
-.topic-tags {
-    display: flex;
-    gap: var(--space-sm);
-    font-family: var(--font-family-mono);
-    font-size: var(--fs-sm);
-}
-
-.category-tag {
-    background-color: var(--color-primary-transparent);
-    color: var(--color-primary);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 6px;
-}
-
-.difficulty-tag {
-    background-color: var(--color-secondary-transparent);
-    color: var(--color-secondary);
-    padding: var(--space-xs) var(--space-sm);
-    border-radius: 6px;
-}
-
-/* Custom Generator Card */
-#custom-topic-container {
-    grid-column: 1 / -1; /* Span full width of the grid */
-}
-
-.custom-generator-card {
-    text-align: center;
-    border-style: dashed;
-    border-color: var(--color-primary);
-}
-
-.custom-generator-card h3 {
-    font-size: 1.5rem;
-    color: var(--color-text);
+    color: #fff;
     margin-bottom: var(--space-sm);
+    font-size: 1.5rem;
+    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-.custom-generator-card p {
-    color: var(--color-text-secondary);
+.topic-description {
+    color: rgba(255, 255, 255, 0.8);
     margin-bottom: 0;
+    line-height: 1.5;
+    font-size: 0.95rem;
 }
+
+/* Topic-specific background styles */
+.topic-card.topic-programming { background-color: #0d214f; background-image: radial-gradient(circle at 10% 20%, rgba(0, 184, 212, 0.3), transparent 50%), radial-gradient(circle at 80% 90%, rgba(156, 39, 176, 0.2), transparent 60%); }
+.topic-card.topic-biology { background-color: #0c3b31; background-image: radial-gradient(circle at 90% 10%, rgba(0, 255, 135, 0.25), transparent 40%), radial-gradient(circle at 20% 80%, rgba(0, 184, 212, 0.2), transparent 50%); }
+.topic-card.topic-space { background-color: #1a143b; background-image: radial-gradient(circle at 20% 15%, rgba(255, 64, 129, 0.3), transparent 40%), radial-gradient(circle at 85% 80%, rgba(156, 39, 176, 0.3), transparent 50%); }
+.topic-card.topic-robotics { background-color: #3e3c3b; background-image: radial-gradient(circle at 5% 5%, rgba(224, 224, 224, 0.1), transparent 30%), radial-gradient(circle at 95% 95%, rgba(224, 224, 224, 0.1), transparent 30%); }
+.topic-card.topic-finance { background-color: #1e4620; background-image: radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.3), transparent 40%), radial-gradient(circle at 10% 90%, rgba(0, 255, 135, 0.2), transparent 50%); }
+.topic-card.topic-arts { background-color: #4a144e; background-image: radial-gradient(circle at 15% 85%, rgba(255, 64, 129, 0.3), transparent 40%), radial-gradient(circle at 85% 15%, rgba(255, 111, 0, 0.2), transparent 50%); }
+.topic-card.topic-medicine { background-color: #2b4f6b; background-image: radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.2), transparent 40%), radial-gradient(circle at 10% 20%, rgba(245, 247, 250, 0.15), transparent 50%); }
+.topic-card.topic-ecology { background-color: #2e4d20; background-image: radial-gradient(circle at 20% 80%, rgba(139, 195, 74, 0.3), transparent 40%), radial-gradient(circle at 80% 20%, rgba(205, 220, 57, 0.2), transparent 50%); }
+.topic-card.topic-philosophy { background-color: #281a4d; background-image: radial-gradient(circle at 80% 85%, rgba(156, 39, 176, 0.3), transparent 40%), radial-gradient(circle at 15% 15%, rgba(13, 71, 161, 0.2), transparent 50%); }

@@ -1,41 +1,31 @@
 <div class="page-container game-map-container">
     <header class="page-header">
-        <h1 id="game-map-title">Loading Journey...</h1>
-        <p id="game-map-progress-text">Completed 0 of 100 levels</p>
+        <h1 id="game-map-title">Level 1 of 20</h1>
+        <div class="progress-container">
+            <div class="progress-bar">
+                <div id="progress-bar-fill"></div>
+            </div>
+            <span id="progress-percent-text">0%</span>
+        </div>
     </header>
-    <main class="game-map-viewport">
-        <div class="parallax-bg">
-            <div class="parallax-layer layer-1"></div>
-            <div class="parallax-layer layer-2"></div>
-            <div class="parallax-layer layer-3"></div>
-        </div>
-        <div id="game-map-path" class="game-map-path">
-            <!-- Level nodes will be rendered here by JS -->
-        </div>
-        <div class="fog-of-war"></div>
+    <main id="levels-grid" class="levels-grid">
+        <!-- Level cards will be rendered here by JS -->
     </main>
     <footer class="game-map-footer">
         <a href="#/topics" class="btn">
             <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-left"/></svg>
-            <span>Change Topic</span>
+            <span>Back to Topics</span>
         </a>
-        <button id="jump-to-current-btn" class="btn btn-primary">
-            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#target"/></svg>
-            <span>Jump to Current</span>
+        <button id="start-level-btn" class="btn btn-primary">
+            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#play"/></svg>
+            <span id="start-level-btn-text">Start Level 1</span>
         </button>
     </footer>
 </div>
 
 <template id="level-node-template">
-    <div class="level-node-wrapper">
-        <div class="level-node card" tabindex="0" role="button">
-            <div class="level-node-icon">
-                <svg class="icon"><use/></svg>
-            </div>
-            <div class="level-node-info">
-                <span class="level-node-number"></span>
-                <p class="level-node-status"></p>
-            </div>
-        </div>
+    <div class="level-card card" tabindex="0" role="button">
+        <span class="level-number"></span>
+        <p class="level-status"></p>
     </div>
 </template>

@@ -55,18 +55,6 @@ const levelGenerationSchema = {
     required: ["lesson", "questions"]
 };
 
-const performanceAnalysisSchema = {
-    type: Type.OBJECT,
-    properties: {
-        weakTopics: {
-            type: Type.ARRAY,
-            description: "An array of up to 3 topic names where the user has shown the weakest performance.",
-            items: { type: Type.STRING }
-        }
-    },
-    required: ["weakTopics"]
-};
-
 
 // --- GEMINI SERVICE FUNCTIONS ---
 
@@ -105,37 +93,6 @@ async function generateLevelContent(topic, level) {
 }
 
 
-/**
- * Analyzes user quiz history to find weak topics.
- * @param {Array<object>} history - The user's quiz history.
- * @returns {Promise<object>} The parsed analysis.
- */
-async function analyzeUserPerformance(history) {
-    if (!ai) throw new Error("AI Service not initialized. Check server configuration.");
-
-    const historySummary = history.map(item => 
-        `Topic: "${item.topic}", Score: ${item.score}/${item.totalQuestions}`
-    ).join('; ');
-
-    const prompt = `Analyze the following user quiz history: "${historySummary}". Identify up to 3 topics where the user consistently has the lowest scores (as a percentage). Focus on topics where they have multiple attempts or low scores on high-question-count quizzes. Do not suggest topics where they have a high score.`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-            config: {
-                responseMimeType: 'application/json',
-                responseSchema: performanceAnalysisSchema,
-            }
-        });
-        return JSON.parse(response.text);
-    } catch (error) {
-        console.error('Gemini API Error (Performance Analysis):', error);
-        throw new Error('Failed to analyze user performance.');
-    }
-}
-
-
 // --- EXPRESS ROUTER ---
 const app = express();
 const server = http.createServer(app);
@@ -153,120 +110,4 @@ const apiLimiter = rateLimit({
 
 app.use('/api', apiLimiter);
 
-// --- API ENDPOINTS ---
-app.get('/api/topics', async (req, res) => {
-    if (topicsCache) {
-        return res.json(topicsCache);
-    }
-    try {
-        const filePath = path.join(__dirname, 'data', 'topics.json');
-        const data = await fs.readFile(filePath, 'utf8');
-        topicsCache = JSON.parse(data);
-        res.json(topicsCache);
-    } catch (err) {
-        console.error('Failed to read topics.json:', err);
-        res.status(500).json({ error: 'Failed to load topic data.' });
-    }
-});
-
-app.post('/api/generate-level', async (req, res) => {
-    const { topic, level } = req.body;
-    if (!topic || level === undefined) {
-        return res.status(400).json({ error: 'Missing required parameters.' });
-    }
-    try {
-        const levelData = await generateLevelContent(topic, parseInt(level, 10));
-        res.json(levelData);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/analyze-performance', async (req, res) => {
-    const { history } = req.body;
-    if (!history || !Array.isArray(history)) {
-        return res.status(400).json({ error: 'Missing or invalid history.' });
-    }
-    try {
-        const analysisData = await analyzeUserPerformance(history);
-        res.json(analysisData);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// --- WEBSOCKET AURAL MODE ---
-wss.on('connection', async (ws, req) => {
-    let session;
-    console.log('Client connected to WebSocket');
-
-    try {
-        const url = new URL(req.url, `http://${req.headers.host}`);
-        const systemInstruction = url.searchParams.get('systemInstruction') || 'You are a helpful AI tutor.';
-
-        if (!ai) {
-             ws.send(JSON.stringify({ type: 'error', message: 'AI Service is not initialized on the server.' }));
-             ws.close();
-             return;
-        }
-
-        session = await ai.live.connect({
-            model: 'gemini-2.5-flash-native-audio-preview-09-2025',
-            config: {
-                responseModalities: [Modality.AUDIO],
-                speechConfig: {
-                    voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } },
-                },
-                inputAudioTranscription: {},
-                outputAudioTranscription: {},
-                systemInstruction: systemInstruction,
-            },
-            callbacks: {
-                onmessage: (message) => {
-                    ws.send(JSON.stringify({ type: 'gemini_message', message }));
-                },
-                onerror: (e) => {
-                    console.error('WebSocket session error:', e);
-                    ws.send(JSON.stringify({ type: 'error', message: 'An error occurred in the AI session.' }));
-                },
-                onclose: () => {
-                    console.log('WebSocket session closed.');
-                },
-            },
-        });
-    } catch (error) {
-        console.error('Failed to create Live session:', error);
-        ws.send(JSON.stringify({ type: 'error', message: 'Failed to connect to the AI service.' }));
-        ws.close();
-        return;
-    }
-
-    ws.on('message', async (message) => {
-        try {
-            const data = JSON.parse(message);
-            if (data.type === 'audio_input') {
-                await session.sendRealtimeInput({ media: data.payload });
-            }
-        } catch (error) {
-            console.error('Error processing client message:', error);
-        }
-    });
-
-    ws.on('close', () => {
-        console.log('Client disconnected');
-        if (session) {
-            session.close();
-        }
-    });
-});
-
-
-// Fallback for SPA routing
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// --- SERVER START ---
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+// --- API

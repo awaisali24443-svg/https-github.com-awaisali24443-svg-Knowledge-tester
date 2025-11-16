@@ -26,24 +26,45 @@
         </div>
     </div>
 
-    <!-- State 3: Quiz -->
+    <!-- State 3: Quiz (New Design) -->
     <div id="level-quiz-state" class="game-level-state">
-         <div class="state-content card">
-             <header class="quiz-header">
-                <div id="quiz-progress-text" class="progress-text"></div>
-                <div class="progress-bar">
-                    <div id="quiz-progress-bar-fill" class="progress-bar-fill"></div>
+        <header class="new-quiz-header">
+            <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
+                <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="sidebar-logo-img">
+                <span class="sidebar-logo-text">AI Quiz Nexus</span>
+            </a>
+            <div class="quiz-header-actions">
+                <button id="quit-btn" class="btn btn-danger">Quit</button>
+                <img src="assets/images/avatar-placeholder.png" alt="User Avatar" class="profile-avatar">
+            </div>
+        </header>
+        <div class="new-quiz-content">
+            <div class="quiz-status-card">
+                <div class="timer-section">
+                    <p>Time Left</p>
+                    <span id="timer-text">01:00</span>
                 </div>
-            </header>
-            <main class="quiz-main">
-                <h2 id="quiz-question-text"></h2>
-                <div id="quiz-options-container" class="options-grid"></div>
-            </main>
-            <footer id="quiz-explanation-container" class="explanation-container" style="display: none;" role="status" aria-live="polite">
-                <p id="quiz-explanation-text"></p>
-                <button id="next-question-btn" class="btn btn-primary">Next</button>
-            </footer>
+                <div class="question-progress-section">
+                    <p id="quiz-progress-text">Question 1 of 5</p>
+                    <div class="progress-bar">
+                        <div id="quiz-progress-bar-fill" class="progress-bar-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card main-question-card">
+                <h2 id="quiz-question-text">Loading question...</h2>
+                <div id="quiz-options-container" class="options-grid">
+                    <!-- Options will be injected here -->
+                </div>
+            </div>
         </div>
+        <footer class="new-quiz-footer">
+             <button id="home-btn" class="btn">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#home"/></svg>
+                <span>Home</span>
+            </button>
+            <button id="submit-answer-btn" class="btn btn-primary" disabled>Submit Answer</button>
+        </footer>
     </div>
     
     <!-- State 4: Results -->

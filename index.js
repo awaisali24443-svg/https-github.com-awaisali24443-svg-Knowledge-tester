@@ -1,6 +1,6 @@
+
 import { ROUTES } from './constants.js';
 import * as configService from './services/configService.js';
-import * as searchService from './services/searchService.js';
 import { renderSidebar } from './services/sidebarService.js';
 import { showFatalError } from './services/errorService.js';
 import * as soundService from './services/soundService.js';
@@ -221,7 +221,7 @@ async function main() {
         // Global click sound handler
         document.body.addEventListener('click', (event) => {
             // Play sound for specific interactive elements
-            if (event.target.closest('.btn, .sidebar-link, .topic-button, .option-btn, .flashcard')) {
+            if (event.target.closest('.btn, .sidebar-link, .topic-button, .option-btn, .flashcard, .topic-card')) {
                 soundService.playSound('click');
             }
         });
@@ -240,13 +240,7 @@ async function main() {
         updateOnlineStatus(); // Initial check
 
 
-        // Initial data fetch and page load with a timeout to prevent hangs.
-        const createIndexPromise = searchService.createIndex();
-        const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Initial data load timed out. Please check your connection.")), 10000)
-        );
-        await Promise.race([createIndexPromise, timeoutPromise]);
-        
+        // Initial page load. Data is now fetched by modules on-demand.
         handleRouteChange();
 
 

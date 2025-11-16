@@ -1,7 +1,7 @@
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 
 let gameProgress = [];
-const TOTAL_LEVELS = 100;
+const TOTAL_LEVELS = 20;
 
 /**
  * Loads game progress from localStorage.
@@ -94,7 +94,7 @@ export function startOrGetJourney(goal) {
  */
 export function completeLevel(journeyId) {
     const journey = getJourneyById(journeyId);
-    if (journey && journey.currentLevel < journey.totalLevels) {
+    if (journey && journey.currentLevel <= journey.totalLevels) {
         journey.currentLevel += 1;
         saveProgress();
     }

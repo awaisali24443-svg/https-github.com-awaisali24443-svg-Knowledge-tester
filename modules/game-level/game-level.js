@@ -4,6 +4,7 @@ import * as markdownService from '../../services/markdownService.js';
 import * as soundService from '../../services/soundService.js';
 import * as historyService from '../../services/historyService.js';
 import * as levelCacheService from '../../services/levelCacheService.js';
+import { showConfirmationModal } from '../../services/modalService.js';
 
 let appState;
 let levelData;
@@ -11,6 +12,10 @@ let currentQuestionIndex = 0;
 let score = 0;
 let answered = false;
 let elements = {};
+let selectedAnswerIndex = null;
+let timerInterval = null;
+let timeLeft = 60;
+
 const PASS_THRESHOLD = 0.8; // 80% to pass
 
 function switchState(targetStateId) {
@@ -28,36 +33,28 @@ async function startLevel() {
     elements.loadingTitle.textContent = `Level ${level}: ${topic}`;
     switchState('level-loading-state');
 
-    // Try cache first
     const cachedLevel = levelCacheService.getLevel(topic, level);
     if (cachedLevel) {
-        console.log(`Level ${level} for "${topic}" loaded from cache.`);
         levelData = cachedLevel;
         renderLesson();
-        switchState('level-lesson-state');
         return;
     }
 
-    // If not in cache and offline, show error
     if (!navigator.onLine) {
         elements.loadingTitle.textContent = 'You are Offline';
-        elements.loadingTitle.nextElementSibling.textContent = 'This level is not cached for offline use. Please connect to the internet to play it for the first time.';
+        elements.loadingTitle.nextElementSibling.textContent = 'This level is not cached. Please connect to the internet to play.';
         elements.loadingTitle.parentElement.querySelector('.spinner').style.display = 'none';
         elements.cancelBtn.textContent = 'Back to Map';
         return;
     }
     
-    // If online, fetch from API
     try {
         levelData = await apiService.generateLevel({ topic, level });
         if (!levelData || !levelData.lesson || !levelData.questions || levelData.questions.length === 0) {
             throw new Error("AI failed to generate valid level content.");
         }
-        // Save to cache on success
         levelCacheService.saveLevel(topic, level, levelData);
-
         renderLesson();
-        switchState('level-lesson-state');
     } catch (error) {
         elements.loadingTitle.textContent = 'Error';
         elements.loadingTitle.nextElementSibling.textContent = error.message;
@@ -69,6 +66,7 @@ async function startLevel() {
 function renderLesson() {
     elements.lessonTitle.textContent = `Level ${appState.context.level}: ${appState.context.topic}`;
     elements.lessonBody.innerHTML = markdownService.render(levelData.lesson);
+    switchState('level-lesson-state');
 }
 
 function startQuiz() {
@@ -81,6 +79,7 @@ function startQuiz() {
 
 function renderQuestion() {
     answered = false;
+    selectedAnswerIndex = null;
     const question = levelData.questions[currentQuestionIndex];
     
     elements.quizProgressText.textContent = `Question ${currentQuestionIndex + 1} / ${levelData.questions.length}`;
@@ -89,25 +88,70 @@ function renderQuestion() {
     
     elements.quizQuestionText.textContent = question.question;
     elements.quizOptionsContainer.innerHTML = '';
+    const optionLetters = ['A', 'B', 'C', 'D'];
     question.options.forEach((optionText, index) => {
         const button = document.createElement('button');
         button.className = 'btn option-btn';
-        button.textContent = optionText;
+        // The letter is now handled by CSS counters
+        const textSpan = document.createElement('span');
+        textSpan.textContent = optionText;
+        button.appendChild(textSpan);
         button.dataset.index = index;
         elements.quizOptionsContainer.appendChild(button);
     });
 
-    elements.quizExplanationContainer.style.display = 'none';
+    elements.submitAnswerBtn.disabled = true;
+    elements.submitAnswerBtn.textContent = 'Submit Answer';
+    
+    startTimer();
 }
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = 60;
+    elements.timerText.textContent = `01:00`;
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        const seconds = String(timeLeft % 60).padStart(2, '0');
+        elements.timerText.textContent = `00:${seconds}`;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            handleTimeUp();
+        }
+    }, 1000);
+}
+
+function handleTimeUp() {
+    // Treat as incorrect answer and move on
+    soundService.playSound('incorrect');
+    selectedAnswerIndex = -1; // Indicate no answer was selected
+    handleSubmitAnswer();
+}
+
 
 function handleOptionClick(event) {
     const button = event.target.closest('.option-btn');
     if (answered || !button) return;
+
+    // Deselect others
+    elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+    
+    // Select clicked
+    button.classList.add('selected');
+    selectedAnswerIndex = parseInt(button.dataset.index, 10);
+    elements.submitAnswerBtn.disabled = false;
+}
+
+function handleSubmitAnswer() {
+    if (answered) {
+        handleNextQuestion();
+        return;
+    }
+    clearInterval(timerInterval);
     answered = true;
 
-    const selectedIndex = parseInt(button.dataset.index, 10);
     const question = levelData.questions[currentQuestionIndex];
-    const isCorrect = question.correctAnswerIndex === selectedIndex;
+    const isCorrect = question.correctAnswerIndex === selectedAnswerIndex;
     
     if (isCorrect) {
         score++;
@@ -116,20 +160,19 @@ function handleOptionClick(event) {
         soundService.playSound('incorrect');
     }
 
-    // Update button styles
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => {
         const index = parseInt(btn.dataset.index, 10);
         if (index === question.correctAnswerIndex) {
             btn.classList.add('correct');
-        } else if (index === selectedIndex) {
+        } else if (index === selectedAnswerIndex) {
             btn.classList.add('incorrect');
         }
         btn.disabled = true;
     });
 
-    elements.quizExplanationText.textContent = question.explanation;
-    elements.quizExplanationContainer.style.display = 'block';
-    elements.nextQuestionBtn.focus();
+    elements.submitAnswerBtn.textContent = 'Next Question';
+    elements.submitAnswerBtn.disabled = false;
+    elements.submitAnswerBtn.focus();
 }
 
 function handleNextQuestion() {
@@ -148,12 +191,11 @@ function showResults() {
 
     soundService.playSound('finish');
     
-    // Save attempt to history
     historyService.addQuizAttempt({
         topic: `${appState.context.topic} - Level ${appState.context.level}`,
         score: score,
         totalQuestions: totalQuestions,
-        startTime: Date.now() - 10000, // Approximate start time
+        startTime: Date.now() - (totalQuestions * 60000), // Approximate
         endTime: Date.now(),
     });
 
@@ -164,9 +206,8 @@ function showResults() {
         elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Great job!`;
         elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(appState.context.topic)}" class="btn btn-primary">Continue Journey</a>`;
         
-        // Only advance the journey if the user passed their CURRENT level.
-        const currentJourneyState = learningPathService.getJourneyById(appState.context.journeyId);
-        if (currentJourneyState && currentJourneyState.currentLevel === appState.context.level) {
+        const journey = learningPathService.getJourneyById(appState.context.journeyId);
+        if (journey && journey.currentLevel === appState.context.level) {
             learningPathService.completeLevel(appState.context.journeyId);
         }
     } else {
@@ -183,6 +224,23 @@ function showResults() {
     switchState('level-results-state');
 }
 
+async function handleQuit() {
+    const confirmed = await showConfirmationModal({
+        title: 'Quit Quiz?',
+        message: 'Are you sure you want to quit? Your progress in this level will not be saved.',
+        confirmText: 'Yes, Quit',
+        cancelText: 'Cancel',
+        danger: true,
+    });
+    if (confirmed) {
+        window.location.hash = `#/game/${encodeURIComponent(appState.context.topic)}`;
+    }
+}
+
+function goHome() {
+    window.location.hash = `#/game/${encodeURIComponent(appState.context.topic)}`;
+}
+
 export function init(globalState) {
     appState = globalState;
     elements = {
@@ -191,13 +249,16 @@ export function init(globalState) {
         lessonTitle: document.getElementById('lesson-title'),
         lessonBody: document.getElementById('lesson-body'),
         startQuizBtn: document.getElementById('start-quiz-btn'),
+        // New Quiz Elements
+        quitBtn: document.getElementById('quit-btn'),
+        homeBtn: document.getElementById('home-btn'),
+        timerText: document.getElementById('timer-text'),
         quizProgressText: document.getElementById('quiz-progress-text'),
         quizProgressBarFill: document.getElementById('quiz-progress-bar-fill'),
         quizQuestionText: document.getElementById('quiz-question-text'),
         quizOptionsContainer: document.getElementById('quiz-options-container'),
-        quizExplanationContainer: document.getElementById('quiz-explanation-container'),
-        quizExplanationText: document.getElementById('quiz-explanation-text'),
-        nextQuestionBtn: document.getElementById('next-question-btn'),
+        submitAnswerBtn: document.getElementById('submit-answer-btn'),
+        // Results Elements
         resultsIcon: document.getElementById('results-icon'),
         resultsTitle: document.getElementById('results-title'),
         resultsDetails: document.getElementById('results-details'),
@@ -207,11 +268,13 @@ export function init(globalState) {
     elements.cancelBtn.addEventListener('click', () => window.history.back());
     elements.startQuizBtn.addEventListener('click', startQuiz);
     elements.quizOptionsContainer.addEventListener('click', handleOptionClick);
-    elements.nextQuestionBtn.addEventListener('click', handleNextQuestion);
+    elements.submitAnswerBtn.addEventListener('click', handleSubmitAnswer);
+    elements.quitBtn.addEventListener('click', handleQuit);
+    elements.homeBtn.addEventListener('click', goHome);
 
     startLevel();
 }
 
 export function destroy() {
-    // Listeners are on elements that get removed, so they are auto-cleaned.
+    clearInterval(timerInterval);
 }

@@ -10,12 +10,15 @@ let previouslyFocusedElement;
  * @param {string} options.message - The descriptive message in the modal body.
  * @param {string} [options.confirmText='Confirm'] - The text for the confirm button.
  * @param {string} [options.cancelText='Cancel'] - The text for the cancel button.
+ * @param {boolean} [options.danger=false] - If true, the confirm button will be styled as a danger button.
  * @returns {Promise<boolean>} A promise that resolves to `true` if confirmed, `false` otherwise.
  */
-export function showConfirmationModal({ title, message, confirmText = 'Confirm', cancelText = 'Cancel' }) {
+export function showConfirmationModal({ title, message, confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
     return new Promise((resolve) => {
         // Save the element that was focused before the modal opened
         previouslyFocusedElement = document.activeElement;
+
+        const confirmButtonClass = danger ? 'btn btn-danger' : 'btn btn-primary';
 
         const modalHTML = `
             <div class="modal-backdrop"></div>
@@ -28,7 +31,7 @@ export function showConfirmationModal({ title, message, confirmText = 'Confirm',
                 </div>
                 <div class="modal-footer">
                     <button class="btn" id="modal-cancel-btn">${cancelText}</button>
-                    <button class="btn btn-primary" id="modal-confirm-btn">${confirmText}</button>
+                    <button class="${confirmButtonClass}" id="modal-confirm-btn">${confirmText}</button>
                 </div>
             </div>
         `;

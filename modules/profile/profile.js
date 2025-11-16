@@ -1,141 +1,142 @@
 import * as gamificationService from '../../services/gamificationService.js';
 import * as historyService from '../../services/historyService.js';
 import * as learningPathService from '../../services/learningPathService.js';
-import * as apiService from '../../services/apiService.js';
-import { getXpForNextLevel } from '../../services/gamificationService.js';
+import * as configService from '../../services/configService.js';
+import { showToast } from '../../services/toastService.js';
 
-let appState;
+let elements = {};
 
-function renderStats() {
-    const stats = gamificationService.getStats();
+/**
+ * Calculates the time elapsed since a given date and returns a human-readable string.
+ * @param {string} dateString - An ISO 8601 date string.
+ * @returns {string} A relative time string (e.g., "2 days ago").
+ */
+function timeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.round((now - date) / 1000);
+    const minutes = Math.round(seconds / 60);
+    const hours = Math.round(minutes / 60);
+    const days = Math.round(hours / 24);
+    const weeks = Math.round(days / 7);
+
+    if (seconds < 60) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hr ago`;
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+    return `${weeks} week${weeks > 1 ? 's' : ''} ago`;
+}
+
+function renderProfileStats() {
     const history = historyService.getHistory();
     const profileStats = gamificationService.getProfileStats(history);
-    
-    document.getElementById('profile-level').textContent = stats.level;
-    const xpNeeded = getXpForNextLevel(stats.level);
-    const xpProgress = xpNeeded > 0 ? (stats.xp / xpNeeded) * 100 : 100;
-    
-    const xpBarFill = document.getElementById('xp-bar-fill');
-    if (xpBarFill) {
-        xpBarFill.style.width = `${xpProgress}%`;
-    }
-    
-    document.getElementById('xp-text').textContent = `${stats.xp} / ${xpNeeded} XP`;
+    const journeys = learningPathService.getAllJourneys();
 
-    document.getElementById('current-streak-stat').textContent = stats.currentStreak;
-    document.getElementById('total-quizzes-stat').textContent = profileStats.totalQuizzes;
-    document.getElementById('total-questions-stat').textContent = profileStats.totalQuestions;
-    document.getElementById('average-score-stat').textContent = `${profileStats.averageScore}%`;
+    const levelsCleared = journeys.reduce((total, journey) => {
+        return total + (journey.currentLevel > 1 ? journey.currentLevel - 1 : 0);
+    }, 0);
+
+    elements.quizzesTaken.textContent = profileStats.totalQuizzes;
+    elements.accuracy.textContent = `${profileStats.averageScore}%`;
+    elements.levelsCleared.textContent = levelsCleared;
 }
 
-function renderAchievements() {
-    const achievements = gamificationService.getAchievements();
-    const grid = document.getElementById('achievements-grid');
-    const template = document.getElementById('achievement-template');
-    grid.innerHTML = '';
-
-    achievements.forEach(ach => {
-        const card = template.content.cloneNode(true);
-        const cardEl = card.querySelector('.achievement-card');
-        
-        cardEl.classList.add(ach.unlocked ? 'unlocked' : 'locked');
-        cardEl.setAttribute('aria-label', `${ach.name}: ${ach.description}. ${ach.unlocked ? 'Status: Unlocked.' : 'Status: Locked.'}`);
-
-        const use = card.querySelector('use');
-        use.setAttribute('href', `/assets/icons/feather-sprite.svg#${ach.icon}`);
-        
-        card.querySelector('.achievement-name').textContent = ach.name;
-        card.querySelector('.achievement-description').textContent = ach.description;
-        
-        grid.appendChild(card);
-    });
+function renderPreferences() {
+    const config = configService.getConfig();
+    elements.soundToggle.checked = config.enableSound;
+    // Theme is 'dark-cyber' (on) or 'light-cyber' (off)
+    elements.themeToggle.checked = config.theme === 'dark-cyber';
 }
 
-function renderLearningJourneys() {
-    const paths = learningPathService.getAllPaths();
-    const listContainer = document.getElementById('journeys-list');
-    const noPathsMessage = document.getElementById('no-journeys-message');
-    const template = document.getElementById('journey-item-template');
+function renderHistoryAndProgress() {
+    // Overall Progress
+    const journeys = learningPathService.getAllJourneys();
+    const totalCompleted = journeys.reduce((sum, j) => sum + (j.currentLevel > 1 ? j.currentLevel - 1 : 0), 0);
+    const totalPossible = journeys.reduce((sum, j) => sum + j.totalLevels, 0);
     
-    listContainer.innerHTML = '';
-    
-    if (paths.length === 0) {
-        noPathsMessage.style.display = 'block';
+    if (totalPossible > 0) {
+        const progressPercent = Math.round((totalCompleted / totalPossible) * 100);
+        elements.levelsProgressText.textContent = `${totalCompleted} / ${totalPossible} (${progressPercent}%)`;
+        elements.levelsProgressBar.style.width = `${progressPercent}%`;
     } else {
-        noPathsMessage.style.display = 'none';
-        paths.forEach(path => {
-            const card = template.content.cloneNode(true);
-            const cardLink = card.querySelector('.journey-item-card');
-            cardLink.href = `/#/learning-path/${path.id}`;
-            
-            card.querySelector('.journey-goal').textContent = path.goal;
-            const progress = path.currentStep / path.path.length;
-            card.querySelector('.journey-details').textContent = `${path.path.length} levels • Created on ${new Date(path.createdAt).toLocaleDateString()}`;
-            card.querySelector('.progress-bar-fill').style.width = `${progress * 100}%`;
-            card.querySelector('.progress-text').textContent = `Progress: ${path.currentStep} / ${path.path.length}`;
+        elements.levelsProgressText.textContent = `0 / 0 (0%)`;
+        elements.levelsProgressBar.style.width = `0%`;
+    }
 
-            listContainer.appendChild(card);
+    // Recent Quizzes
+    const recentHistory = historyService.getRecentHistory(3);
+    elements.recentQuizzesList.innerHTML = '';
+
+    if (recentHistory.length === 0) {
+        elements.noHistoryMessage.style.display = 'block';
+    } else {
+        elements.noHistoryMessage.style.display = 'none';
+        recentHistory.forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="recent-quiz-item">
+                    <div class="quiz-item-icon">
+                        <svg class="icon"><use href="assets/icons/feather-sprite.svg#zap"/></svg>
+                    </div>
+                    <div class="quiz-item-details">
+                        <p class="quiz-item-topic">${item.topic}</p>
+                        <p class="quiz-item-meta">
+                            <span>${item.score}/${item.totalQuestions}</span>
+                            <span>${timeAgo(item.date)}</span>
+                        </p>
+                    </div>
+                    <a href="#/game/${encodeURIComponent(item.topic.replace(/ - Level \d+$/, '').trim())}" class="btn">View Details</a>
+                </div>
+            `;
+            elements.recentQuizzesList.appendChild(li);
         });
     }
 }
 
-async function loadSmartReview() {
-    const history = historyService.getHistory();
-    const section = document.getElementById('smart-review-section');
-    if (!section || history.length < 3) {
-        return; // Don't show the feature if there isn't enough data
-    }
-    
-    try {
-        const analysis = await apiService.analyzePerformance(history);
-        if (analysis && analysis.weakTopics && analysis.weakTopics.length > 0) {
-            renderSmartReviewCard(analysis.weakTopics);
-        }
-    } catch (error) {
-        console.warn('Could not load smart review feature.', error);
-        section.style.display = 'none';
-    }
+function handleSoundToggle() {
+    configService.setConfig({ enableSound: elements.soundToggle.checked });
+    showToast(`Sound effects ${elements.soundToggle.checked ? 'enabled' : 'disabled'}.`, 'info');
 }
 
-function renderSmartReviewCard(topics) {
-    const section = document.getElementById('smart-review-section');
-    const template = document.getElementById('smart-review-template');
-    
-    const card = template.content.cloneNode(true);
-    card.querySelector('.smart-review-description').textContent = "The AI has analyzed your quiz history and suggests creating a custom quiz to review these topics:";
-    
-    const topicsList = card.querySelector('.weak-topics-list');
-    topics.forEach(topic => {
-        const tag = document.createElement('span');
-        tag.className = 'weak-topic-tag';
-        tag.textContent = topic;
-        topicsList.appendChild(tag);
-    });
-
-    card.querySelector('.start-review-btn').addEventListener('click', () => {
-        appState.context = {
-            topic: `Personalized Review: ${topics.join(', ')}`,
-            numQuestions: 10,
-            difficulty: 'medium',
-            learningContext: `This is a personalized review quiz focusing on topics the user has struggled with. The questions should test foundational concepts from these topics: ${topics.join(', ')}.`
-        };
-        window.location.hash = '/loading';
-    });
-
-    section.innerHTML = '';
-    section.appendChild(card);
-    section.style.display = 'block';
+function handleThemeToggle() {
+    const newTheme = elements.themeToggle.checked ? 'dark-cyber' : 'light-cyber';
+    configService.setConfig({ theme: newTheme });
+    showToast(`Theme switched to ${elements.themeToggle.checked ? 'Dark' : 'Light'} Mode.`, 'info');
 }
 
+function addEventListeners() {
+    elements.soundToggle.addEventListener('change', handleSoundToggle);
+    elements.themeToggle.addEventListener('change', handleThemeToggle);
+}
 
-export function init(globalState) {
-    appState = globalState;
-    renderStats();
-    renderLearningJourneys();
-    renderAchievements();
-    loadSmartReview();
+function removeEventListeners() {
+    elements.soundToggle.removeEventListener('change', handleSoundToggle);
+    elements.themeToggle.removeEventListener('change', handleThemeToggle);
+}
+
+export function init(appState) {
+    elements = {
+        // Profile Stats
+        quizzesTaken: document.getElementById('quizzes-taken-stat'),
+        accuracy: document.getElementById('accuracy-stat'),
+        levelsCleared: document.getElementById('levels-cleared-stat'),
+        // Preferences
+        soundToggle: document.getElementById('sound-toggle'),
+        themeToggle: document.getElementById('theme-toggle'),
+        // History & Progress
+        levelsProgressText: document.getElementById('levels-progress-text'),
+        levelsProgressBar: document.getElementById('levels-progress-bar'),
+        recentQuizzesList: document.getElementById('recent-quizzes-list'),
+        noHistoryMessage: document.getElementById('no-history-message'),
+    };
+
+    renderProfileStats();
+    renderPreferences();
+    renderHistoryAndProgress();
+    addEventListeners();
 }
 
 export function destroy() {
-    // No dynamic event listeners to remove that are directly on module container
+    removeEventListeners();
+    elements = {};
 }

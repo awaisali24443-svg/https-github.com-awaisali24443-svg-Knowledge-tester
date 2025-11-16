@@ -4,69 +4,70 @@ let appState;
 let journey;
 let elements = {};
 
-function scrollToCurrent() {
-    const currentNode = elements.path.querySelector('.level-node.current');
-    if (currentNode) {
-        currentNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-}
-
 function render() {
-    elements.title.textContent = journey.goal;
-    elements.progressText.textContent = `Completed ${journey.currentLevel - 1} of ${journey.totalLevels} levels`;
+    elements.title.textContent = `Level ${journey.currentLevel} of ${journey.totalLevels}`;
+    
+    // Progress calculation based on completed levels
+    const progressPercent = Math.round(((journey.currentLevel - 1) / journey.totalLevels) * 100);
+    elements.progressFill.style.width = `${progressPercent}%`;
+    elements.progressText.textContent = `${progressPercent}%`;
     
     const template = document.getElementById('level-node-template');
-    elements.path.innerHTML = '';
+    elements.grid.innerHTML = '';
 
     for (let i = 1; i <= journey.totalLevels; i++) {
         const node = template.content.cloneNode(true);
-        const wrapper = node.querySelector('.level-node-wrapper');
-        const nodeEl = node.querySelector('.level-node');
+        const nodeEl = node.querySelector('.level-card');
         
         nodeEl.dataset.level = i;
-        wrapper.style.animationDelay = `${(i -1) * 20}ms`;
+        nodeEl.style.animationDelay = `${(i -1) * 20}ms`;
 
-        const iconUse = nodeEl.querySelector('.level-node-icon use');
-        const numberEl = nodeEl.querySelector('.level-node-number');
-        const statusEl = nodeEl.querySelector('.level-node-status');
+        const numberEl = nodeEl.querySelector('.level-number');
+        const statusEl = nodeEl.querySelector('.level-status');
 
-        numberEl.textContent = `Level ${i}`;
+        numberEl.textContent = i;
 
         if (i < journey.currentLevel) {
             nodeEl.classList.add('completed');
-            iconUse.setAttribute('href', 'assets/icons/feather-sprite.svg#check-circle');
-            statusEl.textContent = 'Replay';
-            nodeEl.setAttribute('aria-label', `Level ${i}: Replay`);
+            statusEl.textContent = 'Completed';
+            nodeEl.setAttribute('aria-label', `Level ${i}: Completed. Click to replay.`);
         } else if (i === journey.currentLevel) {
             nodeEl.classList.add('current');
-            iconUse.setAttribute('href', 'assets/icons/feather-sprite.svg#play');
-            statusEl.textContent = 'Start Level';
-            nodeEl.setAttribute('aria-label', `Level ${i}: Start`);
+            statusEl.textContent = 'Available';
+            nodeEl.setAttribute('aria-label', `Level ${i}: Current level. Click to start.`);
         } else {
             nodeEl.classList.add('locked');
-            iconUse.setAttribute('href', 'assets/icons/feather-sprite.svg#lock');
             statusEl.textContent = 'Locked';
             nodeEl.setAttribute('aria-label', `Level ${i}: Locked`);
         }
         
-        elements.path.appendChild(wrapper);
+        elements.grid.appendChild(node);
     }
-    
-    setTimeout(scrollToCurrent, 100);
+
+    const startBtnText = elements.startBtn.querySelector('span');
+    startBtnText.textContent = `Start Level ${journey.currentLevel}`;
+    elements.startBtn.dataset.level = journey.currentLevel;
+
+    if (journey.currentLevel > journey.totalLevels) {
+        startBtnText.textContent = `Journey Complete`;
+        elements.startBtn.disabled = true;
+    }
 }
 
-function handlePathClick(event) {
-    const node = event.target.closest('.level-node');
-    if (node && !node.classList.contains('locked')) {
-        const level = parseInt(node.dataset.level, 10);
-        appState.context = {
-            topic: journey.goal,
-            level: level,
-            journeyId: journey.id,
-        };
-        window.location.hash = '#/level';
-    }
+function handleInteraction(event) {
+    const node = event.target.closest('.level-card, #start-level-btn');
+    if (!node || node.classList.contains('locked')) return;
+
+    const level = parseInt(node.dataset.level, 10);
+    
+    appState.context = {
+        topic: journey.goal,
+        level: level,
+        journeyId: journey.id,
+    };
+    window.location.hash = '#/level';
 }
+
 
 export function init(globalState) {
     appState = globalState;
@@ -78,19 +79,22 @@ export function init(globalState) {
         return;
     }
     
-    journey = learningPathService.startOrGetJourney(topic);
+    // The topic might be URL encoded
+    const decodedTopic = decodeURIComponent(topic);
+    journey = learningPathService.startOrGetJourney(decodedTopic);
 
     elements = {
         title: document.getElementById('game-map-title'),
-        progressText: document.getElementById('game-map-progress-text'),
-        path: document.getElementById('game-map-path'),
-        jumpBtn: document.getElementById('jump-to-current-btn'),
+        progressFill: document.getElementById('progress-bar-fill'),
+        progressText: document.getElementById('progress-percent-text'),
+        grid: document.getElementById('levels-grid'),
+        startBtn: document.getElementById('start-level-btn'),
     };
 
     render();
     
-    elements.path.addEventListener('click', handlePathClick);
-    elements.jumpBtn.addEventListener('click', scrollToCurrent);
+    elements.grid.addEventListener('click', handleInteraction);
+    elements.startBtn.addEventListener('click', handleInteraction);
 }
 
 export function destroy() {

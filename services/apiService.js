@@ -1,3 +1,4 @@
+
 import { showToast } from './toastService.js';
 
 /**
@@ -50,28 +51,6 @@ export async function generateLevel({ topic, level }) {
         return await handleResponse(response);
     } catch (error) {
         // Errors will be handled by the calling game-level module
-        throw error;
-    }
-}
-
-
-/**
- * Sends the user's quiz history to the backend for analysis.
- * @param {Array<object>} history - The user's quiz history.
- * @returns {Promise<object>} A promise that resolves to the analysis (e.g., weak topics).
- * @throws {Error} If the analysis fails.
- */
-export async function analyzePerformance(history) {
-    try {
-        const response = await fetch('/api/analyze-performance', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ history })
-        });
-        return await handleResponse(response);
-    } catch (error) {
-        console.error('Performance analysis failed:', error.message);
-        // Silently fail, don't show a toast. Let caller handle UI.
         throw error;
     }
 }

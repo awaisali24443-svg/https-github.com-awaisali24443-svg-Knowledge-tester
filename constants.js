@@ -16,7 +16,6 @@ export const ROUTES = [
     { path: '/history', module: 'history', name: 'History', icon: 'archive', nav: true },
     { path: '/study', module: 'study', name: 'Study', nav: false },
     { path: '/aural', module: 'aural', name: 'Aural', icon: 'mic', nav: true, fullBleed: true },
-    { path: '/settings', module: 'settings', name: 'Settings', icon: 'settings', nav: true, footer: true },
     // New game routes
     { path: '/game/:topic', module: 'game-map', name: 'Game Map', nav: false },
     { path: '/level', module: 'game-level', name: 'Game Level', nav: false, fullBleed: true },

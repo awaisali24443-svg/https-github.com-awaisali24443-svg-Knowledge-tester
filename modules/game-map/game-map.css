@@ -4,188 +4,126 @@
     height: 100%;
 }
 
-.game-map-viewport {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding: var(--space-lg) 0;
-    position: relative; /* For parallax context */
-    perspective: 100px;
-    transform-style: preserve-3d;
-}
-
-/* --- Fog of War & Parallax --- */
-.fog-of-war {
-    position: sticky;
-    top: -1px; /* stick to the very top */
-    height: 150px;
-    width: 100%;
-    background: linear-gradient(to bottom, var(--color-background) 30%, transparent);
-    z-index: 10;
-    pointer-events: none;
-}
-
-.parallax-bg {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -2;
-}
-
-.parallax-layer {
-    position: absolute;
-    inset: 0;
-    background-repeat: repeat;
-    background-size: 200px 200px;
-}
-
-.parallax-layer.layer-1 {
-    background-image: radial-gradient(var(--color-primary-transparent) 1px, transparent 1px);
-    transform: translateZ(-200px) scale(3);
-    animation: move-bg 60s linear infinite;
-}
-
-.parallax-layer.layer-2 {
-    background-image: radial-gradient(var(--color-secondary-transparent) 1px, transparent 1px);
-    transform: translateZ(-150px) scale(2.5);
-    animation: move-bg 45s linear infinite reverse;
-}
-
-.parallax-layer.layer-3 {
-    background-image: radial-gradient(var(--color-surface-transparent) 1px, transparent 1px);
-    transform: translateZ(-100px) scale(2);
-    animation: move-bg 30s linear infinite;
-}
-
-@keyframes move-bg {
-    from { background-position: 0 0; }
-    to { background-position: 200px 200px; }
-}
-
-
-/* --- Game Path & Nodes --- */
-.game-map-path {
-    display: flex;
-    flex-direction: column-reverse; /* Start from level 1 at the bottom */
-    align-items: center;
-    position: relative;
-    padding: var(--space-xl) 0;
-    gap: var(--space-md);
-    transform: translateZ(0); /* Establish stacking context */
-}
-
-.game-map-path::before {
-    content: '';
-    position: absolute;
-    bottom: 50px;
-    top: 50px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 4px;
-    background-image: linear-gradient(var(--color-border) 60%, transparent 40%);
-    background-size: 1px 20px;
-    z-index: -1;
-}
-
-.level-node-wrapper {
-    width: 100%;
-    max-width: 400px;
-    padding: 0 var(--space-lg);
-    animation: node-appear 0.5s ease-out forwards;
-    opacity: 0;
-}
-
-.level-node.card {
-    display: flex;
-    align-items: center;
-    gap: var(--space-lg);
-    padding: var(--space-md) var(--space-lg);
-    cursor: pointer;
-}
-
-
-@keyframes node-appear {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-
-.level-node-icon {
-    width: 40px;
-    height: 40px;
+.page-header {
     flex-shrink: 0;
-    border-radius: 50%;
+}
+
+#game-map-title {
+    margin-bottom: var(--space-md);
+}
+
+.progress-container {
+    max-width: 400px;
+    margin: 0 auto;
     display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 8px;
+    background-color: var(--color-surface-hover);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--brand-gradient, linear-gradient(45deg, var(--color-primary), var(--color-secondary)));
+    border-radius: 4px;
+    transition: width var(--transition-speed-med) ease-out;
+}
+
+#progress-percent-text {
+    font-family: var(--font-family-mono);
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+}
+
+.levels-grid {
+    flex-grow: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: var(--space-lg);
+    overflow-y: auto;
+    padding: var(--space-lg);
+    margin: 0 calc(-1 * var(--page-padding));
+}
+
+.level-card {
+    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: var(--color-surface-hover);
-    color: var(--color-text-secondary);
-    transition: all 0.2s ease;
+    aspect-ratio: 4 / 3;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-speed-fast) ease;
+    animation: node-appear 0.5s ease-out forwards;
+    opacity: 0;
+    padding: var(--space-md);
 }
-.level-node-icon .icon {
-    width: 20px;
-    height: 20px;
+
+@keyframes node-appear {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
 }
-.level-node-info { flex-grow: 1; }
-.level-node-number {
-    font-size: 1.1rem;
-    font-weight: 600;
+
+.level-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: var(--font-family-heading);
     color: var(--color-text);
+    line-height: 1.1;
 }
-.level-node-status {
+
+.level-status {
     font-size: 0.9rem;
-    font-family: var(--font-family-mono);
     color: var(--color-text-secondary);
     margin: 0;
 }
 
-
 /* --- Node States --- */
-.level-node.locked {
+.level-card.locked {
     cursor: not-allowed;
-}
-.level-node.locked, .level-node.locked > * {
-    filter: grayscale(1);
-    opacity: 0.6;
+    background-color: var(--color-surface);
+    opacity: 0.5;
 }
 
-.level-node.completed {
-    border-color: var(--color-primary-transparent);
+.level-card.locked:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--color-border);
 }
-.level-node.completed .level-node-icon {
-    background-color: var(--color-primary-transparent);
-    color: var(--color-primary);
+
+.level-card.completed .level-status {
+    color: var(--color-text-secondary);
 }
-.level-node.completed .level-node-status { color: var(--color-primary); }
-.level-node.completed:hover {
+.level-card.completed:hover {
     border-color: var(--color-primary);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
 }
 
-/* --- Enhanced Current State --- */
-.level-node.current {
-    border-color: var(--color-accent);
-    box-shadow: 0 0 20px var(--color-accent);
-    animation: current-pulse 1.5s infinite ease-in-out;
+.level-card.current {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 15px var(--color-primary-transparent-heavy);
 }
-.level-node.current .level-node-icon {
-    background-color: var(--color-accent);
-    color: var(--color-background);
+.level-card.current .level-status {
+    color: var(--color-primary);
+    font-weight: 600;
 }
-.level-node.current .level-node-status { color: var(--color-accent); font-weight: 600; }
-@keyframes current-pulse {
-    0% { box-shadow: 0 0 20px var(--color-accent); transform: scale(1); }
-    50% { box-shadow: 0 0 35px var(--color-accent); transform: scale(1.02); }
-    100% { box-shadow: 0 0 20px var(--color-accent); transform: scale(1); }
+.level-card.current:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 0 25px var(--color-primary-transparent-heavy);
 }
 
 .game-map-footer {
     display: flex;
-    justify-content: center;
-    gap: var(--space-md);
-    text-align: center;
-    padding-top: var(--space-md);
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    padding-top: var(--space-lg);
+    margin-top: var(--space-lg);
     border-top: 1px solid var(--color-border);
 }

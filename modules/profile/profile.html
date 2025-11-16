@@ -1,109 +1,89 @@
 <div class="page-container profile-container">
-    <header class="page-header">
-        <h1>Your Profile</h1>
-        <p>Track your progress and celebrate your learning milestones.</p>
-    </header>
-
+    <!-- Profile Summary Card -->
     <div class="card profile-summary-card">
-        <div class="level-info">
-            <div class="level-badge">
-                <span>LVL</span>
-                <span id="profile-level">1</span>
+        <div class="profile-header">
+            <div class="profile-avatar-wrapper">
+                <img src="assets/images/avatar-placeholder.png" alt="Aisha Khan" class="profile-avatar">
+                <span class="online-indicator"></span>
             </div>
-            <div class="xp-bar-container">
-                <div class="xp-bar">
-                    <div id="xp-bar-fill" class="xp-bar-fill"></div>
-                </div>
-                <div id="xp-text" class="xp-text">0 / 100 XP</div>
+            <div class="profile-info">
+                <h1 class="profile-name">Aisha Khan</h1>
+                <button class="btn edit-profile-btn">
+                    <svg class="icon" width="16" height="16" viewBox="0 0 24 24"><use href="assets/icons/feather-sprite.svg#feather"/></svg>
+                    <span>Edit Profile</span>
+                </button>
             </div>
         </div>
         <div class="profile-stats-grid">
             <div class="profile-stat">
-                <div class="stat-value" id="current-streak-stat">0</div>
-                <div class="stat-label">Day Streak</div>
-            </div>
-            <div class="profile-stat">
-                <div class="stat-value" id="total-quizzes-stat">0</div>
+                <div id="quizzes-taken-stat" class="stat-value">0</div>
                 <div class="stat-label">Quizzes Taken</div>
             </div>
             <div class="profile-stat">
-                <div class="stat-value" id="total-questions-stat">0</div>
-                <div class="stat-label">Questions Answered</div>
+                <div id="accuracy-stat" class="stat-value">0%</div>
+                <div class="stat-label">Accuracy</div>
             </div>
             <div class="profile-stat">
-                <div class="stat-value" id="average-score-stat">0%</div>
-                <div class="stat-label">Average Score</div>
+                <div id="levels-cleared-stat" class="stat-value">0</div>
+                <div class="stat-label">Levels Cleared</div>
             </div>
         </div>
     </div>
 
-    <section id="smart-review-section" class="smart-review-section" style="display: none;">
-        <!-- AI-powered review content will be injected here -->
-    </section>
-
-    <section class="learning-journeys-section">
-        <h2>My Learning Journeys</h2>
-        <div id="journeys-list" class="journeys-list">
-            <!-- Saved learning paths will be rendered here -->
-        </div>
-        <div id="no-journeys-message" class="empty-state" style="display: none;">
-            <div class="empty-state-icon">
-                 <svg><use href="/assets/icons/feather-sprite.svg#git-branch"/></svg>
+    <!-- App Preferences Card -->
+    <div class="card app-preferences-card">
+        <h2>App Preferences</h2>
+        <div class="setting-item">
+            <div class="setting-info">
+                <svg class="icon"><use href="assets/icons/feather-sprite.svg#mic"/></svg>
+                <label for="sound-toggle">Sound Effects</label>
             </div>
-            <h2>No Journeys Yet</h2>
-            <p>Start a new journey from the 'Journeys' tab to begin learning.</p>
-            <a href="/#/topics" class="btn">Explore Journeys</a>
+            <div class="setting-control">
+                <label class="switch">
+                    <input type="checkbox" id="sound-toggle" role="switch">
+                    <span class="slider round"></span>
+                </label>
+            </div>
         </div>
-    </section>
+        <div class="setting-item">
+            <div class="setting-info">
+                <svg class="icon"><use href="assets/icons/feather-sprite.svg#sliders"/></svg>
+                <label for="theme-toggle">Theme Mode</label>
+            </div>
+            <div class="setting-control">
+                 <label class="switch">
+                    <input type="checkbox" id="theme-toggle" role="switch">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
 
-    <section class="achievements-section">
-        <h2>Achievements</h2>
-        <div id="achievements-grid" class="achievements-grid">
-            <!-- Achievements will be rendered here -->
+    <!-- Quiz Progress & History Card -->
+    <div class="card quiz-history-card">
+        <h2>Quiz Progress & History</h2>
+        <div class="progress-section">
+            <div class="progress-labels">
+                <span>Levels Completed</span>
+                <span id="levels-progress-text">0 / 0 (0%)</span>
+            </div>
+            <div class="progress-bar">
+                <div id="levels-progress-bar" class="progress-bar-fill"></div>
+            </div>
         </div>
-    </section>
+        <h3>Recent Quizzes</h3>
+        <ul id="recent-quizzes-list" class="recent-quizzes-list">
+            <!-- Items injected by JS -->
+        </ul>
+        <div id="no-history-message" style="display: none; text-align: center; margin-top: 1rem; color: var(--color-text-secondary);">
+            <p>No recent quizzes to show.</p>
+        </div>
+    </div>
 </div>
-
-<template id="achievement-template">
-    <div class="achievement-card" tabindex="0">
-        <div class="achievement-icon-wrapper">
-            <div class="achievement-icon">
-                <svg><use/></svg>
-            </div>
-        </div>
-        <h3 class="achievement-name"></h3>
-        <p class="achievement-description"></p>
+<footer class="profile-footer">
+    <p>© 2025 AI Quiz Nexus. All rights reserved.</p>
+    <div class="footer-links">
+        <a href="#" aria-label="Legal">Legal</a>
+        <a href="#" aria-label="Company">Company</a>
     </div>
-</template>
-
-<template id="journey-item-template">
-    <a class="card journey-item-card">
-        <div class="card-content">
-            <h3 class="journey-goal"></h3>
-            <p class="journey-details"></p>
-            <div class="journey-progress">
-                <span class="progress-text"></span>
-                <div class="progress-bar">
-                    <div class="progress-bar-fill"></div>
-                </div>
-            </div>
-        </div>
-    </a>
-</template>
-
-<template id="smart-review-template">
-     <div class="card smart-review-card">
-        <div class="smart-review-icon">
-            <svg><use href="/assets/icons/feather-sprite.svg#target"/></svg>
-        </div>
-        <div class="smart-review-content">
-            <h2>Personalized Review</h2>
-            <p class="smart-review-description"></p>
-            <div class="weak-topics-list"></div>
-            <button class="btn btn-primary start-review-btn">
-                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#play"/></svg>
-                <span>Start Smart Review Quiz</span>
-            </button>
-        </div>
-    </div>
-</template>
+</footer>

@@ -1,26 +1,20 @@
+
 <div class="page-container topic-list-container">
     <header class="page-header">
-        <h1>Select Your Challenge</h1>
-        <p>Discover a new skill. Select any topic to begin your 100-level adventure.</p>
+        <h1>Welcome to AI Quiz Nexus!</h1>
+        <p>Choose your adventure and master new fields with AI-powered quizzes.</p>
     </header>
-    <div class="search-bar-container">
-        <svg class="search-icon" viewBox="0 0 24 24"><use href="/assets/icons/feather-sprite.svg#search"/></svg>
-        <input type="search" id="search-input" class="form-input" placeholder="Search for any topic..." autocomplete="off">
-    </div>
+    <h2>Explore Topics</h2>
     <div id="topic-grid-container" class="topic-grid">
         <!-- Topic cards will be rendered here -->
-        <div id="custom-topic-container"></div>
     </div>
 </div>
 
 <template id="topic-card-template">
     <div class="card topic-card" tabindex="0" role="button">
-        <div class="card-content">
+        <div class="topic-card-content">
             <h3 class="topic-name"></h3>
-            <div class="topic-tags">
-                <span class="category-tag"></span>
-                <span class="difficulty-tag"></span>
-            </div>
+            <p class="topic-description"></p>
         </div>
     </div>
 </template>

@@ -1,52 +1,48 @@
+
 [
   {
-    "category": "Core IT Concepts",
-    "description": "Build a strong foundation in information technology.",
-    "icon": "cpu",
-    "topics": [
-      { "name": "Computer Networking", "difficulty": "Medium" },
-      { "name": "Operating Systems", "difficulty": "Medium" },
-      { "name": "Cybersecurity Fundamentals", "difficulty": "Easy" },
-      { "name": "Cloud Computing (IaaS, PaaS, SaaS)", "difficulty": "Medium" },
-      { "name": "Database Management", "difficulty": "Medium" },
-      { "name": "IT Hardware & Peripherals", "difficulty": "Easy" }
-    ]
+    "name": "Programming & AI",
+    "description": "Dive into algorithms, machine learning, and advanced coding concepts. Test your knowledge in Python, C++, and AI frameworks.",
+    "styleClass": "topic-programming"
   },
   {
-    "category": "Programming Fundamentals",
-    "description": "Start your coding journey with these essential languages.",
-    "icon": "git-branch",
-    "topics": [
-      { "name": "Python Basics", "difficulty": "Easy" },
-      { "name": "JavaScript Fundamentals", "difficulty": "Easy" },
-      { "name": "Java for Beginners", "difficulty": "Medium" },
-      { "name": "C++ Core Concepts", "difficulty": "Medium" },
-      { "name": "SQL for Data Querying", "difficulty": "Easy" },
-      { "name": "HTML & CSS", "difficulty": "Easy" }
-    ]
+    "name": "Biology & Genetics",
+    "description": "Explore the mysteries of life, from cellular structures to advanced genetic engineering and ecosystems. Test your biological insights.",
+    "styleClass": "topic-biology"
   },
   {
-    "category": "Web Development",
-    "description": "Learn to build modern websites and applications.",
-    "icon": "grid",
-    "topics": [
-      { "name": "Frontend Frameworks (React, Vue)", "difficulty": "Hard" },
-      { "name": "Backend Development (Node.js, Django)", "difficulty": "Hard" },
-      { "name": "REST APIs", "difficulty": "Medium" },
-      { "name": "Web Security (OWASP Top 10)", "difficulty": "Medium" },
-      { "name": "Responsive Web Design", "difficulty": "Easy" }
-    ]
+    "name": "Cosmology & Space",
+    "description": "Journey through the cosmos, studying black holes, distant galaxies, and the origins of the universe. Explore cosmic phenomena.",
+    "styleClass": "topic-space"
   },
   {
-    "category": "Data & AI",
-    "description": "Explore the world of data science and artificial intelligence.",
-    "icon": "trending-up",
-    "topics": [
-      { "name": "Introduction to Machine Learning", "difficulty": "Hard" },
-      { "name": "Data Analysis with Pandas", "difficulty": "Medium" },
-      { "name": "Big Data Concepts", "difficulty": "Medium" },
-      { "name": "Neural Networks Basics", "difficulty": "Hard" },
-      { "name": "Natural Language Processing (NLP)", "difficulty": "Hard" }
-    ]
+    "name": "Robotics & Automation",
+    "description": "Delve into the world of smart machines, automation principles, and future technological advancements. Design and control robotic systems.",
+    "styleClass": "topic-robotics"
+  },
+  {
+    "name": "Business & Finance",
+    "description": "Master economic theories, market trends, and strategic business management. Analyze financial data and investment strategies.",
+    "styleClass": "topic-finance"
+  },
+  {
+    "name": "Arts & Culture",
+    "description": "Explore art history, diverse cultural movements, and creative expressions across different civilizations. Uncover artistic legacies.",
+    "styleClass": "topic-arts"
+  },
+  {
+    "name": "Medicine & Health",
+    "description": "Understand human anatomy, physiology, and modern medical practices. Explore diseases, treatments, and public health initiatives.",
+    "styleClass": "topic-medicine"
+  },
+  {
+    "name": "Environment & Ecology",
+    "description": "Learn about environmental science, climate change, and sustainable practices. Protect our planet and its biodiversity.",
+    "styleClass": "topic-ecology"
+  },
+  {
+    "name": "Logic & Philosophy",
+    "description": "Challenge your mind with logical puzzles, critical thinking, and philosophical debates. Understand fundamental questions.",
+    "styleClass": "topic-philosophy"
   }
 ]

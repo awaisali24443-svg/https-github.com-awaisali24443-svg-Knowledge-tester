@@ -1,7 +1,7 @@
 // A version number is injected into the cache name.
 // Bump this version when you want to force an update of the service worker
 // and clear the old caches. This is essential after deploying new assets.
-const CACHE_NAME = 'knowledge-tester-v2.8.7';
+const CACHE_NAME = 'knowledge-tester-v2.8.8';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 // The list of assets to cache during installation.
@@ -22,6 +22,8 @@ const APP_SHELL_URLS = [
     'assets/images/og-image.png',
     'assets/images/icon-192.png',
     'assets/images/icon-512.png',
+    'assets/images/avatar-placeholder.png',
+    'assets/images/circuit-bg.svg',
     'assets/sounds/correct.mp3',
     'assets/sounds/incorrect.mp3',
     'assets/sounds/click.mp3',
@@ -51,7 +53,6 @@ const APP_SHELL_URLS = [
     'modules/history/history.html', 'modules/history/history.css', 'modules/history/history.js',
     'modules/study/study.html', 'modules/study/study.css', 'modules/study/study.js',
     'modules/aural/aural.html', 'modules/aural/aural.css', 'modules/aural/aural.js',
-    'modules/settings/settings.html', 'modules/settings/settings.css', 'modules/settings/settings.js',
     'modules/profile/profile.html', 'modules/profile/profile.css', 'modules/profile/profile.js',
     'modules/game-map/game-map.html', 'modules/game-map/game-map.css', 'modules/game-map/game-map.js',
     'modules/game-level/game-level.html', 'modules/game-level/game-level.css', 'modules/game-level/game-level.js',
