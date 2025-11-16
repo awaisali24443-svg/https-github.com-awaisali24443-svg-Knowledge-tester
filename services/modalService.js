@@ -1,3 +1,4 @@
+
 const modalContainer = document.getElementById('modal-container');
 let previouslyFocusedElement;
 
@@ -7,7 +8,7 @@ let previouslyFocusedElement;
  * and proper ARIA roles.
  * @param {object} options - The options for the modal.
  * @param {string} options.title - The title to display in the modal header.
- * @param {string} options.message - The descriptive message in the modal body.
+ * @param {string} options.message - The descriptive message in the modal body. Can be an HTML string.
  * @param {string} [options.confirmText='Confirm'] - The text for the confirm button.
  * @param {string} [options.cancelText='Cancel'] - The text for the cancel button.
  * @param {boolean} [options.danger=false] - If true, the confirm button will be styled as a danger button.
@@ -27,7 +28,7 @@ export function showConfirmationModal({ title, message, confirmText = 'Confirm',
                     <h2 id="modal-title">${title}</h2>
                 </div>
                 <div class="modal-body">
-                    <p id="modal-message">${message}</p>
+                    <div id="modal-message">${message}</div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn" id="modal-cancel-btn">${cancelText}</button>
@@ -36,53 +37,55 @@ export function showConfirmationModal({ title, message, confirmText = 'Confirm',
             </div>
         `;
         modalContainer.innerHTML = modalHTML;
+        modalContainer.style.display = 'block';
 
         const confirmBtn = document.getElementById('modal-confirm-btn');
         const cancelBtn = document.getElementById('modal-cancel-btn');
         const backdrop = modalContainer.querySelector('.modal-backdrop');
         const modalContent = modalContainer.querySelector('.modal-content');
 
+        function closeModal(value) {
+            modalContainer.innerHTML = '';
+            modalContainer.style.display = 'none';
+            // Restore focus to the element that had it before the modal opened
+            if (previouslyFocusedElement) {
+                previouslyFocusedElement.focus();
+            }
+            document.removeEventListener('keydown', handleKeyDown);
+            resolve(value);
+        }
+        
+        confirmBtn.addEventListener('click', () => closeModal(true));
+        cancelBtn.addEventListener('click', () => closeModal(false));
+        backdrop.addEventListener('click', () => closeModal(false));
+
         // --- Accessibility: Focus Trapping ---
         const focusableElements = modalContent.querySelectorAll('button');
         const firstFocusableElement = focusableElements[0];
         const lastFocusableElement = focusableElements[focusableElements.length - 1];
 
-        const close = (value) => {
-            modalContainer.innerHTML = '';
-            document.removeEventListener('keydown', keydownHandler);
-            // Restore focus to the previously focused element
-            if (previouslyFocusedElement) {
-                previouslyFocusedElement.focus();
-            }
-            resolve(value);
-        };
+        // Focus the first interactive element
+        firstFocusableElement.focus();
 
-        const keydownHandler = (e) => {
+        function handleKeyDown(e) {
             if (e.key === 'Escape') {
-                close(false);
+                closeModal(false);
             }
             if (e.key === 'Tab') {
-                if (e.shiftKey) { // Shift + Tab
+                if (e.shiftKey) { // Shift+Tab
                     if (document.activeElement === firstFocusableElement) {
-                        e.preventDefault();
                         lastFocusableElement.focus();
+                        e.preventDefault();
                     }
                 } else { // Tab
                     if (document.activeElement === lastFocusableElement) {
-                        e.preventDefault();
                         firstFocusableElement.focus();
+                        e.preventDefault();
                     }
                 }
             }
-        };
+        }
 
-        document.addEventListener('keydown', keydownHandler);
-
-        confirmBtn.addEventListener('click', () => close(true));
-        cancelBtn.addEventListener('click', () => close(false));
-        backdrop.addEventListener('click', () => close(false));
-
-        // Set initial focus on the confirm button for primary action
-        confirmBtn.focus();
+        document.addEventListener('keydown', handleKeyDown);
     });
 }

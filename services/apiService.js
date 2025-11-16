@@ -53,6 +53,27 @@ export async function generateJourneyPlan(topic) {
     }
 }
 
+/**
+ * Sends a request to the backend to generate a curriculum outline for a journey.
+ * @param {object} params - The curriculum parameters.
+ * @param {string} params.topic - The topic for the journey.
+ * @param {number} params.totalLevels - The total levels for the journey.
+ * @returns {Promise<object>} A promise resolving to the curriculum outline.
+ * @throws {Error} If the generation fails.
+ */
+export async function generateCurriculumOutline({ topic, totalLevels }) {
+    try {
+        const response = await fetch('/api/generate-curriculum-outline', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, totalLevels })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
 
 /**
  * Sends a request to the backend to generate content for a specific game level.

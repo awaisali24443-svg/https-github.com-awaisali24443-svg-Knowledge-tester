@@ -45,6 +45,18 @@ const journeyPlanSchema = {
     required: ["totalLevels", "description"]
 };
 
+const curriculumOutlineSchema = {
+    type: Type.OBJECT,
+    properties: {
+        chapters: {
+            type: Type.ARRAY,
+            description: "An array of concise, well-named chapter titles that outline the learning journey.",
+            items: { type: Type.STRING }
+        }
+    },
+    required: ["chapters"]
+};
+
 const levelGenerationSchema = {
     type: Type.OBJECT,
     properties: {
@@ -136,6 +148,42 @@ async function generateJourneyPlan(topic) {
     } catch (error) {
         console.error(`Gemini API Error (Journey Plan for ${topic}):`, error);
         throw new Error('Failed to generate a learning plan. The AI may be busy or the topic is restricted.');
+    }
+}
+
+/**
+ * Generates a curriculum outline for a topic.
+ * @param {string} topic - The topic for the curriculum.
+ * @param {number} totalLevels - The total number of levels for the journey.
+ * @returns {Promise<object>} An object with an array of chapter titles.
+ */
+async function generateCurriculumOutline(topic, totalLevels) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    const numChapters = Math.ceil(totalLevels / 50);
+    const prompt = `You are an expert curriculum designer. A learning journey for the topic "${topic}" has been scoped to ${totalLevels} levels.
+    
+    Your task is to break this journey down into exactly ${numChapters} logical chapters.
+    
+    RULES:
+    1. Provide an array of exactly ${numChapters} chapter titles.
+    2. Each title should be concise and descriptive, representing a major unit of study.
+    3. The chapters must be in a logical, progressive order, from beginner to advanced.
+    
+    Return the list of chapter titles in the provided JSON schema.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: curriculumOutlineSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Curriculum Outline for ${topic}):`, error);
+        throw new Error('Failed to generate a curriculum outline.');
     }
 }
 
@@ -287,6 +335,20 @@ app.post('/api/generate-journey-plan', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+app.post('/api/generate-curriculum-outline', async (req, res) => {
+    const { topic, totalLevels } = req.body;
+    if (!topic || !totalLevels) {
+        return res.status(400).json({ error: 'Missing required parameters: topic, totalLevels' });
+    }
+    try {
+        const outline = await generateCurriculumOutline(topic, totalLevels);
+        res.json(outline);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 
 app.post('/api/generate-level', async (req, res) => {
     const { topic, level, totalLevels } = req.body;

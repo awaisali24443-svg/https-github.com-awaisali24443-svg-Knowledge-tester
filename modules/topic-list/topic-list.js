@@ -1,7 +1,8 @@
 
-
 import * as apiService from '../../services/apiService.js';
 import * as stateService from '../../services/stateService.js';
+import * as modalService from '../../services/modalService.js';
+import { showToast } from '../../services/toastService.js';
 
 let topicGrid, template, journeyCreatorForm;
 
@@ -47,14 +48,61 @@ function handleGridInteraction(event) {
     handleTopicSelection(topic);
 }
 
-function handleJourneyCreatorSubmit(event) {
+async function handleJourneyCreatorSubmit(event) {
     event.preventDefault();
     const input = document.getElementById('custom-topic-input');
     const topic = input.value.trim();
-    if (topic) {
-        handleTopicSelection(topic);
+    if (!topic) return;
+
+    const button = journeyCreatorForm.querySelector('button[type="submit"]');
+    const buttonText = button.querySelector('span');
+    const buttonIcon = button.querySelector('svg');
+    const originalButtonText = buttonText.textContent;
+    const originalIconHTML = buttonIcon.innerHTML;
+
+    // Show loading state on button
+    button.disabled = true;
+    buttonText.textContent = 'Generating...';
+    buttonIcon.innerHTML = `<use href="/assets/icons/feather-sprite.svg#cpu"/>`;
+
+    try {
+        // 1. Generate the journey plan to get totalLevels and a better description
+        const plan = await apiService.generateJourneyPlan(topic);
+
+        // 2. Generate the curriculum outline based on the plan
+        const outline = await apiService.generateCurriculumOutline({ topic, totalLevels: plan.totalLevels });
+
+        const curriculumHtml = `
+            <p>The AI has designed a <strong>${plan.totalLevels}-level journey</strong> for "${topic}". Here is the proposed curriculum:</p>
+            <ul class="curriculum-list">
+                ${outline.chapters.map(chapter => `<li>${chapter}</li>`).join('')}
+            </ul>
+        `;
+
+        // 3. Show confirmation modal with the curriculum
+        const confirmed = await modalService.showConfirmationModal({
+            title: 'Journey Preview',
+            message: curriculumHtml,
+            confirmText: 'Begin Journey',
+            cancelText: 'Cancel'
+        });
+
+        // 4. If confirmed, proceed to the journey
+        if (confirmed) {
+            handleTopicSelection(topic);
+        }
+
+    } catch (error) {
+        showToast(`Error creating journey: ${error.message}`, 'error');
+    } finally {
+        // Restore button state
+        button.disabled = false;
+        buttonText.textContent = originalButtonText;
+        buttonIcon.innerHTML = originalIconHTML;
+        input.value = ''; // Clear input
     }
 }
+
 
 export async function init() {
     topicGrid = document.getElementById('topic-grid-container');
