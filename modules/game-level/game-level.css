@@ -206,6 +206,24 @@
 #results-details { margin-bottom: var(--space-xl); font-size: 1.1rem; color: var(--color-text-secondary); }
 .results-actions { display: flex; justify-content: center; gap: var(--space-md); }
 
+.xp-gain {
+    font-family: var(--font-family-mono);
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    background-color: var(--color-primary-transparent);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 50px;
+    display: inline-block;
+    margin-bottom: var(--space-md);
+    animation: pop-in 0.5s ease-out 0.3s backwards;
+}
+
+@keyframes pop-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+
 @media (max-width: 768px) {
     .options-grid { grid-template-columns: 1fr; }
     .new-quiz-content { padding: 0 var(--space-sm); }

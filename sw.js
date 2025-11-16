@@ -1,5 +1,6 @@
 
 
+
 // A version number is injected into the cache name.
 // Bump this version when you want to force an update of the service worker
 // and clear the old caches. This is essential after deploying new assets.
@@ -61,6 +62,7 @@ const APP_SHELL_URLS = [
     'modules/settings/settings.html', 'modules/settings/settings.css', 'modules/settings/settings.js',
     'modules/game-map/game-map.html', 'modules/game-map/game-map.css', 'modules/game-map/game-map.js',
     'modules/game-level/game-level.html', 'modules/game-level/game-level.css', 'modules/game-level/game-level.js',
+    'modules/profile/profile.html', 'modules/profile/profile.css', 'modules/profile/profile.js',
 ];
 
 /**

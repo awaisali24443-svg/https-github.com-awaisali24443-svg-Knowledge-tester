@@ -1,5 +1,6 @@
 
 
+
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -243,6 +244,14 @@ function showResults() {
         endTime: Date.now(),
     });
 
+    const xpGained = score * 10;
+    if (xpGained > 0) {
+        elements.xpGainText.textContent = `+${xpGained} XP`;
+        elements.xpGainText.style.display = 'inline-block';
+    } else {
+        elements.xpGainText.style.display = 'none';
+    }
+
     if (passed) {
         elements.resultsIcon.innerHTML = `<svg><use href="/assets/icons/feather-sprite.svg#check-circle"/></svg>`;
         elements.resultsIcon.className = 'results-icon passed';
@@ -319,6 +328,7 @@ export function init() {
         resultsTitle: document.getElementById('results-title'),
         resultsDetails: document.getElementById('results-details'),
         resultsActions: document.getElementById('results-actions'),
+        xpGainText: document.getElementById('xp-gain-text'),
     };
 
     elements.cancelBtn.addEventListener('click', () => window.history.back());
