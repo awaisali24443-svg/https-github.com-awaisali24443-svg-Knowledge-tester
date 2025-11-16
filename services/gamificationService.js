@@ -18,7 +18,7 @@ const ACHIEVEMENTS = {
     master: { name: "Master", description: "Complete 50 quizzes.", icon: "award", condition: (s, h) => h.length >= 50 },
     
     // Performance Achievements
-    perfectionist: { name: "Perfectionist", description: "Get a 100% score on a quiz.", icon: "star", condition: (s, h, q) => q.score / q.totalQuestions === 1 },
+    perfectionist: { name: "Perfectionist", description: "Get a 100% score on a quiz.", icon: "star", condition: (s, h, q) => q && q.totalQuestions > 0 && q.score / q.totalQuestions === 1 },
     
     // Streak Achievements
     hot_streak: { name: "Hot Streak", description: "Maintain a 3-day streak.", icon: "zap", condition: (s) => s.currentStreak >= 3 },
@@ -95,11 +95,11 @@ function updateStreak(today) {
     }
 }
 
-function checkAchievements(quizState, history) {
+function checkAchievements(quizAttempt, history) {
     Object.keys(ACHIEVEMENTS).forEach(key => {
         if (!stats.unlockedAchievements.includes(key)) {
             const achievement = ACHIEVEMENTS[key];
-            if (achievement.condition(stats, history, quizState)) {
+            if (achievement.condition(stats, history, quizAttempt)) {
                 stats.unlockedAchievements.push(key);
                 showToast(`Achievement Unlocked: ${achievement.name}!`, 'success');
                 // Dispatch a global event for other modules (like soundService) to listen to
@@ -112,16 +112,16 @@ function checkAchievements(quizState, history) {
 /**
  * Called by historyService when a quiz is completed.
  * Updates streak and checks for new achievements.
- * @param {object} quizState - The final quiz state.
+ * @param {object} quizAttempt - The structured quiz attempt object from historyService.
  * @param {Array<object>} history - The full quiz history.
  */
-export function updateStatsOnQuizCompletion(quizState, history) {
+export function updateStatsOnQuizCompletion(quizAttempt, history) {
     const today = new Date();
     updateStreak(today);
     stats.lastQuizDate = today.toISOString();
     
-    // Add XP
-    const xpGained = quizState.score * 10;
+    // Add XP. Use new xpGained field if available, otherwise calculate from score for backward compatibility.
+    const xpGained = quizAttempt.xpGained ?? (quizAttempt.score * 10);
     if (xpGained > 0) {
         stats.xp += xpGained;
         showToast(`${xpGained} XP gained!`, 'info');
@@ -136,7 +136,7 @@ export function updateStatsOnQuizCompletion(quizState, history) {
         xpForNextLevel = getXpForNextLevel(stats.level);
     }
 
-    checkAchievements(quizState, history);
+    checkAchievements(quizAttempt, history);
     
     saveStats();
 }

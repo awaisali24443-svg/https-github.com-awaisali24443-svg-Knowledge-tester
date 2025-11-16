@@ -5,6 +5,54 @@
     color: var(--color-text-secondary);
 }
 
+/* --- Journey Creator Card --- */
+.journey-creator-card {
+    display: flex;
+    gap: var(--space-xl);
+    align-items: center;
+    padding: var(--space-xl);
+    margin-bottom: var(--space-xxl);
+    border-color: var(--color-primary);
+    background: linear-gradient(145deg, var(--color-surface-hover), hsl(from var(--color-surface) h s l+4));
+}
+
+.creator-icon {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+    background: var(--brand-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 0 20px var(--color-primary-transparent-heavy);
+}
+.creator-icon svg {
+    width: 40px;
+    height: 40px;
+}
+
+.creator-content h2 {
+    margin-top: 0;
+    margin-bottom: var(--space-sm);
+}
+
+.creator-content p {
+    margin-bottom: var(--space-lg);
+    color: var(--color-text-secondary);
+}
+
+.creator-form {
+    display: flex;
+    gap: var(--space-md);
+}
+
+.creator-form .form-input {
+    flex-grow: 1;
+}
+
+/* --- Topic Grid --- */
 .topic-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -76,3 +124,14 @@
 .topic-card.topic-medicine { background-color: #2b4f6b; background-image: radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.2), transparent 40%), radial-gradient(circle at 10% 20%, rgba(245, 247, 250, 0.15), transparent 50%); }
 .topic-card.topic-ecology { background-color: #2e4d20; background-image: radial-gradient(circle at 20% 80%, rgba(139, 195, 74, 0.3), transparent 40%), radial-gradient(circle at 80% 20%, rgba(205, 220, 57, 0.2), transparent 50%); }
 .topic-card.topic-philosophy { background-color: #281a4d; background-image: radial-gradient(circle at 80% 85%, rgba(156, 39, 176, 0.3), transparent 40%), radial-gradient(circle at 15% 15%, rgba(13, 71, 161, 0.2), transparent 50%); }
+
+
+@media (max-width: 600px) {
+    .journey-creator-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    .creator-form {
+        flex-direction: column;
+    }
+}

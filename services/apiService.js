@@ -35,19 +35,40 @@ export async function fetchTopics() {
 }
 
 /**
+ * Sends a request to the backend to generate a dynamic learning journey plan.
+ * @param {string} topic - The topic for the journey.
+ * @returns {Promise<object>} A promise resolving to { totalLevels, description }.
+ * @throws {Error} If the generation fails.
+ */
+export async function generateJourneyPlan(topic) {
+    try {
+        const response = await fetch('/api/generate-journey-plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+/**
  * Sends a request to the backend to generate content for a specific game level.
  * @param {object} params - The level generation parameters.
  * @param {string} params.topic - The topic of the game.
  * @param {number} params.level - The level number.
+ * @param {number} params.totalLevels - The total levels in the journey.
  * @returns {Promise<object>} A promise that resolves to the generated level data (lesson and questions).
  * @throws {Error} If the generation fails.
  */
-export async function generateLevel({ topic, level }) {
+export async function generateLevel({ topic, level, totalLevels }) {
     try {
         const response = await fetch('/api/generate-level', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ topic, level })
+            body: JSON.stringify({ topic, level, totalLevels })
         });
         return await handleResponse(response);
     } catch (error) {
@@ -70,6 +91,28 @@ export async function generateBossBattle({ topic, chapter }) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, chapter })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
+/**
+ * Sends a request to the backend to generate a hint for a quiz question.
+ * @param {object} params - The hint parameters.
+ * @param {string} params.topic - The topic of the game.
+ * @param {string} params.question - The question text.
+ * @param {Array<string>} params.options - The answer options.
+ * @returns {Promise<object>} A promise that resolves to the generated hint data.
+ * @throws {Error} If the generation fails.
+ */
+export async function generateHint({ topic, question, options }) {
+    try {
+        const response = await fetch('/api/generate-hint', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, question, options })
         });
         return await handleResponse(response);
     } catch (error) {

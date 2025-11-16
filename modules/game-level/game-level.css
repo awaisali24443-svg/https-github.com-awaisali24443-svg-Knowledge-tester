@@ -169,62 +169,100 @@
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    border: 1px solid var(--color-text-secondary);
-    color: var(--color-text-secondary);
-    font-family: var(--font-family-mono);
-    font-weight: 600;
-    font-size: 0.9rem;
+    border: 1px solid var(--color-border);
+    transition: all 0.2s ease;
+}
+.option-btn.selected::before {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
 }
 .options-grid { counter-reset: option-counter; }
 
-
-.option-btn.correct { background-color: var(--color-success-bg); border-color: var(--color-success); color: var(--color-success); }
-.option-btn.incorrect { background-color: var(--color-error-bg); border-color: var(--color-error); color: var(--color-error); }
-.option-btn:disabled { cursor: default; opacity: 1; }
-.option-btn:disabled:not(.correct):not(.incorrect) { opacity: 0.7; }
+/* Answer States */
+.option-btn.correct, .option-btn.correct:hover {
+    background-color: var(--color-success-bg);
+    border-color: var(--color-success-border);
+    color: var(--color-success);
+}
+.option-btn.correct::before {
+    background-color: var(--color-success);
+    border-color: var(--color-success);
+    color: #fff;
+    content: '✔';
+}
+.option-btn.incorrect, .option-btn.incorrect:hover {
+    background-color: var(--color-error-bg);
+    border-color: var(--color-error-border);
+    color: var(--color-error);
+    opacity: 0.7;
+}
+.option-btn.incorrect::before {
+    background-color: var(--color-error);
+    border-color: var(--color-error);
+    color: #fff;
+    content: '✖';
+}
+.option-btn.correct.selected::before {
+    content: '✔';
+}
 
 .new-quiz-footer {
     width: 100%;
     max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-md) var(--space-lg);
     display: flex;
-    justify-content: space-between;
-    padding: var(--space-md) 0;
+    align-items: center;
+    gap: var(--space-md);
+    flex-shrink: 0;
 }
-#submit-answer-btn {
-    min-width: 180px;
+
+.footer-spacer {
+    flex-grow: 1;
 }
+
+#hint-btn .btn-spinner {
+    width: 1.1em;
+    height: 1.1em;
+}
+
 
 /* --- Results State --- */
 .results-icon {
-    width: 80px; height: 80px; border-radius: 50%; margin: 0 auto var(--space-lg);
-    display: flex; align-items: center; justify-content: center; color: #fff;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto var(--space-lg) auto;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.results-icon.passed { background: var(--color-success); box-shadow: 0 0 20px var(--color-success); }
-.results-icon.failed { background: var(--color-error); box-shadow: 0 0 20px var(--color-error); }
+.results-icon.passed { background-color: var(--color-success-bg); color: var(--color-success); }
+.results-icon.failed { background-color: var(--color-error-bg); color: var(--color-error); }
 .results-icon svg { width: 40px; height: 40px; }
-#results-title { margin-bottom: var(--space-sm); }
-#results-details { margin-bottom: var(--space-xl); font-size: 1.1rem; color: var(--color-text-secondary); }
-.results-actions { display: flex; justify-content: center; gap: var(--space-md); }
 
 .xp-gain {
-    font-family: var(--font-family-mono);
-    font-size: 1.1rem;
-    color: var(--color-primary);
-    background-color: var(--color-primary-transparent);
-    padding: var(--space-sm) var(--space-md);
-    border-radius: 50px;
     display: inline-block;
-    margin-bottom: var(--space-md);
+    padding: var(--space-xs) var(--space-md);
+    background-color: var(--color-surface-hover);
+    border-radius: 20px;
+    font-family: var(--font-family-mono);
+    color: var(--color-secondary);
+    margin-bottom: var(--space-lg);
     animation: pop-in 0.5s ease-out 0.3s backwards;
 }
 
-@keyframes pop-in {
-  from { transform: scale(0.5); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+.results-actions {
+    margin-top: var(--space-xl);
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
 }
 
-
-@media (max-width: 768px) {
+@media (max-width: 600px) {
     .options-grid { grid-template-columns: 1fr; }
-    .new-quiz-content { padding: 0 var(--space-sm); }
+    .quiz-status-card { flex-direction: column; }
+    .timer-section { border-right: none; padding-right: 0; border-bottom: 1px solid var(--color-border); padding-bottom: var(--space-lg); }
 }

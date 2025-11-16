@@ -30,6 +30,21 @@ try {
 
 // --- GEMINI SCHEMAS ---
 
+const journeyPlanSchema = {
+    type: Type.OBJECT,
+    properties: {
+        totalLevels: {
+            type: Type.INTEGER,
+            description: "The ideal total number of levels (e.g., 70, 250, 600) to comprehensively teach this topic from a complete beginner to an expert. This should be a multiple of 10."
+        },
+        description: {
+            type: Type.STRING,
+            description: "A new, compelling, one-sentence description for this specific learning journey."
+        }
+    },
+    required: ["totalLevels", "description"]
+};
+
 const levelGenerationSchema = {
     type: Type.OBJECT,
     properties: {
@@ -76,21 +91,68 @@ const bossBattleGenerationSchema = {
     required: ["questions"]
 };
 
+const hintGenerationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        hint: {
+            type: Type.STRING,
+            description: "A single, short, helpful hint for the provided quiz question. It should guide the user to the correct answer without directly revealing it."
+        }
+    },
+    required: ["hint"]
+};
+
 
 // --- GEMINI SERVICE FUNCTIONS ---
 
 /**
- * Generates a game level (lesson + quiz) using the Gemini API.
- * @param {string} topic - The overall topic.
- * @param {number} level - The level number (1-500).
- * @returns {Promise<object>} The parsed level data.
+ * Analyzes a topic to determine the optimal number of levels for a learning journey.
+ * @param {string} topic - The topic to analyze.
+ * @returns {Promise<object>} An object with totalLevels and description.
  */
-async function generateLevelContent(topic, level) {
+async function generateJourneyPlan(topic) {
     if (!ai) throw new Error("AI Service not initialized.");
-    const prompt = `You are a friendly and encouraging AI tutor creating a 500-level learning game about "${topic}". The user is on Level ${level} and is a complete beginner.
+    const prompt = `You are an expert curriculum designer. Analyze the topic "${topic}".
+    
+    Your task is to determine the ideal number of levels to create a comprehensive learning journey that takes a user from a complete novice to an expert.
     
     RULES:
-    1. The difficulty must increase extremely gradually from Level 1 to 500. Level 1 must be incredibly simple, assuming zero prior knowledge. For example, for "C++", Level 1 should explain what a programming language is, who created C++, and its primary purpose. Level 500 should cover expert-level concepts.
+    1. The total number of levels must be a multiple of 10.
+    2. A simple topic (e.g., "CSS Flexbox") might be 50-100 levels. A complex topic (e.g., "Quantum Mechanics") might be 700+ levels. Use your judgment.
+    3. Also, write a new, exciting one-sentence description for this learning journey.
+    
+    Return your response in the provided JSON schema.`;
+    
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: journeyPlanSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Journey Plan for ${topic}):`, error);
+        throw new Error('Failed to generate a learning plan. The AI may be busy or the topic is restricted.');
+    }
+}
+
+
+/**
+ * Generates a game level (lesson + quiz) using the Gemini API.
+ * @param {string} topic - The overall topic.
+ * @param {number} level - The current level number.
+ * @param {number} totalLevels - The total levels in this journey.
+ * @returns {Promise<object>} The parsed level data.
+ */
+async function generateLevelContent(topic, level, totalLevels) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    const prompt = `You are a friendly and encouraging AI tutor creating a ${totalLevels}-level learning game about "${topic}". The user is on Level ${level} and is a complete beginner.
+    
+    RULES:
+    1. The difficulty must increase extremely gradually from Level 1 to ${totalLevels}. Level 1 must be incredibly simple, assuming zero prior knowledge. For example, for "C++", Level 1 should explain what a programming language is, who created C++, and its primary purpose. Level ${totalLevels} should cover expert-level concepts.
     2. Generate a bite-sized, single-paragraph lesson for Level ${level}. This lesson MUST build upon the knowledge of the previous levels and introduce ONE new, small concept.
     3. Generate 2-3 simple multiple-choice questions that test understanding of *only the concepts in this specific lesson*.
     4. Your tone must be super encouraging, like a game.
@@ -151,6 +213,48 @@ async function generateBossBattleContent(topic, chapter) {
     }
 }
 
+/**
+ * Generates a hint for a quiz question.
+ * @param {string} topic - The overall topic.
+ * @param {string} question - The quiz question.
+ * @param {Array<string>} options - The array of possible answers.
+ * @returns {Promise<object>} The parsed hint data.
+ */
+async function generateHint(topic, question, options) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    
+    const optionsString = options.map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`).join('\n');
+    
+    const prompt = `You are an AI Tutor providing a hint for a quiz.
+    
+    Topic: "${topic}"
+    Question: "${question}"
+    Options:
+    ${optionsString}
+    
+    RULES:
+    1. Generate a single, short, helpful hint.
+    2. The hint MUST NOT reveal the correct answer directly.
+    3. The hint should gently guide the user's thinking process towards the correct concept. For example, if the question is "What is the capital of France?", a good hint would be "Think about the city famous for the Eiffel Tower," not "The answer starts with 'P'."
+    
+    Return the hint in the provided JSON schema.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: hintGenerationSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Hint Generation for ${topic}):`, error);
+        throw new Error('Failed to generate a hint. The AI may be busy.');
+    }
+}
+
 
 // --- EXPRESS ROUTER ---
 const app = express();
@@ -171,13 +275,26 @@ app.use('/api', apiLimiter);
 
 // --- API Endpoints ---
 
-app.post('/api/generate-level', async (req, res) => {
-    const { topic, level } = req.body;
-    if (!topic || !level) {
-        return res.status(400).json({ error: 'Missing required parameters: topic, level' });
+app.post('/api/generate-journey-plan', async (req, res) => {
+    const { topic } = req.body;
+    if (!topic) {
+        return res.status(400).json({ error: 'Missing required parameter: topic' });
     }
     try {
-        const levelContent = await generateLevelContent(topic, level);
+        const plan = await generateJourneyPlan(topic);
+        res.json(plan);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/generate-level', async (req, res) => {
+    const { topic, level, totalLevels } = req.body;
+    if (!topic || !level || !totalLevels) {
+        return res.status(400).json({ error: 'Missing required parameters: topic, level, totalLevels' });
+    }
+    try {
+        const levelContent = await generateLevelContent(topic, level, totalLevels);
         res.json(levelContent);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -192,6 +309,19 @@ app.post('/api/generate-boss-battle', async (req, res) => {
     try {
         const bossContent = await generateBossBattleContent(topic, chapter);
         res.json(bossContent);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/generate-hint', async (req, res) => {
+    const { topic, question, options } = req.body;
+    if (!topic || !question || !options) {
+        return res.status(400).json({ error: 'Missing required parameters: topic, question, options' });
+    }
+    try {
+        const hint = await generateHint(topic, question, options);
+        res.json(hint);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -1,27 +1,43 @@
 <div class="page-container game-map-container">
-    <header class="page-header">
-        <h1 id="game-map-topic-title"></h1> <!-- For the main topic title -->
-        <h2 id="game-map-subtitle"></h2> <!-- For chapter/progress info -->
-        <div class="progress-container">
-            <div class="progress-bar">
-                <div id="progress-bar-fill"></div>
+    <div id="journey-loading-state" class="journey-loading-state">
+        <div class="spinner"></div>
+        <p>The AI is analyzing the topic and designing a custom learning path...</p>
+    </div>
+
+    <div id="journey-content" class="journey-content" style="visibility: hidden;">
+        <header class="page-header">
+            <h1 id="game-map-topic-title"></h1> <!-- For the main topic title -->
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progress-bar-fill"></div>
+                </div>
+                <span id="progress-percent-text">0%</span>
             </div>
-            <span id="progress-percent-text">0%</span>
-        </div>
-    </header>
-    <main id="map-grid" class="map-grid" aria-label="Game Progression Map">
-        <!-- Chapter or Level cards will be rendered here -->
-    </main>
-    <footer class="game-map-footer">
-        <button id="back-btn" class="btn">
-            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-left"/></svg>
-            <span id="back-btn-text">Back to Topics</span>
-        </button>
-        <button id="primary-action-btn" class="btn btn-primary">
-            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#play"/></svg>
-            <span id="primary-action-btn-text">Start</span>
-        </button>
-    </footer>
+            <!-- New chapter navigator -->
+            <div class="chapter-navigator">
+                <button id="prev-chapter-btn" class="btn" aria-label="Previous Chapter">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-left"/></svg>
+                </button>
+                <h2 id="current-chapter-display">Chapter 1</h2>
+                <button id="next-chapter-btn" class="btn" aria-label="Next Chapter">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-right"/></svg>
+                </button>
+            </div>
+        </header>
+        <main id="map-grid" class="map-grid" aria-label="Game Progression Map">
+            <!-- Level cards will be rendered here -->
+        </main>
+        <footer class="game-map-footer">
+            <button id="back-btn" class="btn">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#arrow-left"/></svg>
+                <span id="back-btn-text">Back to Journeys</span>
+            </button>
+            <button id="primary-action-btn" class="btn btn-primary">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#play"/></svg>
+                <span id="primary-action-btn-text">Start</span>
+            </button>
+        </footer>
+    </div>
 </div>
 
 <!-- Template for level nodes -->
@@ -29,19 +45,5 @@
     <div class="level-card card" tabindex="0" role="button">
         <span class="level-number"></span>
         <p class="level-status"></p>
-    </div>
-</template>
-
-<!-- New template for chapter cards -->
-<template id="chapter-card-template">
-    <div class="chapter-card card" tabindex="0" role="button">
-        <div class="chapter-card-header">
-            <h3 class="chapter-title"></h3>
-            <span class="chapter-status"></span>
-        </div>
-        <p class="chapter-levels"></p>
-        <div class="chapter-progress-bar">
-            <div class="chapter-progress-bar-fill"></div>
-        </div>
     </div>
 </template>

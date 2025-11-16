@@ -3,7 +3,7 @@
 import * as apiService from '../../services/apiService.js';
 import * as stateService from '../../services/stateService.js';
 
-let topicGrid, template;
+let topicGrid, template, journeyCreatorForm;
 
 // --- UI Rendering & Event Listeners ---
 
@@ -29,6 +29,13 @@ function renderTopics(topics) {
     });
 }
 
+function handleTopicSelection(topic) {
+    if (!topic) return;
+    // Set context and navigate to the game map for the selected topic
+    stateService.setNavigationContext({ topic });
+    window.location.hash = `#/game/${encodeURIComponent(topic)}`;
+}
+
 function handleGridInteraction(event) {
     if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
     
@@ -37,18 +44,26 @@ function handleGridInteraction(event) {
 
     event.preventDefault();
     const topic = card.dataset.topic;
-    
-    // Set context and navigate to the game map for the selected topic
-    stateService.setNavigationContext({ topic });
-    window.location.hash = `#/game/${encodeURIComponent(topic)}`;
+    handleTopicSelection(topic);
+}
+
+function handleJourneyCreatorSubmit(event) {
+    event.preventDefault();
+    const input = document.getElementById('custom-topic-input');
+    const topic = input.value.trim();
+    if (topic) {
+        handleTopicSelection(topic);
+    }
 }
 
 export async function init() {
     topicGrid = document.getElementById('topic-grid-container');
     template = document.getElementById('topic-card-template');
+    journeyCreatorForm = document.getElementById('journey-creator-form');
 
     topicGrid.addEventListener('click', handleGridInteraction);
     topicGrid.addEventListener('keydown', handleGridInteraction);
+    journeyCreatorForm.addEventListener('submit', handleJourneyCreatorSubmit);
     
     try {
         // Fetch topics directly from the API instead of using a pre-built search index

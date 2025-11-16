@@ -5,7 +5,7 @@ import * as stateService from '../../services/stateService.js';
 
 const LEVELS_PER_CHAPTER = 50;
 let journey, elements;
-let currentChapter = null; // null for chapter view, or chapter number for level view
+let currentChapter = 1; // Start with a default, will be updated in init
 let keyboardNavHandler;
 
 // --- Render Functions ---
@@ -16,68 +16,20 @@ function render() {
     elements.progressFill.style.width = `${totalProgress}%`;
     elements.progressText.textContent = `${totalProgress}%`;
 
-    if (currentChapter === null) {
-        renderChapters();
-    } else {
-        renderLevels(currentChapter);
-    }
+    renderLevels(currentChapter);
+    updateChapterNavigator();
 }
 
-function renderChapters() {
-    elements.subtitle.textContent = `A ${journey.totalLevels}-Level Journey`;
-    elements.grid.className = 'map-grid chapters-view';
-    elements.grid.innerHTML = '';
-    
-    const template = elements.chapterCardTemplate.content;
-    const totalChapters = journey.totalLevels / LEVELS_PER_CHAPTER;
-    const currentChapterForUser = Math.ceil(journey.currentLevel / LEVELS_PER_CHAPTER);
-
-    for (let i = 1; i <= totalChapters; i++) {
-        const card = template.cloneNode(true);
-        const cardEl = card.querySelector('.chapter-card');
-        cardEl.dataset.chapter = i;
-        cardEl.style.animationDelay = `${(i - 1) * 30}ms`;
-
-        const startLevel = (i - 1) * LEVELS_PER_CHAPTER + 1;
-        const endLevel = i * LEVELS_PER_CHAPTER;
-        
-        cardEl.querySelector('.chapter-title').textContent = `Chapter ${i}`;
-        cardEl.querySelector('.chapter-levels').textContent = `Levels ${startLevel}-${endLevel}`;
-        
-        const statusEl = cardEl.querySelector('.chapter-status');
-        const progressFill = cardEl.querySelector('.chapter-progress-bar-fill');
-        
-        if (i < currentChapterForUser) {
-            cardEl.classList.add('completed');
-            statusEl.textContent = 'Completed';
-            progressFill.style.width = '100%';
-        } else if (i === currentChapterForUser) {
-            cardEl.classList.add('current');
-            statusEl.textContent = 'In Progress';
-            const levelsCompletedInChapter = (journey.currentLevel - 1) % LEVELS_PER_CHAPTER;
-            progressFill.style.width = `${(levelsCompletedInChapter / LEVELS_PER_CHAPTER) * 100}%`;
-        } else {
-            cardEl.classList.add('locked');
-            statusEl.textContent = 'Locked';
-            progressFill.style.width = '0%';
-        }
-        elements.grid.appendChild(card);
-    }
-    
-    // Update footer for chapter view
-    elements.backBtnText.textContent = 'Back to Topics';
-    elements.primaryActionBtn.disabled = journey.currentLevel > journey.totalLevels;
-    elements.primaryActionBtnText.textContent = `Continue Level ${journey.currentLevel}`;
-}
 
 function renderLevels(chapter) {
-    elements.subtitle.textContent = `Chapter ${chapter}: Levels ${(chapter - 1) * LEVELS_PER_CHAPTER + 1} - ${chapter * LEVELS_PER_CHAPTER}`;
-    elements.grid.className = 'map-grid levels-view';
+    elements.grid.className = 'map-grid'; // Simplified, only one view now
     elements.grid.innerHTML = '';
 
     const template = elements.levelNodeTemplate.content;
     const startLevel = (chapter - 1) * LEVELS_PER_CHAPTER + 1;
-    const endLevel = chapter * LEVELS_PER_CHAPTER;
+    // Ensure we don't render levels beyond the journey's total
+    const endLevel = Math.min(chapter * LEVELS_PER_CHAPTER, journey.totalLevels);
+
 
     for (let i = startLevel; i <= endLevel; i++) {
         const node = template.cloneNode(true);
@@ -109,10 +61,16 @@ function renderLevels(chapter) {
         elements.grid.appendChild(node);
     }
 
-    // Update footer for level view
-    elements.backBtnText.textContent = 'Back to Chapters';
+    // Update footer button text
     elements.primaryActionBtn.disabled = journey.currentLevel > journey.totalLevels;
     elements.primaryActionBtnText.textContent = `Start Level ${journey.currentLevel}`;
+}
+
+function updateChapterNavigator() {
+    elements.chapterDisplay.textContent = `Chapter ${currentChapter}`;
+    elements.prevChapterBtn.disabled = currentChapter === 1;
+    const totalChapters = Math.ceil(journey.totalLevels / LEVELS_PER_CHAPTER);
+    elements.nextChapterBtn.disabled = currentChapter >= totalChapters;
 }
 
 // --- Event Handlers ---
@@ -124,6 +82,7 @@ function navigateToLevel(level) {
         level: level,
         journeyId: journey.id,
         isBoss: isBoss,
+        totalLevels: journey.totalLevels,
     });
     window.location.hash = '#/level';
 }
@@ -131,23 +90,11 @@ function navigateToLevel(level) {
 function handleInteraction(event) {
     if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
     
-    const targetCard = event.target.closest('.chapter-card, .level-card');
-    if (!targetCard) return;
-    
-    event.preventDefault();
-
-    if (currentChapter === null) { // We are in chapter view
-        const chapterCard = event.target.closest('.chapter-card');
-        if (chapterCard && !chapterCard.classList.contains('locked')) {
-            currentChapter = parseInt(chapterCard.dataset.chapter, 10);
-            render();
-        }
-    } else { // We are in level view
-        const levelCard = event.target.closest('.level-card');
-        if (levelCard && !levelCard.classList.contains('locked')) {
-            const level = parseInt(levelCard.dataset.level, 10);
-            navigateToLevel(level);
-        }
+    const levelCard = event.target.closest('.level-card');
+    if (levelCard && !levelCard.classList.contains('locked')) {
+        event.preventDefault();
+        const level = parseInt(levelCard.dataset.level, 10);
+        navigateToLevel(level);
     }
 }
 
@@ -192,14 +139,23 @@ function handleKeyboardNavigation(e) {
     }
 }
 
-
-function handleFooterBackClick() {
-    if (currentChapter === null) {
-        window.location.hash = '#/topics';
-    } else {
-        currentChapter = null;
+function handlePrevChapter() {
+    if (currentChapter > 1) {
+        currentChapter--;
         render();
     }
+}
+
+function handleNextChapter() {
+    const totalChapters = Math.ceil(journey.totalLevels / LEVELS_PER_CHAPTER);
+    if (currentChapter < totalChapters) {
+        currentChapter++;
+        render();
+    }
+}
+
+function handleFooterBackClick() {
+    window.location.hash = '#/topics';
 }
 
 function handleFooterPrimaryClick() {
@@ -207,19 +163,18 @@ function handleFooterPrimaryClick() {
     
     const nextLevelChapter = Math.ceil(journey.currentLevel / LEVELS_PER_CHAPTER);
     if (currentChapter !== nextLevelChapter) {
-        // If user is in chapter view or a different chapter, switch to the correct one and render levels
+        // If user is viewing a different chapter, switch to the correct one before starting
         currentChapter = nextLevelChapter;
         render();
-    } else {
-        // If already in the correct chapter view, just go to the level
-        navigateToLevel(journey.currentLevel);
     }
+    // Now that we're on the right chapter, navigate to the level
+    navigateToLevel(journey.currentLevel);
 }
 
 
 // --- Lifecycle ---
 
-export function init() {
+export async function init() {
     const { routeParams, navigationContext } = stateService.getState();
     const topic = routeParams.topic || navigationContext.topic;
 
@@ -229,35 +184,49 @@ export function init() {
         return;
     }
     
-    journey = learningPathService.startOrGetJourney(decodeURIComponent(topic));
-
     elements = {
+        loadingState: document.getElementById('journey-loading-state'),
+        journeyContent: document.getElementById('journey-content'),
         topicTitle: document.getElementById('game-map-topic-title'),
-        subtitle: document.getElementById('game-map-subtitle'),
         progressFill: document.getElementById('progress-bar-fill'),
         progressText: document.getElementById('progress-percent-text'),
         grid: document.getElementById('map-grid'),
         backBtn: document.getElementById('back-btn'),
-        backBtnText: document.getElementById('back-btn-text'),
         primaryActionBtn: document.getElementById('primary-action-btn'),
         primaryActionBtnText: document.getElementById('primary-action-btn-text'),
         levelNodeTemplate: document.getElementById('level-node-template'),
-        chapterCardTemplate: document.getElementById('chapter-card-template'),
+        chapterDisplay: document.getElementById('current-chapter-display'),
+        prevChapterBtn: document.getElementById('prev-chapter-btn'),
+        nextChapterBtn: document.getElementById('next-chapter-btn'),
     };
+    
+    try {
+        journey = await learningPathService.startOrGetJourney(decodeURIComponent(topic));
+        
+        elements.loadingState.style.display = 'none';
+        elements.journeyContent.style.visibility = 'visible';
+        
+        const initialChapter = Math.ceil(journey.currentLevel / LEVELS_PER_CHAPTER);
+        currentChapter = navigationContext.chapter || initialChapter;
+    
+        render();
+        
+        elements.grid.addEventListener('click', handleInteraction);
+        elements.grid.addEventListener('keydown', handleInteraction);
+        
+        keyboardNavHandler = handleKeyboardNavigation;
+        document.addEventListener('keydown', keyboardNavHandler);
+        
+        elements.backBtn.addEventListener('click', handleFooterBackClick);
+        elements.primaryActionBtn.addEventListener('click', handleFooterPrimaryClick);
+    
+        elements.prevChapterBtn.addEventListener('click', handlePrevChapter);
+        elements.nextChapterBtn.addEventListener('click', handleNextChapter);
 
-    // Decide initial view
-    currentChapter = navigationContext.chapter || null;
-
-    render();
-    
-    elements.grid.addEventListener('click', handleInteraction);
-    elements.grid.addEventListener('keydown', handleInteraction);
-    
-    keyboardNavHandler = handleKeyboardNavigation;
-    document.addEventListener('keydown', keyboardNavHandler);
-    
-    elements.backBtn.addEventListener('click', handleFooterBackClick);
-    elements.primaryActionBtn.addEventListener('click', handleFooterPrimaryClick);
+    } catch (error) {
+        console.error('Failed to initialize journey:', error);
+        elements.loadingState.innerHTML = `<p class="error-message">Could not create journey: ${error.message}</p><a href="#/topics" class="btn">Back to Topics</a>`;
+    }
 }
 
 export function destroy() {

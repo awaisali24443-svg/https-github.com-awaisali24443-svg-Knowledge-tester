@@ -30,4 +30,5 @@ export const ROUTES = [
     { path: '/study', module: 'study', name: 'Study Session', nav: false },
     { path: '/game/:topic', module: 'game-map', name: 'Game Map', nav: false },
     { path: '/level', module: 'game-level', name: 'Game Level', nav: false, fullBleed: true },
+    { path: '/review', module: 'quiz-review', name: 'Quiz Review', nav: false },
 ];

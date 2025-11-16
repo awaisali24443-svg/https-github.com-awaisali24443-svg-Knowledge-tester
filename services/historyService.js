@@ -82,6 +82,7 @@ export function addQuizAttempt(quizState) {
         totalQuestions: quizState.questions.length,
         difficulty: quizState.difficulty || 'medium', // Add difficulty
         date: new Date(quizState.endTime).toISOString(),
+        xpGained: quizState.xpGained,
     };
 
     history.unshift(newAttempt); // Add to the beginning of the array
@@ -90,8 +91,8 @@ export function addQuizAttempt(quizState) {
     }
     saveHistory();
     
-    // Update gamification stats after saving the attempt
-    gamificationService.updateStatsOnQuizCompletion(quizState, getHistory());
+    // Update gamification stats after saving the attempt, passing the new structured object
+    gamificationService.updateStatsOnQuizCompletion(newAttempt, getHistory());
 }
 
 /**

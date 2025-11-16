@@ -1,7 +1,7 @@
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
+import * as apiService from './apiService.js';
 
 let gameProgress = [];
-const TOTAL_LEVELS = 500;
 
 /**
  * Loads game progress from localStorage.
@@ -66,28 +66,30 @@ export function getJourneyByGoal(goal) {
 }
 
 /**
- * Gets an existing journey for a topic or creates a new one if it doesn't exist.
+ * Gets an existing journey for a topic or creates a new one by calling the AI if it doesn't exist.
+ * This is now an asynchronous operation.
  * @param {string} goal - The user-defined goal for the learning journey (topic name).
- * @returns {object} The existing or newly created journey object.
+ * @returns {Promise<object>} A promise that resolves to the existing or newly created journey object.
+ * @throws {Error} If API call fails.
  */
-export function startOrGetJourney(goal) {
-    let journey = getJourneyByGoal(goal);
-    if (journey) {
-        // Ensure existing journeys are updated to the new total levels
-        if (journey.totalLevels !== TOTAL_LEVELS) {
-            journey.totalLevels = TOTAL_LEVELS;
-            saveProgress();
-        }
-        return journey;
+export async function startOrGetJourney(goal) {
+    const existingJourney = getJourneyByGoal(goal);
+    if (existingJourney) {
+        return existingJourney;
     }
+    
+    // If it doesn't exist, generate a plan from the AI
+    const plan = await apiService.generateJourneyPlan(goal);
     
     const newJourney = {
         id: `journey_${Date.now()}`,
         goal,
+        description: plan.description, // Use AI-generated description
         currentLevel: 1,
-        totalLevels: TOTAL_LEVELS,
+        totalLevels: plan.totalLevels, // Use AI-determined level count
         createdAt: new Date().toISOString(),
     };
+    
     gameProgress.unshift(newJourney); // Add to the beginning for chronological display
     saveProgress();
     return newJourney;

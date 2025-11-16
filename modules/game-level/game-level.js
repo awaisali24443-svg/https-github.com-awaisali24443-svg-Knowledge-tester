@@ -1,6 +1,3 @@
-
-
-
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -9,6 +6,7 @@ import * as historyService from '../../services/historyService.js';
 import * as levelCacheService from '../../services/levelCacheService.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 import * as stateService from '../../services/stateService.js';
+import { showToast } from '../../services/toastService.js';
 
 let levelData;
 let currentQuestionIndex = 0;
@@ -19,6 +17,9 @@ let selectedAnswerIndex = null;
 let timerInterval = null;
 let timeLeft = 60;
 let levelContext = {};
+let userAnswers = [];
+let hintUsedThisQuestion = false;
+let xpGainedThisLevel = 0;
 
 const PASS_THRESHOLD = 0.8; // 80% to pass
 const LEVELS_PER_CHAPTER = 50; // Align with game-map logic
@@ -37,7 +38,7 @@ function switchState(targetStateId) {
 }
 
 async function startLevel() {
-    const { topic, level, journeyId, isBoss } = levelContext;
+    const { topic, level, journeyId, isBoss, totalLevels } = levelContext;
     if (!topic || !level || !journeyId) {
         window.location.hash = '/topics';
         return;
@@ -82,7 +83,7 @@ async function startLevel() {
             levelCacheService.saveLevel(topic, level, levelData);
             startQuiz(); // Boss battles go straight to the quiz
         } else {
-            levelData = await apiService.generateLevel({ topic, level });
+            levelData = await apiService.generateLevel({ topic, level, totalLevels });
             if (!levelData || !levelData.lesson || !levelData.questions || levelData.questions.length === 0) {
                 throw new Error("AI failed to generate valid level content.");
             }
@@ -107,6 +108,8 @@ function renderLesson() {
 function startQuiz() {
     currentQuestionIndex = 0;
     score = 0;
+    userAnswers = [];
+    xpGainedThisLevel = 0; // Reset XP for the level
     renderQuestion();
     switchState('level-quiz-state');
     soundService.playSound('start');
@@ -115,6 +118,7 @@ function startQuiz() {
 function renderQuestion() {
     answered = false;
     selectedAnswerIndex = null;
+    hintUsedThisQuestion = false; // Reset hint for new question
     const question = levelData.questions[currentQuestionIndex];
     
     elements.quizProgressText.textContent = `Question ${currentQuestionIndex + 1} / ${levelData.questions.length}`;
@@ -137,6 +141,12 @@ function renderQuestion() {
 
     elements.submitAnswerBtn.disabled = true;
     elements.submitAnswerBtn.textContent = 'Submit Answer';
+    
+    elements.hintBtn.disabled = false;
+    elements.hintBtn.innerHTML = `
+        <svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg>
+        <span>Hint</span>
+    `;
 
     announce(`Question ${currentQuestionIndex + 1}: ${question.question}`);
     startTimer();
@@ -191,12 +201,15 @@ function handleSubmitAnswer() {
     }
     clearInterval(timerInterval);
     answered = true;
+    userAnswers[currentQuestionIndex] = selectedAnswerIndex;
 
     const question = levelData.questions[currentQuestionIndex];
     const isCorrect = question.correctAnswerIndex === selectedAnswerIndex;
     
     if (isCorrect) {
         score++;
+        const xpForThisQuestion = hintUsedThisQuestion ? 5 : 10;
+        xpGainedThisLevel += xpForThisQuestion;
         soundService.playSound('correct');
         announce('Correct!');
     } else {
@@ -215,6 +228,7 @@ function handleSubmitAnswer() {
         btn.disabled = true;
     });
 
+    elements.hintBtn.disabled = true; // Disable hint button after answering
     elements.submitAnswerBtn.textContent = currentQuestionIndex < levelData.questions.length - 1 ? 'Next Question' : 'Show Results';
     elements.submitAnswerBtn.disabled = false;
     elements.submitAnswerBtn.focus();
@@ -227,6 +241,15 @@ function handleNextQuestion() {
     } else {
         showResults();
     }
+}
+
+function handleReviewAnswers() {
+    stateService.setNavigationContext({
+        ...levelContext,
+        questions: levelData.questions,
+        userAnswers: userAnswers,
+    });
+    window.location.hash = '#/review';
 }
 
 function showResults() {
@@ -242,9 +265,10 @@ function showResults() {
         totalQuestions: totalQuestions,
         startTime: Date.now() - (totalQuestions * 60000), // Approximate
         endTime: Date.now(),
+        xpGained: xpGainedThisLevel,
     });
 
-    const xpGained = score * 10;
+    const xpGained = xpGainedThisLevel;
     if (xpGained > 0) {
         elements.xpGainText.textContent = `+${xpGained} XP`;
         elements.xpGainText.style.display = 'inline-block';
@@ -252,13 +276,15 @@ function showResults() {
         elements.xpGainText.style.display = 'none';
     }
 
+    const reviewBtnHTML = `<button id="review-answers-btn" class="btn">Review Answers</button>`;
+
     if (passed) {
         elements.resultsIcon.innerHTML = `<svg><use href="/assets/icons/feather-sprite.svg#check-circle"/></svg>`;
         elements.resultsIcon.className = 'results-icon passed';
         elements.resultsTitle.textContent = `Level ${levelContext.level} Complete!`;
         const resultText = `You scored ${score} out of ${totalQuestions}. Great job!`;
         elements.resultsDetails.textContent = resultText;
-        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn btn-primary">Continue Journey</a>`;
+        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn btn-primary">Continue Journey</a> ${reviewBtnHTML}`;
         
         announce(`Level Complete! ${resultText}`);
 
@@ -275,10 +301,13 @@ function showResults() {
         elements.resultsActions.innerHTML = `
             <a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">Back to Map</a>
             <button id="retry-level-btn" class="btn btn-primary">Try Again</button>
+            ${reviewBtnHTML}
         `;
         document.getElementById('retry-level-btn').addEventListener('click', startQuiz);
         announce(`Quiz finished. ${resultText}`);
     }
+    
+    document.getElementById('review-answers-btn').addEventListener('click', handleReviewAnswers);
     switchState('level-results-state');
 }
 
@@ -292,6 +321,39 @@ async function handleQuit() {
     });
     if (confirmed) {
         window.location.hash = `#/game/${encodeURIComponent(levelContext.topic)}`;
+    }
+}
+
+async function handleHintClick() {
+    if (elements.hintBtn.disabled) return;
+
+    elements.hintBtn.disabled = true;
+    elements.hintBtn.innerHTML = `<div class="btn-spinner"></div><span>Generating...</span>`;
+
+    try {
+        const question = levelData.questions[currentQuestionIndex];
+        const hintData = await apiService.generateHint({
+            topic: levelContext.topic,
+            question: question.question,
+            options: question.options
+        });
+
+        if (hintData && hintData.hint) {
+            showToast(`Hint: ${hintData.hint}`, 'info', 5000); // Show for 5 seconds
+            hintUsedThisQuestion = true;
+        } else {
+            throw new Error("Received an empty hint from the AI.");
+        }
+    } catch (error) {
+        showToast(error.message, 'error');
+        // Re-enable the button if hint generation fails
+        elements.hintBtn.disabled = false;
+    } finally {
+        // Restore button text but keep it disabled for this question
+        elements.hintBtn.innerHTML = `
+            <svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg>
+            <span>Hint</span>
+        `;
     }
 }
 
@@ -317,6 +379,7 @@ export function init() {
         // Quiz
         quitBtn: document.getElementById('quit-btn'),
         homeBtn: document.getElementById('home-btn'),
+        hintBtn: document.getElementById('hint-btn'),
         timerText: document.getElementById('timer-text'),
         quizProgressText: document.getElementById('quiz-progress-text'),
         quizProgressBarFill: document.getElementById('quiz-progress-bar-fill'),
@@ -337,6 +400,7 @@ export function init() {
     elements.submitAnswerBtn.addEventListener('click', handleSubmitAnswer);
     elements.quitBtn.addEventListener('click', handleQuit);
     elements.homeBtn.addEventListener('click', goHome);
+    elements.hintBtn.addEventListener('click', handleHintClick);
 
     startLevel();
 }
