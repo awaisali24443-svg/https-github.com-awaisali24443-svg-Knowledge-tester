@@ -231,7 +231,7 @@ async function startConversation() {
                 finalizeLiveTranscription();
                 
                 const checkPlaybackAndSetListening = () => {
-                    if (!outputAudioContext || outputAudioContext.currentTime + 0.1 >= nextStartTime) {
+                    if (!outputAudioContext || outputAudioContext.state === 'closed' || outputAudioContext.currentTime + 0.1 >= nextStartTime) {
                          if (currentState !== STATE.IDLE && currentState !== STATE.ERROR) {
                             updateUI(STATE.LISTENING);
                         }
