@@ -25,7 +25,7 @@ const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 const APP_SHELL_URLS = [
     '/',
     'index.html',
-    'index.tsx',
+    'index.js',
     'constants.js',
     'manifest.json',
     'data/topics.json',

@@ -45,7 +45,7 @@ function decode(base64) {
 }
 
 async function decodeAudioData(data, ctx, sampleRate, numChannels) {
-    const dataInt16 = new Int16Array(data.buffer);
+    const dataInt16 = new Int16Array(data.buffer, data.byteOffset, data.byteLength / 2);
     const frameCount = dataInt16.length / numChannels;
     const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
 
