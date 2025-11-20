@@ -1,3 +1,4 @@
+
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -113,13 +114,46 @@ async function startLevel() {
     }
 }
 
+/**
+ * Background process to fetch the next level while the user is celebrating.
+ * This makes the "Continue" action feel instant.
+ */
+async function preloadNextLevel() {
+    const nextLevel = levelContext.level + 1;
+    if (nextLevel > levelContext.totalLevels) return; // End of journey
+
+    // Check cache first to avoid waste
+    if (levelCacheService.getLevel(levelContext.topic, nextLevel)) return;
+
+    try {
+        const isBoss = nextLevel % LEVELS_PER_CHAPTER === 0;
+        const { topic, totalLevels } = levelContext;
+
+        // We don't await this in the main UI thread flow, but we do inside this async function
+        let data;
+        if (isBoss) {
+            const chapter = Math.ceil(nextLevel / LEVELS_PER_CHAPTER);
+            data = await apiService.generateBossBattle({ topic, chapter });
+        } else {
+            data = await apiService.generateLevel({ topic, level: nextLevel, totalLevels });
+        }
+
+        if (data) {
+            levelCacheService.saveLevel(topic, nextLevel, data);
+            console.log(`[Preload] Level ${nextLevel} ready.`);
+        }
+    } catch (e) {
+        console.warn("[Preload] Failed silently:", e);
+        // Silent fail is okay for preloading; the user will just trigger normal loading later
+    }
+}
+
 function renderLesson() {
     elements.lessonTitle.textContent = `Level ${levelContext.level}: ${levelContext.topic}`;
     elements.lessonBody.innerHTML = markdownService.render(levelData.lesson);
     
     // Render mermaid diagrams if any
     if (window.mermaid) {
-        // Small timeout to ensure DOM insertion is complete before mermaid tries to find nodes
         setTimeout(() => {
             try {
                 mermaid.init(undefined, document.querySelectorAll('.mermaid'));
@@ -333,8 +367,14 @@ function showResults() {
         }
         
         elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn btn-primary">Continue Journey</a> ${reviewBtnHTML}`;
+        
+        // Update progress
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
+
+        // PERFORMANCE OPTIMIZATION: Preload the next level now!
+        preloadNextLevel();
+
     } else {
         elements.resultsIcon.innerHTML = `<svg><use href="/assets/icons/feather-sprite.svg#x-circle"/></svg>`;
         elements.resultsIcon.className = 'results-icon failed';
