@@ -22,6 +22,14 @@
         </div>
     </div>
 
+    <!-- My Journeys Section -->
+    <div id="active-journeys-section" style="display: none;">
+        <h2>My Active Journeys</h2>
+        <div id="active-journeys-grid" class="topic-grid" style="margin-bottom: var(--space-xxl);">
+            <!-- Active journeys rendered here -->
+        </div>
+    </div>
+
     <h2>Explore Topics</h2>
     <div id="topic-grid-container" class="topic-grid">
         <!-- Topic cards will be rendered here -->
@@ -33,6 +41,17 @@
         <div class="topic-card-content">
             <h3 class="topic-name"></h3>
             <p class="topic-description"></p>
+        </div>
+    </div>
+</template>
+<template id="active-journey-template">
+    <div class="card topic-card active-journey-card" tabindex="0" role="button">
+        <div class="topic-card-content">
+            <div class="journey-status-badge">Level <span class="journey-level"></span></div>
+            <h3 class="topic-name"></h3>
+            <div class="journey-progress-bar">
+                <div class="journey-progress-fill"></div>
+            </div>
         </div>
     </div>
 </template>

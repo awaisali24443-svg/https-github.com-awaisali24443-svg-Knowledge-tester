@@ -1,3 +1,4 @@
+
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 import * as apiService from './apiService.js';
 
@@ -68,18 +69,36 @@ export function getJourneyByGoal(goal) {
 
 /**
  * Gets an existing journey for a topic or creates a new one by calling the AI if it doesn't exist.
- * This is now an asynchronous operation with race condition protection.
  * @param {string} goal - The user-defined goal for the learning journey (topic name).
+ * @param {object} [preCalculatedPlan] - Optional. If provided, uses this plan instead of calling the API.
  * @returns {Promise<object>} A promise that resolves to the existing or newly created journey object.
  * @throws {Error} If API call fails.
  */
-export function startOrGetJourney(goal) {
+export function startOrGetJourney(goal, preCalculatedPlan = null) {
     const existingJourney = getJourneyByGoal(goal);
     if (existingJourney) {
         return Promise.resolve(existingJourney);
     }
 
     const lowerCaseGoal = goal.toLowerCase();
+    
+    // If we have a plan already (from the creator UI), create it immediately without API call
+    if (preCalculatedPlan) {
+        const newJourney = {
+            id: `journey_${Date.now()}`,
+            goal,
+            description: preCalculatedPlan.description,
+            currentLevel: 1,
+            totalLevels: preCalculatedPlan.totalLevels,
+            createdAt: new Date().toISOString(),
+        };
+
+        gameProgress.unshift(newJourney);
+        saveProgress();
+        return Promise.resolve(newJourney);
+    }
+
+    // Otherwise, handle standard generation with race-condition protection
     if (pendingJourneys.has(lowerCaseGoal)) {
         return pendingJourneys.get(lowerCaseGoal);
     }

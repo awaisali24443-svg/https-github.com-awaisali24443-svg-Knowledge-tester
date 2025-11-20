@@ -1,10 +1,14 @@
 
+
 import * as apiService from '../../services/apiService.js';
 import * as stateService from '../../services/stateService.js';
 import * as modalService from '../../services/modalService.js';
+import * as learningPathService from '../../services/learningPathService.js';
 import { showToast } from '../../services/toastService.js';
 
-let topicGrid, template, journeyCreatorForm;
+let topicGrid, activeJourneysGrid, activeJourneysSection;
+let template, activeJourneyTemplate;
+let journeyCreatorForm;
 
 // --- UI Rendering & Event Listeners ---
 
@@ -27,6 +31,38 @@ function renderTopics(topics) {
         card.querySelector('.topic-description').textContent = topic.description;
         
         topicGrid.appendChild(card);
+    });
+}
+
+function renderActiveJourneys() {
+    const journeys = learningPathService.getAllJourneys();
+    
+    if (!journeys || journeys.length === 0) {
+        activeJourneysSection.style.display = 'none';
+        return;
+    }
+
+    activeJourneysSection.style.display = 'block';
+    activeJourneysGrid.innerHTML = '';
+
+    journeys.forEach((journey, index) => {
+        const card = activeJourneyTemplate.content.cloneNode(true);
+        const cardEl = card.querySelector('.topic-card');
+        cardEl.dataset.topic = journey.goal;
+        // Assign a random style class if none exists (or based on hash) to make it colorful
+        const styles = ['topic-programming', 'topic-space', 'topic-biology', 'topic-arts', 'topic-finance', 'topic-robotics'];
+        const styleIndex = journey.goal.length % styles.length;
+        cardEl.classList.add(styles[styleIndex]);
+        
+        cardEl.style.animationDelay = `${index * 30}ms`;
+        
+        card.querySelector('.topic-name').textContent = journey.goal;
+        card.querySelector('.journey-level').textContent = journey.currentLevel;
+        
+        const progress = Math.min(100, ((journey.currentLevel - 1) / journey.totalLevels) * 100);
+        card.querySelector('.journey-progress-fill').style.width = `${progress}%`;
+        
+        activeJourneysGrid.appendChild(card);
     });
 }
 
@@ -87,8 +123,11 @@ async function handleJourneyCreatorSubmit(event) {
             cancelText: 'Cancel'
         });
 
-        // 4. If confirmed, proceed to the journey
+        // 4. If confirmed, SAVE the journey and proceed
         if (confirmed) {
+            // CRITICAL: Save the journey using the plan we just generated.
+            // This prevents a second API call in the game-map and ensures the journey exists.
+            await learningPathService.startOrGetJourney(topic, plan);
             handleTopicSelection(topic);
         }
 
@@ -106,13 +145,22 @@ async function handleJourneyCreatorSubmit(event) {
 
 export async function init() {
     topicGrid = document.getElementById('topic-grid-container');
+    activeJourneysGrid = document.getElementById('active-journeys-grid');
+    activeJourneysSection = document.getElementById('active-journeys-section');
+    
     template = document.getElementById('topic-card-template');
+    activeJourneyTemplate = document.getElementById('active-journey-template');
     journeyCreatorForm = document.getElementById('journey-creator-form');
 
     topicGrid.addEventListener('click', handleGridInteraction);
     topicGrid.addEventListener('keydown', handleGridInteraction);
+    activeJourneysGrid.addEventListener('click', handleGridInteraction);
+    activeJourneysGrid.addEventListener('keydown', handleGridInteraction);
     journeyCreatorForm.addEventListener('submit', handleJourneyCreatorSubmit);
     
+    // Render user's active journeys first
+    renderActiveJourneys();
+
     try {
         // Fetch topics directly from the API instead of using a pre-built search index
         const allTopics = await apiService.fetchTopics();

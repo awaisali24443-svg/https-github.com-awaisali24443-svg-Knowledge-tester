@@ -105,6 +105,28 @@ body::after {
     }
 }
 
+/* --- Global Keyframe Animations --- */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fade-slide-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pop-in {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 
 /* --- App Layout --- */
 #app-wrapper {
@@ -487,41 +509,175 @@ a:hover { text-decoration: underline; }
 .form-input, .form-select {
     width: 100%;
     padding: 0.8rem 1rem;
-    background-color: var(--color--- START OF FILE constants.js ---
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    color: var(--color-text);
+    font-family: var(--font-family-body);
+    font-size: 1rem;
+    transition: border-color var(--transition-speed-fast), box-shadow var(--transition-speed-fast);
+}
+.form-input:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-transparent);
+}
 
+/* --- Utility Classes --- */
+.text-center { text-align: center; }
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+.hidden { display: none !important; }
 
+/* Toast Notifications */
+#toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
 
+.toast {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-left: 4px solid var(--color-primary);
+    padding: 12px 20px;
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    animation: toast-in 0.3s ease-out forwards;
+    pointer-events: auto;
+    max-width: 300px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
 
+.toast-success { border-left-color: var(--color-success); }
+.toast-error { border-left-color: var(--color-error); }
 
-export const LOCAL_STORAGE_KEYS = {
-    CONFIG: 'knowledge-tester-config',
-    LIBRARY: 'knowledge-tester-library',
-    GAME_PROGRESS: 'knowledge-tester-game-progress',
-    HISTORY: 'knowledge-tester-history',
-    GAMIFICATION: 'knowledge-tester-gamification',
-    WELCOME_COMPLETED: 'knowledge-tester-welcome-completed',
-};
+@keyframes toast-in {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
 
-// Re-enabling all features and routes for the full application experience.
-export const FEATURES = {
-    AURAL_MODE: true,
-};
+/* Modal */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px);
+    z-index: 1100;
+    animation: fade-in 0.2s ease-out;
+}
 
-export const ROUTES = [
-    // Main navigation routes
-    { path: '/', module: 'home', name: 'Home', icon: 'home', nav: true },
-    { path: '/topics', module: 'topic-list', name: 'Journeys', icon: 'git-branch', nav: true },
-    { path: '/library', module: 'library', name: 'Library', icon: 'book', nav: true },
-    { path: '/history', module: 'history', name: 'History', icon: 'archive', nav: true },
-    { path: '/profile', module: 'profile', name: 'Profile', icon: 'user', nav: true },
-    { path: '/aural', module: 'aural', name: 'Aural Tutor', icon: 'mic', nav: true, fullBleed: true },
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius);
+    padding: var(--space-xl);
+    z-index: 1101;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 
-    // Footer/Settings routes
-    { path: '/settings', module: 'settings', name: 'Settings', icon: 'settings', nav: true, footer: true },
+.modal-header h2 { margin-bottom: var(--space-md); font-size: var(--fs-h3); }
+.modal-body { margin-bottom: var(--space-xl); color: var(--color-text-secondary); }
+.modal-footer { display: flex; justify-content: flex-end; gap: var(--space-md); }
 
-    // Non-navigational routes (part of application flow)
-    { path: '/study', module: 'study', name: 'Study Session', nav: false },
-    { path: '/game/:topic', module: 'game-map', name: 'Game Map', nav: false },
-    { path: '/level', module: 'game-level', name: 'Game Level', nav: false, fullBleed: true },
-    { path: '/review', module: 'quiz-review', name: 'Quiz Review', nav: false },
-];
+/* Offline Indicator */
+.offline-indicator {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background-color: var(--color-error);
+    color: white;
+    text-align: center;
+    padding: 5px;
+    font-size: 0.8rem;
+    z-index: 9999;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--color-surface-active);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-border);
+}
+
+/* Loading Spinner */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-surface-active);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- Responsive Tweaks --- */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width-collapsed: 0px; /* Hide sidebar on mobile */
+        --page-padding: 1rem;
+        --fs-h1: 2rem;
+    }
+    
+    #app-wrapper {
+        flex-direction: column-reverse; /* Bottom nav on mobile */
+    }
+    
+    #sidebar {
+        width: 100%;
+        height: var(--bottom-nav-height);
+        flex-direction: row;
+        border-right: none;
+        border-top: 1px solid var(--color-border);
+        padding: 0;
+        justify-content: space-around;
+    }
+    
+    #sidebar:hover {
+        width: 100%; /* No expansion on mobile */
+    }
+    
+    .sidebar-logo { display: none; }
+    .sidebar-link { padding: 0; justify-content: center; flex-direction: column; height: 100%; width: 100%; }
+    .sidebar-link .icon { margin-right: 0; margin-bottom: 4px; }
+    .sidebar-link .text { font-size: 0.7rem; opacity: 1; }
+    .sidebar-link.active::before {
+        top: 0; left: 20%; right: 20%; bottom: auto; width: auto; height: 3px; border-radius: 0 0 3px 3px;
+    }
+    
+    /* Hide non-mobile nav items if necessary, or use media queries in rendering logic */
+}
