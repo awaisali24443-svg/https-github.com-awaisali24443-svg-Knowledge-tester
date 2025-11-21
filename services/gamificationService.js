@@ -8,7 +8,8 @@ const defaultStats = {
     currentStreak: 0,
     lastQuizDate: null,
     unlockedAchievements: [],
-    dailyQuests: { date: null, quests: [] }
+    dailyQuests: { date: null, quests: [] },
+    dailyChallenge: { date: null, completed: false }
 };
 
 let stats = { ...defaultStats };
@@ -72,8 +73,24 @@ function checkDailyQuests() {
         const shuffled = [...QUEST_TYPES].sort(() => 0.5 - Math.random());
         const newQuests = shuffled.slice(0, 3).map(q => ({ ...q, completed: false }));
         stats.dailyQuests = { date: today, quests: newQuests };
+        stats.dailyChallenge = { date: today, completed: false };
         saveStats();
     }
+}
+
+export function isDailyChallengeCompleted() {
+    return stats.dailyChallenge && stats.dailyChallenge.completed;
+}
+
+export function completeDailyChallenge() {
+    if (!stats.dailyChallenge.completed) {
+        stats.dailyChallenge.completed = true;
+        stats.xp += 200; 
+        showToast("Daily Challenge Complete! +200 XP", "success");
+        saveStats();
+        return true;
+    }
+    return false;
 }
 
 export function checkQuestProgress(action) {
@@ -137,7 +154,6 @@ function updateStreak(today) {
 }
 
 function checkAchievements(quizAttempt, history) {
-    // We need library for the Librarian achievement check
     const libraryStr = localStorage.getItem(LOCAL_STORAGE_KEYS.LIBRARY);
     const library = libraryStr ? JSON.parse(libraryStr) : [];
 

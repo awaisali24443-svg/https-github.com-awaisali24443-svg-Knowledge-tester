@@ -7,6 +7,7 @@ import * as historyService from '../../services/historyService.js';
 import * as levelCacheService from '../../services/levelCacheService.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 import * as stateService from '../../services/stateService.js';
+import * as libraryService from '../../services/libraryService.js';
 import { showToast } from '../../services/toastService.js';
 
 let levelData;
@@ -114,22 +115,16 @@ async function startLevel() {
     }
 }
 
-/**
- * Background process to fetch the next level while the user is celebrating.
- * This makes the "Continue" action feel instant.
- */
 async function preloadNextLevel() {
     const nextLevel = levelContext.level + 1;
-    if (nextLevel > levelContext.totalLevels) return; // End of journey
+    if (nextLevel > levelContext.totalLevels) return; 
 
-    // Check cache first to avoid waste
     if (levelCacheService.getLevel(levelContext.topic, nextLevel)) return;
 
     try {
         const isBoss = nextLevel % LEVELS_PER_CHAPTER === 0;
         const { topic, totalLevels } = levelContext;
 
-        // We don't await this in the main UI thread flow, but we do inside this async function
         let data;
         if (isBoss) {
             const chapter = Math.ceil(nextLevel / LEVELS_PER_CHAPTER);
@@ -144,7 +139,6 @@ async function preloadNextLevel() {
         }
     } catch (e) {
         console.warn("[Preload] Failed silently:", e);
-        // Silent fail is okay for preloading; the user will just trigger normal loading later
     }
 }
 
@@ -152,7 +146,6 @@ function renderLesson() {
     elements.lessonTitle.textContent = `Level ${levelContext.level}: ${levelContext.topic}`;
     elements.lessonBody.innerHTML = markdownService.render(levelData.lesson);
     
-    // Render mermaid diagrams if any
     if (window.mermaid) {
         setTimeout(() => {
             try {
@@ -173,7 +166,6 @@ function startQuiz() {
     userAnswers = [];
     xpGainedThisLevel = 0;
     
-    // Boss Battle Init
     if (levelContext.isBoss) {
         bossHp = 100;
         damagePerHit = 100 / levelData.questions.length;
@@ -247,7 +239,6 @@ function handleOptionClick(event) {
     const button = event.target.closest('.option-btn');
     if (answered || !button) return;
     
-    // Tactile feedback on selection
     soundService.playSound('click');
 
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
@@ -275,12 +266,9 @@ function handleSubmitAnswer() {
         soundService.playSound('correct');
         announce('Correct!');
 
-        // Boss Battle Damage Logic
         if (levelContext.isBoss) {
             bossHp = Math.max(0, bossHp - damagePerHit);
             elements.bossHealthFill.style.width = `${bossHp}%`;
-            
-            // Screen Shake Effect
             document.body.classList.add('shake');
             setTimeout(() => document.body.classList.remove('shake'), 500);
         }
@@ -290,7 +278,6 @@ function handleSubmitAnswer() {
         const correctAnswerText = question.options[question.correctAnswerIndex];
         announce(`Incorrect. The correct answer was: ${correctAnswerText}`);
         
-        // Boss Battle Taking Damage Logic
         if (levelContext.isBoss) {
             document.body.classList.add('damage-flash');
             setTimeout(() => document.body.classList.remove('damage-flash'), 500);
@@ -344,6 +331,20 @@ function showResults() {
         xpGained: xpGainedThisLevel,
     });
 
+    // Auto-Save Mistakes
+    let mistakesSaved = 0;
+    levelData.questions.forEach((q, index) => {
+        if (userAnswers[index] !== q.correctAnswerIndex && userAnswers[index] !== undefined) {
+            if (!libraryService.isQuestionSaved(q)) {
+                libraryService.saveQuestion(q); 
+                mistakesSaved++;
+            }
+        }
+    });
+    if (mistakesSaved > 0) {
+        showToast(`${mistakesSaved} mistake(s) saved to Library.`, 'info', 4000);
+    }
+
     const xpGained = xpGainedThisLevel;
     if (xpGained > 0) {
         elements.xpGainText.textContent = `+${xpGained} XP`;
@@ -360,19 +361,17 @@ function showResults() {
         
         if (levelContext.isBoss) {
              elements.resultsTitle.textContent = `Boss Defeated!`;
-             elements.resultsDetails.textContent = `You dealt final damage and conquered Chapter ${Math.ceil(levelContext.level / LEVELS_PER_CHAPTER)}!`;
+             elements.resultsDetails.textContent = `You conquered Chapter ${Math.ceil(levelContext.level / LEVELS_PER_CHAPTER)}!`;
         } else {
              elements.resultsTitle.textContent = `Level ${levelContext.level} Complete!`;
-             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Great job!`;
+             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}.`;
         }
         
         elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn btn-primary">Continue Journey</a> ${reviewBtnHTML}`;
         
-        // Update progress
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
 
-        // PERFORMANCE OPTIMIZATION: Preload the next level now!
         preloadNextLevel();
 
     } else {
@@ -381,10 +380,10 @@ function showResults() {
         
         if (levelContext.isBoss) {
              elements.resultsTitle.textContent = 'Boss Fight Failed';
-             elements.resultsDetails.textContent = `The boss has ${Math.ceil(bossHp)}% HP remaining. Review your strategy and try again.`;
+             elements.resultsDetails.textContent = `The boss survived. Try again.`;
         } else {
              elements.resultsTitle.textContent = 'Keep Practicing!';
-             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Review the lesson and try again.`;
+             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Review the lesson.`;
         }
        
         elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">Back to Map</a> <button id="retry-level-btn" class="btn btn-primary">Try Again</button> ${reviewBtnHTML}`;
@@ -398,7 +397,7 @@ function showResults() {
 async function handleQuit() {
     const confirmed = await showConfirmationModal({
         title: 'Quit Quiz?',
-        message: 'Are you sure you want to quit? Your progress in this level will not be saved.',
+        message: 'Your progress in this level will not be saved.',
         confirmText: 'Yes, Quit',
         cancelText: 'Cancel',
         danger: true,
@@ -507,7 +506,6 @@ export function init() {
     elements = {
         announcer: document.getElementById('announcer-region'),
         timerAnnouncer: document.getElementById('timer-announcer-region'),
-        loadingTitle: document.getElementById('loading-title'),
         cancelBtn: document.getElementById('cancel-generation-btn'),
         lessonTitle: document.getElementById('lesson-title'),
         lessonBody: document.getElementById('lesson-body'),

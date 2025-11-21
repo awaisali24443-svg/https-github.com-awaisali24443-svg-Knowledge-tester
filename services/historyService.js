@@ -1,3 +1,4 @@
+
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 import { showToast } from './toastService.js';
 import * as gamificationService from './gamificationService.js';
@@ -55,6 +56,25 @@ export function getRecentHistory(count = 3) {
     return getHistory().slice(0, count);
 }
 
+/**
+ * Gets context about the user's last significant activity.
+ * Useful for seeding AI conversations.
+ */
+export function getLastContext() {
+    const sorted = getHistory();
+    const lastStruggle = sorted.find(h => h.type === 'quiz' && (h.score / h.totalQuestions) < 0.7);
+    
+    if (lastStruggle) {
+        return `The user recently struggled with "${lastStruggle.topic}" (Score: ${lastStruggle.score}/${lastStruggle.totalQuestions}). Offer to help clarify concepts from that topic.`;
+    }
+    
+    const lastActivity = sorted[0];
+    if (lastActivity) {
+        return `The user recently completed "${lastActivity.topic}". Ask if they want to deepen their knowledge there.`;
+    }
+    
+    return "The user is starting a new session. Ask what they want to learn today.";
+}
 
 /**
  * Adds a completed quiz attempt to the history.
@@ -110,7 +130,6 @@ export function addAuralSession(sessionData) {
     
     if (newSession.xpGained > 0) {
         // Optionally trigger generic XP update if gamification service supports it directly
-        // For now we just save it.
     }
 }
 

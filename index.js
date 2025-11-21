@@ -1,3 +1,4 @@
+
 import { ROUTES, LOCAL_STORAGE_KEYS } from './constants.js';
 import * as configService from './services/configService.js';
 import { renderSidebar } from './services/sidebarService.js';
@@ -118,13 +119,11 @@ async function loadModule(route) {
         }
     };
 
-    // View Transitions API
     if (document.startViewTransition) {
         const transition = document.startViewTransition(async () => {
              await renderNewModule();
         });
     } else {
-        // Fallback for older browsers
         await new Promise(resolve => {
             const handler = (event) => {
                 if (event.target === appContainer) {
@@ -189,6 +188,13 @@ function showWelcomeScreen() {
 
 async function main() {
     try {
+        // PWA Install Capture
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            window.deferredInstallPrompt = e;
+            window.dispatchEvent(new CustomEvent('app-installable'));
+        });
+
         configService.init();
         applyAppSettings(configService.getConfig());
         soundService.init(configService);

@@ -126,6 +126,17 @@ const explanationSchema = {
     required: ["explanation"]
 };
 
+const dailyChallengeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        question: { type: Type.STRING },
+        options: { type: Type.ARRAY, items: { type: Type.STRING } },
+        correctAnswerIndex: { type: Type.INTEGER },
+        topic: { type: Type.STRING }
+    },
+    required: ["question", "options", "correctAnswerIndex", "topic"]
+};
+
 
 // --- GEMINI SERVICE FUNCTIONS ---
 
@@ -359,6 +370,58 @@ async function explainConcept(topic, concept, context) {
     }
 }
 
+async function generateDailyChallenge() {
+    if (!ai) throw new Error("AI Service not initialized.");
+    const categories = ["Science", "Technology", "History", "Space", "Coding", "Biology"];
+    const topic = categories[Math.floor(Math.random() * categories.length)];
+    
+    const prompt = `Generate one single, interesting trivia question about "${topic}".
+    Difficulty: Medium.
+    Format: JSON with question, options (4), correctAnswerIndex, and topic.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: dailyChallengeSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error("Daily Challenge Error:", error);
+        throw new Error("Failed to generate challenge.");
+    }
+}
+
+async function explainError(topic, question, userChoice, correctChoice) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    const prompt = `The user answered a question about "${topic}" incorrectly.
+    Question: "${question}"
+    User Chose: "${userChoice}" (Incorrect)
+    Correct Answer: "${correctChoice}"
+    
+    Task: Explain WHY the user's choice is a common misconception or why it is wrong in this context. Be specific to the error.
+    
+    Return JSON with 'explanation'.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: explanationSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error("Error Explanation Error:", error);
+        throw new Error("Failed to explain error.");
+    }
+}
+
 
 // --- EXPRESS ROUTER ---
 const app = express();
@@ -454,6 +517,14 @@ app.post('/api/explain-concept', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+});
+
+app.get('/api/daily-challenge', async (req, res) => {
+    try { res.json(await generateDailyChallenge()); } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/explain-error', async (req, res) => {
+    try { res.json(await explainError(req.body.topic, req.body.question, req.body.userChoice, req.body.correctChoice)); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/topics', async (req, res) => {

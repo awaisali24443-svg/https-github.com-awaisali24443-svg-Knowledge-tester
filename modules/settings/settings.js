@@ -8,21 +8,15 @@ import * as levelCacheService from '../../services/levelCacheService.js';
 let elements = {};
 const animationLevels = ['off', 'subtle', 'full'];
 
-/**
- * Updates the visual state of the segmented theme toggle control.
- * Moves the indicator and sets ARIA attributes and tabindex for accessibility.
- * @param {HTMLElement} button - The theme button that should be active.
- * @param {boolean} [instant=false] - If true, applies changes without transition.
- */
 function setActiveThemeButton(button, instant = false) {
     if (!button) return;
 
     elements.themeToggleButtons.forEach(btn => {
         btn.setAttribute('aria-checked', 'false');
-        btn.tabIndex = -1; // Make non-selected buttons unfocusable via Tab
+        btn.tabIndex = -1;
     });
     button.setAttribute('aria-checked', 'true');
-    button.tabIndex = 0; // Make selected button focusable
+    button.tabIndex = 0; 
 
     const indicator = elements.themeToggle.querySelector('.segmented-control-indicator');
     const containerRect = elements.themeToggle.getBoundingClientRect();
@@ -39,15 +33,12 @@ function setActiveThemeButton(button, instant = false) {
     if (instant) setTimeout(() => { indicator.style.transition = ''; }, 50);
 }
 
-/**
- * Loads current settings from the config service and updates the UI.
- */
 function loadSettings() {
     const config = configService.getConfig();
     elements.soundToggle.checked = config.enableSound;
 
     const activeThemeButton = elements.themeToggle.querySelector(`button[data-theme="${config.theme}"]`);
-    setActiveThemeButton(activeThemeButton, true); // Instant update on load
+    setActiveThemeButton(activeThemeButton, true); 
     
     elements.animationSlider.value = animationLevels.indexOf(config.animationIntensity);
 }
@@ -74,7 +65,7 @@ function handleThemeToggleKeydown(event) {
     const { key } = event;
     if (key !== 'ArrowLeft' && key !== 'ArrowRight') return;
 
-    event.preventDefault(); // Prevent page scroll
+    event.preventDefault();
 
     const buttons = Array.from(elements.themeToggleButtons);
     const checkedButton = elements.themeToggle.querySelector('button[aria-checked="true"]');
@@ -87,7 +78,7 @@ function handleThemeToggleKeydown(event) {
     }
 
     const newButton = buttons[currentIndex];
-    newButton.focus(); // Move focus to the new button
+    newButton.focus();
     const newTheme = newButton.dataset.theme;
     setActiveThemeButton(newButton);
     configService.setConfig({ theme: newTheme });
@@ -111,6 +102,20 @@ async function handleClearData() {
     }
 }
 
+function handleInstallClick() {
+    const promptEvent = window.deferredInstallPrompt;
+    if (!promptEvent) return;
+    
+    promptEvent.prompt();
+    promptEvent.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+            console.log('User accepted the A2HS prompt');
+        }
+        window.deferredInstallPrompt = null;
+        if(elements.installSection) elements.installSection.style.display = 'none';
+    });
+}
+
 export function init() {
     elements = {
         soundToggle: document.getElementById('sound-toggle'),
@@ -118,6 +123,8 @@ export function init() {
         clearDataBtn: document.getElementById('clear-data-btn'),
         themeToggle: document.getElementById('theme-toggle-group'),
         themeToggleButtons: document.querySelectorAll('#theme-toggle-group button'),
+        installSection: document.getElementById('install-app-section'),
+        installBtn: document.getElementById('install-app-btn'),
     };
 
     loadSettings();
@@ -127,6 +134,11 @@ export function init() {
     elements.clearDataBtn.addEventListener('click', handleClearData);
     elements.themeToggle.addEventListener('click', handleThemeToggle);
     elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
+
+    if (window.deferredInstallPrompt) {
+        elements.installSection.style.display = 'block';
+        elements.installBtn.addEventListener('click', handleInstallClick);
+    }
 }
 
 export function destroy() {
@@ -137,5 +149,6 @@ export function destroy() {
         elements.themeToggle.removeEventListener('click', handleThemeToggle);
         elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
     }
+    if (elements.installBtn) elements.installBtn.removeEventListener('click', handleInstallClick);
     elements = {};
 }

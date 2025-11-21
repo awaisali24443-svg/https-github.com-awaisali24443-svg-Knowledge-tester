@@ -3,8 +3,11 @@ import * as gamificationService from '../../services/gamificationService.js';
 import * as historyService from '../../services/historyService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as stateService from '../../services/stateService.js';
+import * as apiService from '../../services/apiService.js';
+import { showToast } from '../../services/toastService.js';
 
 let historyClickHandler;
+let challengeBtn;
 
 function renderStreak() {
     const stats = gamificationService.getStats();
@@ -22,7 +25,6 @@ function renderStreak() {
 
 function renderPrimaryAction() {
     const journeys = learningPathService.getAllJourneys();
-    // Find the most recently accessed or first active journey
     const path = journeys.length > 0 ? journeys[0] : null;
 
     const card = document.getElementById('primary-action-card');
@@ -77,11 +79,96 @@ function renderRecentHistory() {
     container.addEventListener('click', historyClickHandler);
 }
 
+// --- NEW: Daily Challenge Logic ---
+async function initDailyChallenge() {
+    const container = document.getElementById('daily-challenge-card');
+    const statusText = document.getElementById('daily-challenge-status');
+    challengeBtn = document.getElementById('start-daily-challenge-btn');
+    
+    if (gamificationService.isDailyChallengeCompleted()) {
+        container.classList.add('completed');
+        statusText.textContent = "Challenge Completed! Come back tomorrow.";
+        challengeBtn.disabled = true;
+        challengeBtn.textContent = "Done";
+        container.style.display = 'block';
+        return;
+    }
+
+    container.style.display = 'block';
+    
+    challengeBtn.onclick = async () => {
+        challengeBtn.disabled = true;
+        challengeBtn.textContent = "Loading...";
+        
+        try {
+            const challenge = await apiService.fetchDailyChallenge();
+            
+            const optionsHtml = challenge.options.map((opt, i) => 
+                `<button class="btn option-btn" data-idx="${i}" style="width:100%; margin-bottom:8px; text-align:left;">${opt}</button>`
+            ).join('');
+            
+            const modalHtml = `
+                <div class="challenge-modal">
+                    <h3 style="color:var(--color-primary); margin-bottom:1rem;">${challenge.topic} Trivia</h3>
+                    <p style="font-size:1.2rem; margin-bottom:1.5rem;">${challenge.question}</p>
+                    <div id="challenge-options">${optionsHtml}</div>
+                </div>
+            `;
+            
+            const modalContainer = document.getElementById('modal-container');
+            modalContainer.innerHTML = `
+                <div class="modal-backdrop"></div>
+                <div class="modal-content">
+                    ${modalHtml}
+                    <div class="modal-footer" style="justify-content:center; margin-top:1rem;">
+                        <button id="cancel-challenge" class="btn">Close</button>
+                    </div>
+                </div>
+            `;
+            modalContainer.style.display = 'block';
+            
+            const optionsDiv = document.getElementById('challenge-options');
+            optionsDiv.addEventListener('click', (e) => {
+                const btn = e.target.closest('.option-btn');
+                if(!btn) return;
+                
+                const selected = parseInt(btn.dataset.idx);
+                const isCorrect = selected === challenge.correctAnswerIndex;
+                
+                if (isCorrect) {
+                    showToast("Correct! +200 XP", "success");
+                    gamificationService.completeDailyChallenge();
+                    container.classList.add('completed');
+                    statusText.textContent = "Challenge Completed!";
+                    challengeBtn.textContent = "Done";
+                } else {
+                    showToast(`Wrong! It was: ${challenge.options[challenge.correctAnswerIndex]}`, "error");
+                }
+                
+                modalContainer.style.display = 'none';
+                challengeBtn.disabled = gamificationService.isDailyChallengeCompleted();
+                if(!gamificationService.isDailyChallengeCompleted()) challengeBtn.textContent = "Play";
+            });
+            
+            document.getElementById('cancel-challenge').onclick = () => {
+                modalContainer.style.display = 'none';
+                challengeBtn.disabled = false;
+                challengeBtn.textContent = "Play";
+            };
+
+        } catch (e) {
+            showToast("Failed to load challenge.", "error");
+            challengeBtn.disabled = false;
+            challengeBtn.textContent = "Play";
+        }
+    };
+}
 
 export function init() {
     renderStreak();
     renderPrimaryAction();
     renderRecentHistory();
+    initDailyChallenge();
 }
 
 export function destroy() {

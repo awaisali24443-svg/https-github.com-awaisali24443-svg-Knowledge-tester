@@ -1,3 +1,4 @@
+
 import { showToast } from './toastService.js';
 
 /**
@@ -118,6 +119,28 @@ export async function explainConcept(topic, concept, context) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, concept, context })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function fetchDailyChallenge() {
+    try {
+        const response = await fetch('/api/daily-challenge');
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function explainError(topic, question, userChoice, correctChoice) {
+    try {
+        const response = await fetch('/api/explain-error', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, question, userChoice, correctChoice })
         });
         return await handleResponse(response);
     } catch (error) {
