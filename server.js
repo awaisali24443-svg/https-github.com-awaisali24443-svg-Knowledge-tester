@@ -258,8 +258,9 @@ async function generateBossBattleContent(topic, chapter) {
     Generate the 10 questions based on these rules and the provided JSON schema.`;
 
     try {
+        // Using gemini-3-pro-preview for complex reasoning tasks like Boss Battles
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',

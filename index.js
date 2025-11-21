@@ -186,6 +186,26 @@ function showWelcomeScreen() {
     }, { once: true });
 }
 
+function showLevelUpModal(level) {
+    soundService.playSound('achievement');
+    const modal = document.createElement('div');
+    modal.className = 'level-up-overlay';
+    modal.innerHTML = `
+        <div class="level-up-content">
+            <div class="level-badge">${level}</div>
+            <h2 class="level-up-title">LEVEL UP!</h2>
+            <p class="level-up-sub">You've reached Level ${level}</p>
+            <button id="level-up-continue" class="btn btn-primary">Continue</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    
+    document.getElementById('level-up-continue').addEventListener('click', () => {
+        modal.style.opacity = '0';
+        setTimeout(() => modal.remove(), 500);
+    });
+}
+
 async function main() {
     try {
         // PWA Install Capture
@@ -215,6 +235,9 @@ async function main() {
         window.addEventListener('settings-changed', (e) => applyAppSettings(e.detail));
         window.addEventListener('achievement-unlocked', () => {
             soundService.playSound('achievement');
+        });
+        window.addEventListener('level-up', (e) => {
+            showLevelUpModal(e.detail.level);
         });
 
         document.body.addEventListener('click', (event) => {

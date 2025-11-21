@@ -184,11 +184,16 @@ export function updateStatsOnQuizCompletion(quizAttempt, history) {
     checkQuestProgress({ type: 'complete_level', data: { scorePercent } });
 
     let xpForNextLevel = getXpForNextLevel(stats.level);
+    let didLevelUp = false;
     while (stats.xp >= xpForNextLevel) {
         stats.level++;
         stats.xp -= xpForNextLevel;
-        showToast(`Level Up! You are now Level ${stats.level}!`, 'success');
+        didLevelUp = true;
         xpForNextLevel = getXpForNextLevel(stats.level);
+    }
+
+    if (didLevelUp) {
+        window.dispatchEvent(new CustomEvent('level-up', { detail: { level: stats.level } }));
     }
 
     checkAchievements(quizAttempt, history);

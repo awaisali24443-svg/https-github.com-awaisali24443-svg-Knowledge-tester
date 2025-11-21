@@ -102,9 +102,15 @@ export function isQuestionSaved(question) {
 }
 
 /**
- * Retrieves all saved questions for a general study session.
- * @returns {Array<object>} A copy of all questions in the library.
+ * Retrieves all saved questions for a general study session, shuffled.
+ * Shuffling improves learning retention by preventing pattern matching.
+ * @returns {Array<object>} A shuffled copy of all questions in the library.
  */
 export function getQuestionsForStudy() {
-    return [...library];
+    const shuffled = [...library];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
 }

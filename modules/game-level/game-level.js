@@ -315,6 +315,78 @@ function handleReviewAnswers() {
     window.location.hash = '#/review';
 }
 
+// Simple Canvas Confetti Implementation
+function fireConfetti() {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'confetti-canvas';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    // NEON CYBER PALETTE for cleaner aesthetic
+    const colors = ['#00b8d4', '#9c27b0', '#ff4081', '#f50057', '#00e676', '#2979ff', '#ff9100'];
+
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            w: Math.random() * 10 + 5,
+            h: Math.random() * 10 + 5,
+            dx: (Math.random() - 0.5) * 20,
+            dy: (Math.random() - 0.5) * 20,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10,
+            tiltAngle: Math.random() * 10,
+            tiltAngleIncremental: (Math.random() * 0.07) + 0.05
+        });
+    }
+
+    let animationId;
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = 0;
+
+        particles.forEach(p => {
+            p.tiltAngle += p.tiltAngleIncremental;
+            p.y += (Math.cos(p.tiltAngle) + 3 + p.h / 2) / 2;
+            p.x += Math.sin(p.tiltAngle) * 2;
+            p.x += p.dx * 0.5; // reduced explosion velocity over time
+            p.y += p.dy * 0.5;
+
+            // Friction
+            p.dx *= 0.9;
+            p.dy *= 0.9;
+            
+            p.tilt = Math.sin(p.tiltAngle) * 15;
+
+            if (p.y < canvas.height) {
+                active++;
+                ctx.beginPath();
+                ctx.lineWidth = p.w / 2;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.w / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.h / 2);
+                ctx.stroke();
+            }
+        });
+
+        if (active > 0) {
+            animationId = requestAnimationFrame(animate);
+        } else {
+            canvas.remove();
+        }
+    }
+    animate();
+    
+    // Cleanup after 4 seconds just in case
+    setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        if(document.body.contains(canvas)) canvas.remove();
+    }, 4000);
+}
+
 function showResults() {
     const totalQuestions = levelData.questions.length;
     const scorePercent = totalQuestions > 0 ? (score / totalQuestions) : 0;
@@ -372,6 +444,7 @@ function showResults() {
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
 
+        fireConfetti(); // CELEBRATION!
         preloadNextLevel();
 
     } else {
