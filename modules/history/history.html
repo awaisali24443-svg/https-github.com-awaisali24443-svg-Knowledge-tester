@@ -19,8 +19,23 @@
              <svg><use href="/assets/icons/feather-sprite.svg#clock"/></svg>
         </div>
         <h2>No Missions Recorded</h2>
-        <p>Complete quizzes to generate your performance history.</p>
+        <p>Complete quizzes or talk to the AI Tutor to generate your performance history.</p>
         <a href="/#/topics" class="btn btn-primary">Start a Mission</a>
+    </div>
+</div>
+
+<!-- Transcript Modal -->
+<div id="transcript-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content transcript-content">
+        <div class="modal-header">
+            <h2>Session Transcript</h2>
+            <button id="close-transcript-btn" class="btn-icon" aria-label="Close">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#x-circle"/></svg>
+            </button>
+        </div>
+        <div id="transcript-body" class="modal-body transcript-body">
+            <!-- Transcript lines go here -->
+        </div>
     </div>
 </div>
 
@@ -35,18 +50,11 @@
                     <span class="history-meta"></span>
                 </div>
                 <div class="history-score-badge">
-                    <svg viewBox="0 0 36 36" class="circular-chart">
-                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                        <path class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                    </svg>
-                    <span class="percentage"></span>
+                    <!-- Quiz Score or Aural Icon will be injected here -->
                 </div>
             </div>
             <div class="history-footer">
-                <button class="btn-small retry-btn">
-                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#rotate-ccw"/></svg> 
-                    Retry
-                </button>
+                <!-- Buttons injected via JS -->
             </div>
         </div>
     </div>

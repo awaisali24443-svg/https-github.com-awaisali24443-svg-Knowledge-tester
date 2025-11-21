@@ -1,5 +1,3 @@
-
-
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 import { showToast } from './toastService.js';
 import * as gamificationService from './gamificationService.js';
@@ -41,18 +39,17 @@ export function init() {
 }
 
 /**
- * Retrieves the entire quiz history, sorted with the most recent attempts first.
- * @returns {Array<object>} A sorted array of quiz attempt objects.
+ * Retrieves the entire history, sorted with the most recent attempts first.
+ * @returns {Array<object>} A sorted array of history objects.
  */
 export function getHistory() {
-    // Return a sorted copy
     return [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
 }
 
 /**
- * Retrieves the most recent quiz attempts.
- * @param {number} [count=3] - The number of recent attempts to retrieve.
- * @returns {Array<object>} An array of the most recent quiz attempt objects.
+ * Retrieves the most recent history items.
+ * @param {number} [count=3] - The number of items to retrieve.
+ * @returns {Array<object>}
  */
 export function getRecentHistory(count = 3) {
     return getHistory().slice(0, count);
@@ -61,45 +58,67 @@ export function getRecentHistory(count = 3) {
 
 /**
  * Adds a completed quiz attempt to the history.
- * @param {object} quizState - The final state object of the completed quiz from quizStateService.
+ * @param {object} quizState - The final state object of the completed quiz.
  */
 export function addQuizAttempt(quizState) {
     if (!quizState || !quizState.questions || quizState.questions.length === 0) {
         return;
     }
 
-    const attemptId = `hist_${quizState.startTime}`;
+    const attemptId = `quiz_${quizState.startTime}`;
 
-    // Prevent duplicate entries if user navigates back to results page
-    if (history.some(attempt => attempt.id === attemptId)) {
-        return;
-    }
+    if (history.some(attempt => attempt.id === attemptId)) return;
 
     const newAttempt = {
         id: attemptId,
+        type: 'quiz',
         topic: quizState.topic,
         score: quizState.score,
         totalQuestions: quizState.questions.length,
-        difficulty: quizState.difficulty || 'medium', // Add difficulty
+        difficulty: quizState.difficulty || 'medium',
         date: new Date(quizState.endTime).toISOString(),
         xpGained: quizState.xpGained,
     };
 
-    history.unshift(newAttempt); // Add to the beginning of the array
-    if (history.length > 50) { // Limit history size to prevent localStorage bloat
-        history.pop();
-    }
+    history.unshift(newAttempt);
+    if (history.length > 50) history.pop();
     saveHistory();
     
-    // Update gamification stats after saving the attempt, passing the new structured object
     gamificationService.updateStatsOnQuizCompletion(newAttempt, getHistory());
 }
 
 /**
- * Clears all entries from the quiz history.
+ * Adds a completed Aural Tutor session to the history.
+ * @param {object} sessionData - Data about the conversation.
+ */
+export function addAuralSession(sessionData) {
+    if (!sessionData || !sessionData.transcript || sessionData.transcript.length === 0) return;
+
+    const newSession = {
+        id: `aural_${Date.now()}`,
+        type: 'aural',
+        topic: 'Aural Tutor Session',
+        date: new Date().toISOString(),
+        duration: sessionData.duration, // in seconds
+        transcript: sessionData.transcript, // Array of {sender, text}
+        xpGained: sessionData.xpGained || 0
+    };
+
+    history.unshift(newSession);
+    if (history.length > 50) history.pop();
+    saveHistory();
+    
+    if (newSession.xpGained > 0) {
+        // Optionally trigger generic XP update if gamification service supports it directly
+        // For now we just save it.
+    }
+}
+
+/**
+ * Clears all entries from the history.
  */
 export function clearHistory() {
     history = [];
     saveHistory();
-    showToast('Quiz history cleared.');
+    showToast('History cleared.');
 }

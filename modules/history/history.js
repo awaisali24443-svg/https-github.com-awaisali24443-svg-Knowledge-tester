@@ -7,6 +7,9 @@ let clearBtn;
 let emptyMessage;
 let template;
 let gridClickHandler;
+let transcriptModal;
+let transcriptBody;
+let closeTranscriptBtn;
 
 function renderHistory() {
     const history = historyService.getHistory();
@@ -26,32 +29,55 @@ function renderHistory() {
         history.forEach((item, index) => {
             const clone = template.content.cloneNode(true);
             const entry = clone.querySelector('.history-entry');
+            const badgeContainer = entry.querySelector('.history-score-badge');
+            const footer = entry.querySelector('.history-footer');
             
-            // Animation Stagger
             entry.style.animationDelay = `${index * 50}ms`;
             
-            // Data processing
-            const topicName = cleanTopic(item.topic);
-            const scorePercent = item.totalQuestions > 0 ? Math.round((item.score / item.totalQuestions) * 100) : 0;
-            const passed = scorePercent >= 60; // arbitrary pass threshold for visual styling
-
-            entry.classList.add(passed ? 'passed' : 'failed');
-            entry.querySelector('.history-card').dataset.topic = topicName;
-
-            // Text Content
+            // Common Info
             entry.querySelector('.history-date').textContent = new Date(item.date).toLocaleString(undefined, { 
                 weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
             });
             entry.querySelector('.history-topic').textContent = item.topic;
-            entry.querySelector('.history-meta').textContent = `${item.score}/${item.totalQuestions} Correct • +${item.xpGained || 0} XP`;
-            
-            // Circular Chart
-            entry.querySelector('.percentage').textContent = `${scorePercent}%`;
-            // Stroke-dasharray: value, 100. Since circumference is roughly 100 in SVG viewbox logic (r=15.9155)
-            setTimeout(() => {
-                const circle = entry.querySelector('.circle');
-                if (circle) circle.setAttribute('stroke-dasharray', `${scorePercent}, 100`);
-            }, 100 + (index * 50));
+
+            if (item.type === 'aural') {
+                // --- AURAL SESSION RENDER ---
+                entry.classList.add('aural');
+                entry.querySelector('.history-meta').textContent = `Audio Session • ${Math.floor(item.duration / 60)}m ${item.duration % 60}s • +${item.xpGained || 0} XP`;
+                
+                badgeContainer.innerHTML = `<div class="aural-icon-badge"><svg class="icon"><use href="/assets/icons/feather-sprite.svg#mic"/></svg></div>`;
+                
+                footer.innerHTML = `<button class="btn-small transcript-btn" data-id="${item.id}"><svg class="icon"><use href="/assets/icons/feather-sprite.svg#message-circle"/></svg> Transcript</button>`;
+                
+                // Store transcript data on the button for easy access
+                const btn = footer.querySelector('.transcript-btn');
+                btn.itemData = item;
+
+            } else {
+                // --- QUIZ RENDER ---
+                const topicName = cleanTopic(item.topic);
+                const scorePercent = item.totalQuestions > 0 ? Math.round((item.score / item.totalQuestions) * 100) : 0;
+                const passed = scorePercent >= 60;
+
+                entry.classList.add(passed ? 'passed' : 'failed');
+                entry.querySelector('.history-card').dataset.topic = topicName;
+                entry.querySelector('.history-meta').textContent = `${item.score}/${item.totalQuestions} Correct • +${item.xpGained || 0} XP`;
+                
+                badgeContainer.innerHTML = `
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    </svg>
+                    <span class="percentage">${scorePercent}%</span>
+                `;
+                
+                setTimeout(() => {
+                    const circle = badgeContainer.querySelector('.circle');
+                    if (circle) circle.setAttribute('stroke-dasharray', `${scorePercent}, 100`);
+                }, 100 + (index * 50));
+
+                footer.innerHTML = `<button class="btn-small retry-btn"><svg class="icon"><use href="/assets/icons/feather-sprite.svg#rotate-ccw"/></svg> Retry</button>`;
+            }
 
             container.appendChild(clone);
         });
@@ -61,7 +87,7 @@ function renderHistory() {
 async function handleClearHistory() {
     const confirmed = await showConfirmationModal({
         title: 'Clear Mission Log',
-        message: 'This will wipe your entire timeline. All records of your past victories and defeats will be lost.',
+        message: 'This will wipe your entire timeline. All records of your past victories, defeats, and conversations will be lost.',
         confirmText: 'Wipe Data',
         cancelText: 'Cancel',
         danger: true
@@ -73,7 +99,23 @@ async function handleClearHistory() {
     }
 }
 
+function showTranscript(item) {
+    transcriptBody.innerHTML = '';
+    if (item.transcript && item.transcript.length > 0) {
+        item.transcript.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = `transcript-line ${msg.sender}`;
+            div.innerHTML = `<span class="transcript-label">${msg.sender === 'user' ? 'You' : 'AI Tutor'}</span>${msg.text}`;
+            transcriptBody.appendChild(div);
+        });
+    } else {
+        transcriptBody.innerHTML = '<p style="text-align:center; color:var(--color-text-secondary);">No transcript available for this session.</p>';
+    }
+    transcriptModal.style.display = 'block';
+}
+
 function handleGridClick(event) {
+    // Handle Retry
     const retryButton = event.target.closest('.retry-btn');
     if (retryButton) {
         const historyCard = retryButton.closest('.history-card');
@@ -84,6 +126,14 @@ function handleGridClick(event) {
                 window.location.hash = `#/game/${encodeURIComponent(topic)}`;
             }
         }
+        return;
+    }
+
+    // Handle Transcript
+    const transcriptBtn = event.target.closest('.transcript-btn');
+    if (transcriptBtn) {
+        const item = transcriptBtn.itemData;
+        if (item) showTranscript(item);
     }
 }
 
@@ -92,11 +142,24 @@ export function init() {
     clearBtn = document.getElementById('clear-history-btn');
     emptyMessage = document.getElementById('empty-history-message');
     template = document.getElementById('history-item-template');
+    
+    transcriptModal = document.getElementById('transcript-modal');
+    transcriptBody = document.getElementById('transcript-body');
+    closeTranscriptBtn = document.getElementById('close-transcript-btn');
 
     clearBtn.addEventListener('click', handleClearHistory);
     
     gridClickHandler = handleGridClick;
     container.addEventListener('click', gridClickHandler);
+    
+    closeTranscriptBtn.addEventListener('click', () => {
+        transcriptModal.style.display = 'none';
+    });
+    
+    // Close modal on backdrop click
+    transcriptModal.addEventListener('click', (e) => {
+        if (e.target === transcriptModal) transcriptModal.style.display = 'none';
+    });
     
     renderHistory();
 }

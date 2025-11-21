@@ -1,3 +1,4 @@
+
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 import { showToast } from './toastService.js';
 
@@ -13,20 +14,37 @@ const defaultStats = {
 let stats = { ...defaultStats };
 
 const ACHIEVEMENTS = {
-    novice: { name: "Novice", description: "Complete your first quiz.", icon: "award", color: "linear-gradient(135deg, #cd7f32 0%, #e6ac7c 100%)", condition: (s, h) => h.length >= 1 },
-    scholar: { name: "Scholar", description: "Complete 10 quizzes.", icon: "award", color: "linear-gradient(135deg, #757F9A 0%, #D7DDE8 100%)", condition: (s, h) => h.length >= 10 },
-    master: { name: "Master", description: "Complete 50 quizzes.", icon: "award", color: "linear-gradient(135deg, #F2994A 0%, #F2C94C 100%)", condition: (s, h) => h.length >= 50 },
-    perfectionist: { name: "Perfectionist", description: "Get a 100% score on a quiz.", icon: "star", color: "linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%)", condition: (s, h, q) => q && q.totalQuestions > 0 && q.score / q.totalQuestions === 1 },
-    hot_streak: { name: "Hot Streak", description: "Maintain a 3-day streak.", icon: "zap", color: "linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%)", condition: (s) => s.currentStreak >= 3 },
-    unstoppable: { name: "Unstoppable", description: "Maintain a 7-day streak.", icon: "zap", color: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", condition: (s) => s.currentStreak >= 7 },
-    tech_guru: { name: "Tech Guru", description: "Complete 5 quizzes on Technology topics.", icon: "cpu", color: "linear-gradient(135deg, #00b09b 0%, #96c93d 100%)", condition: (s, h) => h.filter(item => item.topic && (item.topic.toLowerCase().includes('machine learning') || item.topic.toLowerCase().includes('cybersecurity'))).length >= 5 },
+    // --- Starter ---
+    novice: { name: "First Step", description: "Complete your first quiz.", icon: "award", color: "linear-gradient(135deg, #8e2de2, #4a00e0)", condition: (s, h) => h.length >= 1 },
+    
+    // --- Volume ---
+    scholar: { name: "Scholar", description: "Complete 10 quizzes.", icon: "book", color: "linear-gradient(135deg, #11998e, #38ef7d)", condition: (s, h) => h.length >= 10 },
+    library_builder: { name: "Librarian", description: "Save 5 questions to your library.", icon: "book", color: "linear-gradient(135deg, #f2994a, #f2c94c)", condition: (s, h, q, lib) => lib && lib.length >= 5 },
+    veteran: { name: "Veteran", description: "Complete 50 quizzes.", icon: "shield", color: "linear-gradient(135deg, #ec008c, #fc6767)", condition: (s, h) => h.length >= 50 },
+    
+    // --- Skill ---
+    perfectionist: { name: "Perfectionist", description: "Get 100% on a quiz.", icon: "star", color: "linear-gradient(135deg, #ffd700, #fdb931)", condition: (s, h, q) => q && q.totalQuestions > 0 && q.score === q.totalQuestions },
+    speed_demon: { name: "Speed Demon", description: "Complete a quiz in under 30 seconds.", icon: "zap", color: "linear-gradient(135deg, #ffff00, #ff0000)", condition: (s, h, q) => q && (new Date(q.endTime) - new Date(q.startTime)) < 30000 },
+    
+    // --- Streaks & Habits ---
+    three_peat: { name: "Heating Up", description: "3-day streak.", icon: "zap", color: "linear-gradient(135deg, #ff416c, #ff4b2b)", condition: (s) => s.currentStreak >= 3 },
+    week_warrior: { name: "Unstoppable", description: "7-day streak.", icon: "zap", color: "linear-gradient(135deg, #a8ff78, #78ffd6)", condition: (s) => s.currentStreak >= 7 },
+    night_owl: { name: "Night Owl", description: "Complete a quiz after 10 PM.", icon: "target", color: "linear-gradient(135deg, #2c3e50, #4ca1af)", condition: (s, h, q) => q && new Date(q.endTime).getHours() >= 22 },
+    early_bird: { name: "Early Bird", description: "Complete a quiz before 8 AM.", icon: "target", color: "linear-gradient(135deg, #ff9966, #ff5e62)", condition: (s, h, q) => q && new Date(q.endTime).getHours() < 8 },
+
+    // --- Mastery ---
+    polymath: { name: "Polymath", description: "Complete quizzes in 3 different topics.", icon: "cpu", color: "linear-gradient(135deg, #fc466b, #3f5efb)", condition: (s, h) => {
+        const topics = new Set(h.map(i => i.topic.split('-')[0].trim()));
+        return topics.size >= 3;
+    }},
 };
 
 const QUEST_TYPES = [
     { id: 'complete_level', text: 'Complete 1 Level', xp: 50, check: (action) => action.type === 'complete_level' },
     { id: 'perfect_score', text: 'Get 100% on a Quiz', xp: 100, check: (action) => action.type === 'complete_level' && action.data.scorePercent === 1 },
     { id: 'use_hint', text: 'Use a Hint', xp: 20, check: (action) => action.type === 'use_hint' },
-    { id: 'save_question', text: 'Save a Question to Library', xp: 30, check: (action) => action.type === 'save_question' },
+    { id: 'save_question', text: 'Save a Question', xp: 30, check: (action) => action.type === 'save_question' },
+    { id: 'study_session', text: 'Review Flashcards', xp: 40, check: (action) => action.type === 'study_session' },
 ];
 
 function loadStats() {
@@ -51,7 +69,6 @@ function saveStats() {
 function checkDailyQuests() {
     const today = new Date().toDateString();
     if (stats.dailyQuests.date !== today) {
-        // Generate new quests
         const shuffled = [...QUEST_TYPES].sort(() => 0.5 - Math.random());
         const newQuests = shuffled.slice(0, 3).map(q => ({ ...q, completed: false }));
         stats.dailyQuests = { date: today, quests: newQuests };
@@ -120,10 +137,14 @@ function updateStreak(today) {
 }
 
 function checkAchievements(quizAttempt, history) {
+    // We need library for the Librarian achievement check
+    const libraryStr = localStorage.getItem(LOCAL_STORAGE_KEYS.LIBRARY);
+    const library = libraryStr ? JSON.parse(libraryStr) : [];
+
     Object.keys(ACHIEVEMENTS).forEach(key => {
         if (!stats.unlockedAchievements.includes(key)) {
             const achievement = ACHIEVEMENTS[key];
-            if (achievement.condition(stats, history, quizAttempt)) {
+            if (achievement.condition(stats, history, quizAttempt, library)) {
                 stats.unlockedAchievements.push(key);
                 showToast(`Achievement Unlocked: ${achievement.name}!`, 'success');
                 window.dispatchEvent(new CustomEvent('achievement-unlocked', { detail: { ...achievement, id: key } }));
@@ -143,7 +164,6 @@ export function updateStatsOnQuizCompletion(quizAttempt, history) {
         showToast(`${xpGained} XP gained!`, 'info');
     }
 
-    // Check Quests
     const scorePercent = quizAttempt.totalQuestions > 0 ? quizAttempt.score / quizAttempt.totalQuestions : 0;
     checkQuestProgress({ type: 'complete_level', data: { scorePercent } });
 

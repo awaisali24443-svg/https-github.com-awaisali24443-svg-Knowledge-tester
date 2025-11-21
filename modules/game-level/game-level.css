@@ -1,3 +1,4 @@
+
 .game-level-container {
     height: 100%;
     width: 100%;
@@ -65,30 +66,59 @@
     margin-bottom: var(--space-lg);
 }
 .lesson-header h1 { color: var(--color-primary); }
+
+/* PRESENTATION STYLE TYPOGRAPHY */
 .lesson-body {
     text-align: left;
-    line-height: 1.7;
-    font-size: 1.1rem;
-    color: var(--color-text-secondary);
+    line-height: 1.8; /* Looser leading for readability */
+    font-size: 1.2rem; /* Larger font size */
+    color: var(--color-text);
     max-height: 60vh;
     overflow-y: auto;
     padding-right: var(--space-md);
     position: relative;
+    font-family: var(--font-family-body);
 }
-.lesson-body p { margin-bottom: var(--space-md); }
-.lesson-body strong { color: var(--color-text); }
+
+.lesson-body p { margin-bottom: var(--space-lg); }
+
+.lesson-body strong { 
+    color: var(--color-secondary); 
+    font-weight: 700;
+}
+
+/* Code Snippets in text */
 .lesson-body code {
     background-color: var(--color-surface-hover);
+    color: var(--color-accent);
     padding: 2px 6px;
     border-radius: 4px;
     font-family: var(--font-family-mono);
+    font-size: 0.9em;
 }
+
+/* Presentation Lists */
 .lesson-body ul {
-    list-style-position: inside;
-    padding-left: var(--space-sm);
-    margin-bottom: var(--space-md);
+    list-style: none; /* Remove default dots, we use emojis now */
+    padding-left: 0;
+    margin-bottom: var(--space-xl);
 }
-.lesson-body h3 { margin-top: var(--space-lg); }
+
+.lesson-body li {
+    margin-bottom: var(--space-md);
+    padding-left: var(--space-md);
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.lesson-body h3 { 
+    margin-top: var(--space-xl); 
+    color: var(--color-primary);
+    border-left: 4px solid var(--color-primary);
+    padding-left: var(--space-md);
+}
 
 /* --- Mermaid Diagram Styles --- */
 .lesson-body .mermaid {

@@ -1,3 +1,4 @@
+
 import * as gamificationService from '../../services/gamificationService.js';
 import * as historyService from '../../services/historyService.js';
 
@@ -19,6 +20,28 @@ function renderStats() {
     document.getElementById('avg-score-stat').textContent = `${profileStats.averageScore}%`;
 }
 
+function renderQuests() {
+    const quests = gamificationService.getDailyQuests();
+    const list = document.getElementById('daily-quests-list');
+    
+    if (!quests || quests.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:var(--color-text-secondary);">No active quests.</p>';
+        return;
+    }
+
+    list.innerHTML = quests.map(quest => `
+        <div class="quest-item ${quest.completed ? 'completed' : ''}">
+            <div class="quest-left">
+                <div class="quest-status-icon">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#${quest.completed ? 'check-circle' : 'circle'}"/></svg>
+                </div>
+                <span class="quest-text">${quest.text}</span>
+            </div>
+            <span class="quest-xp">+${quest.xp} XP</span>
+        </div>
+    `).join('');
+}
+
 function renderAchievements() {
     const achievements = gamificationService.getAchievements();
     const grid = document.getElementById('achievements-grid');
@@ -29,10 +52,9 @@ function renderAchievements() {
         card.className = `card achievement-card ${ach.unlocked ? 'unlocked' : ''}`;
         card.setAttribute('title', ach.description);
 
-        // Apply dynamic gradient if unlocked
         let iconStyle = '';
         if (ach.unlocked && ach.color) {
-            iconStyle = `background: ${ach.color}; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3);`;
+            iconStyle = `background: ${ach.color}; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: white;`;
         }
 
         card.innerHTML = `
@@ -51,6 +73,7 @@ function renderAchievements() {
 
 export function init() {
     renderStats();
+    renderQuests();
     renderAchievements();
 }
 

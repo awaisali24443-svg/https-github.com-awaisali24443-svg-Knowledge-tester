@@ -1,4 +1,3 @@
-
 import * as stateService from '../../services/stateService.js';
 import * as historyService from '../../services/historyService.js';
 import { showToast } from '../../services/toastService.js';
@@ -28,7 +27,6 @@ let transcriptLog = [];
 let elements = {};
 
 // --- Audio Worklet Code (Inline Blob) ---
-// We use a Blob URL to load the worklet without needing a separate file on the server.
 const workletCode = `
 class PCMProcessor extends AudioWorkletProcessor {
   process(inputs, outputs, parameters) {
@@ -36,14 +34,10 @@ class PCMProcessor extends AudioWorkletProcessor {
     if (input.length > 0) {
       const float32Data = input[0];
       const int16Data = new Int16Array(float32Data.length);
-      
-      // Convert Float32 to Int16 PCM
       for (let i = 0; i < float32Data.length; i++) {
         const s = Math.max(-1, Math.min(1, float32Data[i]));
         int16Data[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
       }
-      
-      // Send data to main thread
       this.port.postMessage(int16Data.buffer, [int16Data.buffer]);
     }
     return true;

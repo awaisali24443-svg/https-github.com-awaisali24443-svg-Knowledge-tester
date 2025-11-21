@@ -63,7 +63,7 @@ const levelGenerationSchema = {
     properties: {
         lesson: {
             type: Type.STRING,
-            description: "A very short, single-paragraph lesson for this specific level, formatted in Markdown. If a process, flow, or hierarchy is described, you MUST include a mermaid.js diagram code block (```mermaid ... ```) to visualize it."
+            description: "A high-impact, 'Presentation Style' lesson. Use bullet points, emojis, and bold text. NO long paragraphs. If a process is described, include a mermaid.js diagram."
         },
         questions: {
             type: Type.ARRAY,
@@ -190,16 +190,28 @@ async function generateCurriculumOutline(topic, totalLevels) {
 
 async function generateLevelContent(topic, level, totalLevels) {
     if (!ai) throw new Error("AI Service not initialized.");
-    const prompt = `You are a friendly and encouraging AI tutor creating a ${totalLevels}-level learning game about "${topic}". The user is on Level ${level}.
     
-    RULES:
-    1. The difficulty must increase gradually. Level 1 is for complete beginners.
-    2. Generate a bite-sized, single-paragraph lesson for Level ${level}. Introduce ONE new concept.
-    3. VISUALIZATION: If the concept involves a process, flow, hierarchy, or relationship, you MUST include a Mermaid.js diagram code block (starting with \`\`\`mermaid) to visualize it.
-    4. Generate 2-3 simple multiple-choice questions that test understanding of *only the concepts in this specific lesson*.
-    5. Tone: Encouraging, gamified.
+    const prompt = `You are a charismatic, world-class keynote speaker and educator. You are teaching a ${totalLevels}-level masterclass on "${topic}". The user is currently on Level ${level}.
     
-    Generate the lesson and questions based on these rules and the provided JSON schema.`;
+    YOUR GOAL: Deliver a high-impact, "Presentation Style" lesson that sticks.
+    
+    RULES FOR LESSON CONTENT:
+    1. **NO WALLS OF TEXT.** Do not write standard paragraphs.
+    2. **Tone:** Conversational, high-energy, and direct. Like a TED Talk.
+    3. **Structure:**
+       - Start with a "Hook" or a "Big Idea" (1 sentence).
+       - Use **Bullet Points** for the core concepts. 
+       - **IMPORTANT:** Use EMOJIS as bullet points (e.g., 🚀, 💡, 🔑, ⚠️) to make it visually popping.
+       - Use **Bold** for key terms.
+       - End with a quick "Takeaway."
+    4. **Content:** Introduce ONE specific sub-concept appropriate for Level ${level}.
+    5. **Visualization:** If the concept involves a process or hierarchy, you MUST include a Mermaid.js diagram (start with \`\`\`mermaid).
+    
+    RULES FOR QUESTIONS:
+    1. Generate 2-3 multiple-choice questions based *only* on this specific lesson.
+    2. Keep options concise.
+    
+    Generate the JSON response.`;
 
     try {
         const response = await ai.models.generateContent({
