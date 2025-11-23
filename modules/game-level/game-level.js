@@ -24,6 +24,7 @@ let hintUsedThisQuestion = false;
 let xpGainedThisLevel = 0;
 let outputAudioContext = null;
 let currentAudioSource = null;
+let keyboardHandler = null;
 
 // Boss Battle State
 let bossHp = 100;
@@ -196,8 +197,18 @@ function renderQuestion() {
     question.options.forEach((optionText, index) => {
         const button = document.createElement('button');
         button.className = 'btn option-btn';
+        // Add number hint for keyboard users
+        const shortcutSpan = document.createElement('span');
+        shortcutSpan.className = 'shortcut-hint';
+        shortcutSpan.textContent = `[${index + 1}]`;
+        shortcutSpan.style.opacity = '0.5';
+        shortcutSpan.style.marginRight = '8px';
+        shortcutSpan.style.fontSize = '0.8em';
+
         const textSpan = document.createElement('span');
         textSpan.textContent = optionText;
+        
+        button.appendChild(shortcutSpan);
         button.appendChild(textSpan);
         button.dataset.index = index;
         elements.quizOptionsContainer.appendChild(button);
@@ -239,12 +250,21 @@ function handleOptionClick(event) {
     const button = event.target.closest('.option-btn');
     if (answered || !button) return;
     
-    soundService.playSound('click');
+    selectOption(parseInt(button.dataset.index, 10));
+}
 
+function selectOption(index) {
+    if (answered) return;
+    
+    soundService.playSound('click');
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-    button.classList.add('selected');
-    selectedAnswerIndex = parseInt(button.dataset.index, 10);
-    elements.submitAnswerBtn.disabled = false;
+    
+    const targetBtn = elements.quizOptionsContainer.querySelector(`.option-btn[data-index="${index}"]`);
+    if(targetBtn) {
+        targetBtn.classList.add('selected');
+        selectedAnswerIndex = index;
+        elements.submitAnswerBtn.disabled = false;
+    }
 }
 
 function handleSubmitAnswer() {
@@ -315,7 +335,6 @@ function handleReviewAnswers() {
     window.location.hash = '#/review';
 }
 
-// Simple Canvas Confetti Implementation
 function fireConfetti() {
     const canvas = document.createElement('canvas');
     canvas.id = 'confetti-canvas';
@@ -325,7 +344,6 @@ function fireConfetti() {
     canvas.height = window.innerHeight;
 
     const particles = [];
-    // NEON CYBER PALETTE for cleaner aesthetic
     const colors = ['#00b8d4', '#9c27b0', '#ff4081', '#f50057', '#00e676', '#2979ff', '#ff9100'];
 
     for (let i = 0; i < 150; i++) {
@@ -352,10 +370,9 @@ function fireConfetti() {
             p.tiltAngle += p.tiltAngleIncremental;
             p.y += (Math.cos(p.tiltAngle) + 3 + p.h / 2) / 2;
             p.x += Math.sin(p.tiltAngle) * 2;
-            p.x += p.dx * 0.5; // reduced explosion velocity over time
+            p.x += p.dx * 0.5; 
             p.y += p.dy * 0.5;
 
-            // Friction
             p.dx *= 0.9;
             p.dy *= 0.9;
             
@@ -380,7 +397,6 @@ function fireConfetti() {
     }
     animate();
     
-    // Cleanup after 4 seconds just in case
     setTimeout(() => {
         cancelAnimationFrame(animationId);
         if(document.body.contains(canvas)) canvas.remove();
@@ -403,7 +419,6 @@ function showResults() {
         xpGained: xpGainedThisLevel,
     });
 
-    // Auto-Save Mistakes
     let mistakesSaved = 0;
     levelData.questions.forEach((q, index) => {
         if (userAnswers[index] !== q.correctAnswerIndex && userAnswers[index] !== undefined) {
@@ -444,7 +459,7 @@ function showResults() {
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
 
-        fireConfetti(); // CELEBRATION!
+        fireConfetti();
         preloadNextLevel();
 
     } else {
@@ -465,6 +480,62 @@ function showResults() {
     
     document.getElementById('review-answers-btn').addEventListener('click', handleReviewAnswers);
     switchState('level-results-state');
+}
+
+async function handleShare() {
+    const btn = document.getElementById('share-result-btn');
+    if (!btn) return;
+    
+    const originalText = btn.innerHTML;
+    btn.innerHTML = `<div class="btn-spinner"></div> Capturing...`;
+    btn.disabled = true;
+
+    try {
+        const elementToCapture = document.getElementById('share-capture-area');
+        
+        const canvas = await html2canvas(elementToCapture, {
+            backgroundColor: '#0f172a', // Enforce dark theme bg for screenshot
+            scale: 2, // High res
+            logging: false,
+            useCORS: true
+        });
+
+        canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'my-quiz-victory.png', { type: 'image/png' });
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: 'I beat the AI Quiz Master!',
+                        text: `I just scored ${score}/${levelData.questions.length} on ${levelContext.topic}!`,
+                        files: [file]
+                    });
+                    showToast('Shared successfully!', 'success');
+                } catch (err) {
+                    console.log('Share cancelled or failed', err);
+                    downloadImage(canvas); // Fallback
+                }
+            } else {
+                downloadImage(canvas);
+            }
+            
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    } catch (e) {
+        console.error(e);
+        showToast('Failed to capture image', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+function downloadImage(canvas) {
+    const link = document.createElement('a');
+    link.download = `quiz-result-${Date.now()}.png`;
+    link.href = canvas.toDataURL();
+    link.click();
+    showToast('Image downloaded!', 'success');
 }
 
 async function handleQuit() {
@@ -572,6 +643,33 @@ function stopAudio() {
     }
 }
 
+// Global Keyboard Handler for Pro Users
+function handleGlobalKeydown(e) {
+    if (document.getElementById('level-quiz-state').classList.contains('active')) {
+        // Selection Logic (1-4)
+        if (['1', '2', '3', '4'].includes(e.key)) {
+            const idx = parseInt(e.key) - 1;
+            selectOption(idx);
+        }
+        // Submit Logic (Enter)
+        if (e.key === 'Enter') {
+            if (!elements.submitAnswerBtn.disabled) {
+                handleSubmitAnswer();
+            }
+        }
+    } else if (document.getElementById('level-results-state').classList.contains('active')) {
+        // Share Logic (S)
+        if (e.key.toLowerCase() === 's') {
+            handleShare();
+        }
+    } else if (document.getElementById('level-lesson-state').classList.contains('active')) {
+         // Start Logic (Enter)
+         if (e.key === 'Enter') {
+            startQuiz();
+         }
+    }
+}
+
 export function init() {
     const { navigationContext } = stateService.getState();
     levelContext = navigationContext;
@@ -604,6 +702,7 @@ export function init() {
         xpGainText: document.getElementById('xp-gain-text'),
         bossHealthContainer: document.getElementById('boss-health-container'),
         bossHealthFill: document.getElementById('boss-health-fill'),
+        shareBtn: document.getElementById('share-result-btn')
     };
 
     elements.cancelBtn.addEventListener('click', () => window.history.back());
@@ -617,6 +716,10 @@ export function init() {
     elements.quitBtn.addEventListener('click', handleQuit);
     elements.homeBtn.addEventListener('click', () => window.location.hash = '/#/');
     elements.hintBtn.addEventListener('click', handleHintClick);
+    if(elements.shareBtn) elements.shareBtn.addEventListener('click', handleShare);
+
+    keyboardHandler = handleGlobalKeydown;
+    document.addEventListener('keydown', keyboardHandler);
 
     startLevel();
 }
@@ -627,5 +730,8 @@ export function destroy() {
     if (outputAudioContext) {
         outputAudioContext.close().catch(e => console.error(e));
         outputAudioContext = null;
+    }
+    if (keyboardHandler) {
+        document.removeEventListener('keydown', keyboardHandler);
     }
 }

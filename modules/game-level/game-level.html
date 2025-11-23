@@ -109,12 +109,22 @@
     
     <!-- State 4: Results -->
     <div id="level-results-state" class="game-level-state">
-        <div class="state-content card results-content">
+        <div id="share-capture-area" class="state-content card results-content">
             <div id="results-icon" class="results-icon"></div>
             <h1 id="results-title"></h1>
             <p id="xp-gain-text" class="xp-gain"></p>
             <p id="results-details"></p>
-            <div id="results-actions" class="results-actions"></div>
+            
+            <div id="results-actions" class="results-actions">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+        <!-- Separate share button outside capture area to avoid recursion -->
+        <div class="share-container" style="margin-top: 20px;">
+            <button id="share-result-btn" class="btn" style="background: var(--color-surface-active); border-color: var(--color-accent); color: var(--color-accent);">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#award"/></svg>
+                <span>Share Victory</span>
+            </button>
         </div>
     </div>
 

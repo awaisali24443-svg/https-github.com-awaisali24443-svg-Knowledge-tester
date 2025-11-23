@@ -4,10 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Knowledge Tester</title>
+    <!-- PHASE 2: Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;400;700&display=swap" rel="stylesheet">
+    
     <!-- Existing styles -->
     <link rel="stylesheet" href="style.css">
     <!-- PHASE 1: Styles -->
     <link rel="stylesheet" href="style-phase1.css">
+    <!-- PHASE 2: Styles -->
+    <link rel="stylesheet" href="style-phase2.css">
+
 <script type="importmap">
 {
   "imports": {
@@ -25,6 +33,9 @@
 </script>
 </head>
 <body>
+    <!-- PHASE 2: Particles Container -->
+    <div id="particles-js"></div>
+
     <div class="container">
         <h1>Knowledge Tester</h1>
         <!-- Input and Button are targeted dynamically by phase1-core.js -->
@@ -37,7 +48,12 @@
 
     <!-- Original Logic -->
     <script src="index.js"></script>
-    <!-- PHASE 1: Logic (Loaded last to ensure DOM exists, but runs listeners first via capture) -->
+    <!-- PHASE 1: Logic -->
     <script src="phase1-core.js"></script>
+    
+    <!-- PHASE 2: Libraries & Logic -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="phase2-themes.js"></script>
 </body>
 </html>
