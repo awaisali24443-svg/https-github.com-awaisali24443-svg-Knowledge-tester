@@ -216,3 +216,48 @@ export function getProfileStats(history) {
     
     return { totalQuizzes, totalQuestions, averageScore };
 }
+
+// --- NEW: Memory Health Logic ---
+export function calculateMemoryHealth(history) {
+    // 1. Group by Topic
+    const topicDates = {};
+    history.forEach(h => {
+        const cleanTopic = h.topic.split('-')[0].trim();
+        const date = new Date(h.date).getTime();
+        if (!topicDates[cleanTopic] || date > topicDates[cleanTopic]) {
+            topicDates[cleanTopic] = date;
+        }
+    });
+
+    const topics = Object.keys(topicDates);
+    if (topics.length === 0) return { health: 100, status: 'Stable', oldestTopic: null };
+
+    // 2. Find the most neglected topic
+    let oldestDate = Date.now();
+    let oldestTopic = null;
+    
+    // Average Decay
+    let totalDecay = 0;
+    const now = Date.now();
+    const DAY_MS = 86400000;
+
+    topics.forEach(t => {
+        const daysSince = (now - topicDates[t]) / DAY_MS;
+        const decay = Math.min(100, daysSince * 5); // Lose 5% health per day
+        totalDecay += decay;
+
+        if (topicDates[t] < oldestDate) {
+            oldestDate = topicDates[t];
+            oldestTopic = t;
+        }
+    });
+
+    // 3. Calculate Overall Health (Average of all active topics)
+    const avgHealth = Math.max(0, 100 - (totalDecay / topics.length));
+    
+    let status = 'Stable';
+    if (avgHealth < 50) status = 'Critical';
+    else if (avgHealth < 80) status = 'Decaying';
+
+    return { health: Math.round(avgHealth), status, oldestTopic };
+}

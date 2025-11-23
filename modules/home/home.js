@@ -79,7 +79,52 @@ function renderRecentHistory() {
     container.addEventListener('click', historyClickHandler);
 }
 
-// --- NEW: Daily Challenge Logic ---
+// --- NEW: Neural Integrity (Memory Health) ---
+function renderMemoryHealth() {
+    const history = historyService.getHistory();
+    if (history.length === 0) return; // No history, no decay
+
+    const { health, status, oldestTopic } = gamificationService.calculateMemoryHealth(history);
+    
+    const widget = document.getElementById('memory-health-widget');
+    const percentEl = document.getElementById('health-percentage');
+    const barFill = document.getElementById('health-bar-fill');
+    const statusText = document.getElementById('health-status-text');
+    const repairBtn = document.getElementById('repair-memory-btn');
+    
+    widget.style.display = 'block';
+    percentEl.textContent = `${health}%`;
+    barFill.style.width = `${health}%`;
+    
+    // Status Colors
+    if (status === 'Critical') {
+        barFill.style.backgroundColor = 'var(--color-error)';
+        widget.style.borderLeftColor = 'var(--color-error)';
+        statusText.textContent = `Critical Decay: ${oldestTopic}`;
+    } else if (status === 'Decaying') {
+        barFill.style.backgroundColor = 'var(--color-primary)'; // Or orange if defined
+        widget.style.borderLeftColor = 'var(--color-primary)';
+        statusText.textContent = `Fading: ${oldestTopic}`;
+    } else {
+        barFill.style.backgroundColor = 'var(--color-success)';
+        widget.style.borderLeftColor = 'var(--color-success)';
+        statusText.textContent = "Neural pathways stable.";
+    }
+    
+    // Show Repair button if health is low
+    if (health < 90 && oldestTopic) {
+        repairBtn.style.display = 'flex';
+        repairBtn.onclick = () => {
+            stateService.setNavigationContext({ topic: oldestTopic, level: 1, journeyId: 'repair', isBoss: false, totalLevels: 10 });
+            window.location.hash = `#/game/${encodeURIComponent(oldestTopic)}`;
+        };
+    } else {
+        repairBtn.style.display = 'none';
+    }
+}
+
+
+// --- Daily Challenge Logic ---
 async function initDailyChallenge() {
     const container = document.getElementById('daily-challenge-card');
     const statusText = document.getElementById('daily-challenge-status');
@@ -168,6 +213,7 @@ export function init() {
     renderStreak();
     renderPrimaryAction();
     renderRecentHistory();
+    renderMemoryHealth();
     initDailyChallenge();
 }
 

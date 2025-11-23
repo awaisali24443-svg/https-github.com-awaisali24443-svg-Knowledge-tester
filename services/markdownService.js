@@ -1,19 +1,14 @@
 
+import DOMPurify from 'dompurify';
+
 /**
  * Renders a Markdown string into a basic HTML string.
- * Security: Includes basic output sanitization.
+ * Security: Uses DOMPurify for robust XSS sanitization.
  */
 export function render(markdown) {
     if (!markdown) return '';
 
-    // 1. Basic Sanitization
-    // We remove script tags but allow emojis and standard punctuation.
-    let safeMarkdown = markdown
-        .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
-        .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, "")
-        .replace(/ on\w+="[^"]*"/g, "");
-
-    const lines = safeMarkdown.split('\n');
+    const lines = markdown.split('\n');
     let html = '';
     let inCodeBlock = false;
     let inList = false;
@@ -39,6 +34,7 @@ export function render(markdown) {
                     inList = false;
                 }
                 inCodeBlock = true;
+                // Basic sanitization of lang attribute to alphanumeric
                 codeBlockLang = line.trim().substring(3).trim().replace(/[^a-zA-Z0-9-]/g, ''); 
             }
             continue;
@@ -49,6 +45,7 @@ export function render(markdown) {
                 const cleanLine = line.replace(/<\/div>/gi, ''); 
                 codeBlockContent.push(cleanLine);
             } else {
+                // Escape HTML inside code blocks for display
                 const escapedLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 codeBlockContent.push(escapedLine);
             }
@@ -99,5 +96,11 @@ export function render(markdown) {
          }
     }
 
-    return html;
+    // FINAL SECURITY PASS: Sanitize the generated HTML
+    // We allow standard tags and attributes, but strictly forbid scripts/iframes
+    return DOMPurify.sanitize(html, {
+        USE_PROFILES: { html: true },
+        ADD_TAGS: ['div', 'pre', 'code', 'span'],
+        ADD_ATTR: ['class', 'data-lang']
+    });
 }

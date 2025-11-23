@@ -16,6 +16,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let topicsCache = null;
 
+// --- VALIDATION HELPERS ---
+function isValidTopic(topic) {
+    return typeof topic === 'string' && topic.length > 0 && topic.length <= 100;
+}
+
+function isValidText(text, maxLength = 1000) {
+    return typeof text === 'string' && text.length > 0 && text.length <= maxLength;
+}
+
+function isValidNumber(num) {
+    return typeof num === 'number' && !isNaN(num);
+}
+
 // --- GEMINI API SETUP ---
 let ai;
 try {
@@ -40,7 +53,7 @@ const journeyPlanSchema = {
         },
         description: {
             type: Type.STRING,
-            description: "A new, compelling, one-sentence description for this specific learning journey."
+            description: "A new, compelling, one-sentence description for this learning journey."
         }
     },
     required: ["totalLevels", "description"]
@@ -58,16 +71,12 @@ const curriculumOutlineSchema = {
     required: ["chapters"]
 };
 
-const levelGenerationSchema = {
+const questionsGenerationSchema = {
     type: Type.OBJECT,
     properties: {
-        lesson: {
-            type: Type.STRING,
-            description: "A high-impact, 'Presentation Style' lesson. Use bullet points, emojis, and bold text. NO long paragraphs. If a process is described, include a mermaid.js diagram."
-        },
         questions: {
             type: Type.ARRAY,
-            description: "An array of 2-3 multiple-choice questions based *only* on the provided lesson text.",
+            description: "An array of exactly 6 multiple-choice questions.",
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -80,7 +89,48 @@ const levelGenerationSchema = {
             }
         }
     },
-    required: ["lesson", "questions"]
+    required: ["questions"]
+};
+
+const lessonGenerationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        lesson: {
+            type: Type.STRING,
+            description: "A high-impact, 'Presentation Style' lesson. Use bullet points, emojis, and bold text. NO long paragraphs. If a process is described, include a mermaid.js diagram."
+        }
+    },
+    required: ["lesson"]
+};
+
+// NEW: Interactive Challenge Schema
+const interactiveChallengeSchema = {
+    type: Type.OBJECT,
+    properties: {
+        challengeType: { 
+            type: Type.STRING, 
+            enum: ["sequence", "match"],
+            description: "Choose 'sequence' for ordering tasks (e.g., history, code logic) or 'match' for associations (e.g., terms to definitions)."
+        },
+        instruction: { 
+            type: Type.STRING,
+            description: "The instruction for the user (e.g., 'Arrange the phases of Mitosis in order' or 'Match the HTTP codes to their meanings')."
+        },
+        items: {
+            type: Type.ARRAY,
+            description: "For 'sequence', return 4-5 items in the CORRECT order. For 'match', return 4 pairs.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING },
+                    text: { type: Type.STRING, description: "The visible text (e.g., 'Prophase' or '404')." },
+                    match: { type: Type.STRING, description: "Only for 'match' type. The paired value (e.g., 'Not Found')." }
+                },
+                required: ["id", "text"]
+            }
+        }
+    },
+    required: ["challengeType", "instruction", "items"]
 };
 
 const bossBattleGenerationSchema = {
@@ -199,28 +249,18 @@ async function generateCurriculumOutline(topic, totalLevels) {
     }
 }
 
-async function generateLevelContent(topic, level, totalLevels) {
+async function generateLevelQuestions(topic, level, totalLevels) {
     if (!ai) throw new Error("AI Service not initialized.");
     
-    const prompt = `You are a charismatic, world-class keynote speaker and educator. You are teaching a ${totalLevels}-level masterclass on "${topic}". The user is currently on Level ${level}.
+    const prompt = `You are an expert educator creating a quiz for a student learning "${topic}".
+    Current Level: ${level} / ${totalLevels}.
     
-    YOUR GOAL: Deliver a high-impact, "Presentation Style" lesson that sticks.
+    TASK: Generate exactly 6 multiple-choice questions for this specific level.
     
-    RULES FOR LESSON CONTENT:
-    1. **NO WALLS OF TEXT.** Do not write standard paragraphs.
-    2. **Tone:** Conversational, high-energy, and direct. Like a TED Talk.
-    3. **Structure:**
-       - Start with a "Hook" or a "Big Idea" (1 sentence).
-       - Use **Bullet Points** for the core concepts. 
-       - **IMPORTANT:** Use EMOJIS as bullet points (e.g., 🚀, 💡, 🔑, ⚠️) to make it visually popping.
-       - Use **Bold** for key terms.
-       - End with a quick "Takeaway."
-    4. **Content:** Introduce ONE specific sub-concept appropriate for Level ${level}.
-    5. **Visualization:** If the concept involves a process or hierarchy, you MUST include a Mermaid.js diagram (start with \`\`\`mermaid).
-    
-    RULES FOR QUESTIONS:
-    1. Generate 2-3 multiple-choice questions based *only* on this specific lesson.
-    2. Keep options concise.
+    RULES:
+    1. The questions should introduce and test a specific concept appropriate for this level.
+    2. Questions must be challenging but fair.
+    3. Include plausible distractors.
     
     Generate the JSON response.`;
 
@@ -230,13 +270,81 @@ async function generateLevelContent(topic, level, totalLevels) {
             contents: prompt,
             config: {
                 responseMimeType: 'application/json',
-                responseSchema: levelGenerationSchema,
+                responseSchema: questionsGenerationSchema,
             }
         });
         return JSON.parse(response.text);
     } catch (error) {
-        console.error(`Gemini API Error (Level ${level} Generation for ${topic}):`, error);
-        throw new Error('Failed to generate the next level.');
+        console.error(`Gemini API Error (Level Questions ${level}):`, error);
+        throw new Error('Failed to generate questions.');
+    }
+}
+
+async function generateInteractiveLevel(topic, level) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    
+    const prompt = `You are a game designer creating an interactive challenge for the topic "${topic}" at Level ${level}.
+    
+    TASK: Create either a "Sequence" challenge (ordering items) OR a "Match" challenge (pairing items). Choose the one that best fits the concept for this level.
+    
+    RULES:
+    - If Sequence: Provide 4-5 steps/items in the CORRECT order.
+    - If Match: Provide 4 pairs of terms and definitions/associations.
+    - Keep items concise (max 5-7 words).
+    
+    Return the JSON response.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: interactiveChallengeSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Interactive Level ${level}):`, error);
+        throw new Error('Failed to generate interactive challenge.');
+    }
+}
+
+async function generateLevelLesson(topic, level, totalLevels, questionsContext) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    
+    const questionsText = JSON.stringify(questionsContext);
+    
+    const prompt = `You are a charismatic, world-class keynote speaker. You are teaching a masterclass on "${topic}" (Level ${level}).
+    
+    CONTEXT: The student has just been assigned the following challenge: ${questionsText}.
+    
+    YOUR GOAL: Write a high-impact, "Presentation Style" lesson that teaches the concepts required to answer those specific questions.
+    
+    RULES:
+    1. **NO WALLS OF TEXT.** Do not write standard paragraphs.
+    2. **Tone:** Conversational, high-energy, and direct. Like a TED Talk.
+    3. **Structure:**
+       - Start with a "Hook" (1 sentence).
+       - Use **Bullet Points** with EMOJIS (🚀, 💡, 🔑) for core concepts.
+       - Use **Bold** for key terms.
+    4. **Visualization:** If the concept involves a process or hierarchy, you MUST include a Mermaid.js diagram (start with \`\`\`mermaid).
+    
+    Generate the JSON response.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: lessonGenerationSchema,
+            }
+        });
+        return JSON.parse(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Level Lesson ${level}):`, error);
+        throw new Error('Failed to generate lesson.');
     }
 }
 
@@ -445,7 +553,7 @@ app.use('/api', apiLimiter);
 
 app.post('/api/generate-journey-plan', async (req, res) => {
     const { topic } = req.body;
-    if (!topic) return res.status(400).json({ error: 'Missing required parameter: topic' });
+    if (!isValidTopic(topic)) return res.status(400).json({ error: 'Invalid parameter: topic' });
     try {
         const plan = await generateJourneyPlan(topic);
         res.json(plan);
@@ -456,7 +564,7 @@ app.post('/api/generate-journey-plan', async (req, res) => {
 
 app.post('/api/generate-curriculum-outline', async (req, res) => {
     const { topic, totalLevels } = req.body;
-    if (!topic || !totalLevels) return res.status(400).json({ error: 'Missing required parameters' });
+    if (!isValidTopic(topic) || !isValidNumber(totalLevels)) return res.status(400).json({ error: 'Invalid parameters' });
     try {
         const outline = await generateCurriculumOutline(topic, totalLevels);
         res.json(outline);
@@ -465,12 +573,34 @@ app.post('/api/generate-curriculum-outline', async (req, res) => {
     }
 });
 
-app.post('/api/generate-level', async (req, res) => {
+app.post('/api/generate-level-questions', async (req, res) => {
     const { topic, level, totalLevels } = req.body;
-    if (!topic || !level || !totalLevels) return res.status(400).json({ error: 'Missing required parameters' });
+    if (!isValidTopic(topic) || !isValidNumber(level) || !isValidNumber(totalLevels)) return res.status(400).json({ error: 'Invalid parameters' });
     try {
-        const levelContent = await generateLevelContent(topic, level, totalLevels);
-        res.json(levelContent);
+        const data = await generateLevelQuestions(topic, level, totalLevels);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/generate-interactive-level', async (req, res) => {
+    const { topic, level } = req.body;
+    if (!isValidTopic(topic) || !isValidNumber(level)) return res.status(400).json({ error: 'Invalid parameters' });
+    try {
+        const data = await generateInteractiveLevel(topic, level);
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/generate-level-lesson', async (req, res) => {
+    const { topic, level, totalLevels, questions } = req.body;
+    if (!isValidTopic(topic) || !isValidNumber(level) || !isValidNumber(totalLevels) || !questions) return res.status(400).json({ error: 'Invalid parameters' });
+    try {
+        const data = await generateLevelLesson(topic, level, totalLevels, questions);
+        res.json(data);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -478,7 +608,7 @@ app.post('/api/generate-level', async (req, res) => {
 
 app.post('/api/generate-boss-battle', async (req, res) => {
     const { topic, chapter } = req.body;
-    if (!topic || !chapter) return res.status(400).json({ error: 'Missing required parameters' });
+    if (!isValidTopic(topic) || !isValidNumber(chapter)) return res.status(400).json({ error: 'Invalid parameters' });
     try {
         const bossContent = await generateBossBattleContent(topic, chapter);
         res.json(bossContent);
@@ -489,7 +619,7 @@ app.post('/api/generate-boss-battle', async (req, res) => {
 
 app.post('/api/generate-hint', async (req, res) => {
     const { topic, question, options } = req.body;
-    if (!topic || !question || !options) return res.status(400).json({ error: 'Missing required parameters' });
+    if (!isValidTopic(topic) || !isValidText(question) || !options) return res.status(400).json({ error: 'Invalid parameters' });
     try {
         const hint = await generateHint(topic, question, options);
         res.json(hint);
@@ -500,7 +630,7 @@ app.post('/api/generate-hint', async (req, res) => {
 
 app.post('/api/generate-speech', async (req, res) => {
     const { text } = req.body;
-    if (!text || text.trim().length === 0) return res.status(400).json({ error: 'Missing text' });
+    if (!isValidText(text, 5000)) return res.status(400).json({ error: 'Invalid text' });
     try {
         const audioContent = await generateSpeech(text);
         res.json({ audioContent });
@@ -511,7 +641,7 @@ app.post('/api/generate-speech', async (req, res) => {
 
 app.post('/api/explain-concept', async (req, res) => {
     const { topic, concept, context } = req.body;
-    if (!topic || !concept) return res.status(400).json({ error: 'Missing topic or concept' });
+    if (!isValidTopic(topic) || !isValidText(concept)) return res.status(400).json({ error: 'Invalid parameters' });
     try {
         const result = await explainConcept(topic, concept, context || '');
         res.json(result);
@@ -525,7 +655,9 @@ app.get('/api/daily-challenge', async (req, res) => {
 });
 
 app.post('/api/explain-error', async (req, res) => {
-    try { res.json(await explainError(req.body.topic, req.body.question, req.body.userChoice, req.body.correctChoice)); } catch (e) { res.status(500).json({ error: e.message }); }
+    const { topic, question, userChoice, correctChoice } = req.body;
+    if (!isValidTopic(topic) || !isValidText(question)) return res.status(400).json({ error: 'Invalid parameters' });
+    try { res.json(await explainError(topic, question, userChoice, correctChoice)); } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.get('/api/topics', async (req, res) => {

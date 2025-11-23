@@ -18,9 +18,43 @@ async function handleResponse(response) {
     return response.json();
 }
 
+/**
+ * Helper to fetch with a timeout.
+ */
+async function fetchWithTimeout(url, options = {}, timeout = 30000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    
+    // If the caller provided a signal (e.g., for user cancellation), we need to respect it too.
+    if (options.signal) {
+        options.signal.addEventListener('abort', () => {
+            clearTimeout(id);
+            controller.abort();
+        });
+    }
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(id);
+        return response;
+    } catch (error) {
+        clearTimeout(id);
+        if (error.name === 'AbortError') {
+             // If user cancelled (passed signal), treat as user abort.
+             if (options.signal && options.signal.aborted) throw error;
+             // Otherwise, treat as network timeout.
+             throw new Error("Request timed out.");
+        }
+        throw error;
+    }
+}
+
 export async function fetchTopics() {
     try {
-        const response = await fetch('/api/topics');
+        const response = await fetchWithTimeout('/api/topics');
         return await handleResponse(response);
     } catch (error) {
         showToast('Error fetching topics.', 'error');
@@ -30,7 +64,7 @@ export async function fetchTopics() {
 
 export async function generateJourneyPlan(topic) {
     try {
-        const response = await fetch('/api/generate-journey-plan', {
+        const response = await fetchWithTimeout('/api/generate-journey-plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic })
@@ -43,7 +77,7 @@ export async function generateJourneyPlan(topic) {
 
 export async function generateCurriculumOutline({ topic, totalLevels }) {
     try {
-        const response = await fetch('/api/generate-curriculum-outline', {
+        const response = await fetchWithTimeout('/api/generate-curriculum-outline', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, totalLevels })
@@ -54,9 +88,9 @@ export async function generateCurriculumOutline({ topic, totalLevels }) {
     }
 }
 
-export async function generateLevel({ topic, level, totalLevels }) {
+export async function generateLevelQuestions({ topic, level, totalLevels }) {
     try {
-        const response = await fetch('/api/generate-level', {
+        const response = await fetchWithTimeout('/api/generate-level-questions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, level, totalLevels })
@@ -67,9 +101,37 @@ export async function generateLevel({ topic, level, totalLevels }) {
     }
 }
 
+export async function generateInteractiveLevel({ topic, level }) {
+    try {
+        const response = await fetchWithTimeout('/api/generate-interactive-level', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, level })
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
+export async function generateLevelLesson({ topic, level, totalLevels, questions, signal }) {
+    try {
+        // Pass the AbortSignal to allow user cancellation, combined with timeout logic in fetchWithTimeout
+        const response = await fetchWithTimeout('/api/generate-level-lesson', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ topic, level, totalLevels, questions }),
+            signal: signal
+        });
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
 export async function generateBossBattle({ topic, chapter }) {
     try {
-        const response = await fetch('/api/generate-boss-battle', {
+        const response = await fetchWithTimeout('/api/generate-boss-battle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, chapter })
@@ -82,7 +144,7 @@ export async function generateBossBattle({ topic, chapter }) {
 
 export async function generateHint({ topic, question, options }) {
     try {
-        const response = await fetch('/api/generate-hint', {
+        const response = await fetchWithTimeout('/api/generate-hint', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, question, options })
@@ -95,7 +157,7 @@ export async function generateHint({ topic, question, options }) {
 
 export async function generateSpeech(text) {
     try {
-        const response = await fetch('/api/generate-speech', {
+        const response = await fetchWithTimeout('/api/generate-speech', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text })
@@ -106,16 +168,9 @@ export async function generateSpeech(text) {
     }
 }
 
-/**
- * Sends a request to the backend to explain a specific concept (Socratic Deep Dive).
- * @param {string} topic - The main topic.
- * @param {string} concept - The specific concept/text to explain.
- * @param {string} context - The surrounding context (e.g., the full lesson text).
- * @returns {Promise<object>} Resolves to { explanation }.
- */
 export async function explainConcept(topic, concept, context) {
     try {
-        const response = await fetch('/api/explain-concept', {
+        const response = await fetchWithTimeout('/api/explain-concept', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, concept, context })
@@ -128,7 +183,7 @@ export async function explainConcept(topic, concept, context) {
 
 export async function fetchDailyChallenge() {
     try {
-        const response = await fetch('/api/daily-challenge');
+        const response = await fetchWithTimeout('/api/daily-challenge');
         return await handleResponse(response);
     } catch (error) {
         throw error;
@@ -137,7 +192,7 @@ export async function fetchDailyChallenge() {
 
 export async function explainError(topic, question, userChoice, correctChoice) {
     try {
-        const response = await fetch('/api/explain-error', {
+        const response = await fetchWithTimeout('/api/explain-error', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ topic, question, userChoice, correctChoice })

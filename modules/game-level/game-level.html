@@ -1,3 +1,4 @@
+
 <div class="game-level-container">
     <div class="sr-only" id="announcer-region" role="alert" aria-live="assertive"></div>
     <div class="sr-only" id="timer-announcer-region" role="status" aria-live="polite"></div>
@@ -16,8 +17,18 @@
                 <div class="skeleton" style="width: 40%; height: 40px;"></div>
              </div>
              <div id="loading-text-container" style="margin-top: 20px;">
-                 <p>The AI is crafting your next challenge...</p>
-                 <button id="cancel-generation-btn" class="btn">Cancel</button>
+                 <p id="loading-status-text">The AI is crafting your next challenge...</p>
+                 
+                 <!-- NEW: Instant Skip / Popup Action -->
+                 <div id="skip-lesson-popup" class="skip-lesson-popup" style="display: none;">
+                     <button id="skip-to-quiz-btn" class="btn btn-primary">
+                         <svg class="icon"><use href="/assets/icons/feather-sprite.svg#zap"/></svg>
+                         <span>Questions Ready! Start Quiz</span>
+                     </button>
+                     <p class="small-text">Lesson generating in background...</p>
+                 </div>
+
+                 <button id="cancel-generation-btn" class="btn" style="margin-top: 10px;">Cancel</button>
              </div>
         </div>
     </div>
@@ -55,7 +66,7 @@
         </div>
     </div>
 
-    <!-- State 3: Quiz -->
+    <!-- State 3: Quiz / Interactive Challenge -->
     <div id="level-quiz-state" class="game-level-state">
         <header class="new-quiz-header">
             <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
@@ -86,12 +97,23 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Standard MCQ Container -->
             <div id="question-container" class="card main-question-card">
                 <h2 id="quiz-question-text">Loading question...</h2>
                 <div id="quiz-options-container" class="options-grid">
-                    <!-- Options will be injected here -->
+                    <!-- Options injected here -->
                 </div>
             </div>
+            
+            <!-- NEW: Interactive Challenge Container -->
+            <div id="interactive-container" class="card main-question-card" style="display: none;">
+                <h2 id="interactive-instruction"></h2>
+                <div id="interactive-playground" class="interactive-playground">
+                    <!-- Sorting/Matching items injected here -->
+                </div>
+            </div>
+
         </div>
         <footer class="new-quiz-footer">
              <button id="home-btn" class="btn">

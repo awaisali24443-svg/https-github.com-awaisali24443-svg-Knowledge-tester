@@ -44,6 +44,22 @@
 
         <!-- Sidebar Widgets -->
         <div class="dashboard-sidebar">
+            
+            <!-- NEW: Neural Integrity Widget -->
+            <div id="memory-health-widget" class="dashboard-widget card" style="display: none;">
+                <div class="widget-header">
+                    <h3>Neural Integrity</h3>
+                    <span id="health-percentage">100%</span>
+                </div>
+                <div class="health-bar-container">
+                    <div id="health-bar-fill" class="health-bar-fill"></div>
+                </div>
+                <p id="health-status-text">Systems Nominal.</p>
+                <button id="repair-memory-btn" class="btn btn-small btn-repair" style="display: none;">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#zap"/></svg> Repair Memory
+                </button>
+            </div>
+
             <div id="recent-history-container" class="dashboard-widget" style="display: none;">
                 <!-- Content injected by JS -->
             </div>

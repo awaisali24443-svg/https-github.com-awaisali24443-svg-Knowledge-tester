@@ -10,7 +10,16 @@ import * as stateService from '../../services/stateService.js';
 import * as libraryService from '../../services/libraryService.js';
 import { showToast } from '../../services/toastService.js';
 
-let levelData;
+let levelData = {}; // Stores lesson + questions
+let masterQuestionsList = []; // Stores all generated questions (e.g., 6 for standard)
+let currentAttemptSet = 0; // Tracks which set of questions we are on (0 or 1)
+let currentQuestions = []; // The actual subset being used for the current quiz
+
+// Interactive Challenge State
+let isInteractiveLevel = false;
+let interactiveData = null; // { type, instruction, items }
+let interactiveUserState = []; // Current sort order OR matched pairs
+
 let currentQuestionIndex = 0;
 let score = 0;
 let answered = false;
@@ -24,13 +33,23 @@ let hintUsedThisQuestion = false;
 let xpGainedThisLevel = 0;
 let outputAudioContext = null;
 let currentAudioSource = null;
+let retryGenerationPromise = null; // Store the pending retry generation
 
 // Boss Battle State
 let bossHp = 100;
 let damagePerHit = 10;
 
+// Async Flow Control
+let lessonGenerationPromise = null;
+let lessonAbortController = null; // Controller to cancel lesson generation
+let skippedLesson = false;
+
+// Drag and Drop State
+let dragStartIndex = null;
+
 const PASS_THRESHOLD = 0.8;
 const LEVELS_PER_CHAPTER = 50;
+const STANDARD_QUESTIONS_PER_ATTEMPT = 3;
 
 function announce(message, polite = false) {
     const region = polite ? elements.timerAnnouncer : elements.announcer;
@@ -70,27 +89,86 @@ function switchState(targetStateId) {
     document.getElementById(targetStateId)?.classList.add('active');
 }
 
-async function startLevel() {
+/**
+ * Starts the level loading process.
+ * @param {boolean} forceRefresh - If true, ignores cache and requests new questions from AI.
+ */
+async function startLevel(forceRefresh = false) {
     const { topic, level, journeyId, isBoss, totalLevels } = levelContext;
+    
+    // Reset state
+    retryGenerationPromise = null;
+    lessonGenerationPromise = null;
+    if (lessonAbortController) {
+        lessonAbortController.abort(); // Cancel any previous pending request
+    }
+    lessonAbortController = null;
+    skippedLesson = false;
+    currentAttemptSet = 0;
+    masterQuestionsList = [];
+    levelData = {};
+    isInteractiveLevel = false;
+    interactiveData = null;
+
     if (!topic || !level || !journeyId) {
         window.location.hash = '/topics';
         return;
     }
-    
-    switchState('level-loading-state');
 
-    const cachedLevel = levelCacheService.getLevel(topic, level);
-    if (cachedLevel) {
-        levelData = cachedLevel;
-        if (isBoss) {
-            startQuiz();
-        } else {
-            renderLesson();
+    // Determine if this is an Interactive Challenge (every 5th level, not boss)
+    // Bosses (level 50, 100) are standard quizzes for now based on previous logic, but "every 5th level" 
+    // implies 5, 10, 15... 45. 50 is Boss. So if % 5 == 0 AND NOT Boss.
+    if (level % 5 === 0 && !isBoss) {
+        isInteractiveLevel = true;
+    }
+    
+    // Show loading screen
+    switchState('level-loading-state');
+    elements.skipPopup.style.display = 'none'; // Hide skip initially
+    elements.loadingText.textContent = isInteractiveLevel 
+        ? "Designing Interactive Challenge..." 
+        : "The AI is crafting your next challenge...";
+
+    let partialCacheHit = false;
+
+    // If NOT forcing refresh, try to load from cache first
+    if (!forceRefresh) {
+        const cachedLevel = levelCacheService.getLevel(topic, level);
+        
+        if (cachedLevel) {
+            // Check based on level type
+            if (isInteractiveLevel && cachedLevel.challengeType) {
+                levelData = cachedLevel;
+                interactiveData = cachedLevel;
+                // Interactive levels have no separate lesson, they are just the challenge + lesson context maybe?
+                // For now, let's assume interactive levels might have a lesson or might just be the challenge.
+                // If we follow standard pattern, we want a lesson too.
+                if (cachedLevel.lesson) {
+                    renderLesson();
+                } else {
+                    startQuiz(); // Or start interactive mode
+                }
+                return;
+            } else if (!isInteractiveLevel && cachedLevel.questions) {
+                 // Standard Level Logic (Existing)
+                if (isBoss || cachedLevel.lesson) {
+                    levelData = cachedLevel;
+                    masterQuestionsList = levelData.questions || [];
+                    if (isBoss) {
+                        startQuiz();
+                    } else {
+                        renderLesson();
+                    }
+                    return;
+                }
+                levelData.questions = cachedLevel.questions;
+                masterQuestionsList = cachedLevel.questions;
+                partialCacheHit = true;
+            }
         }
-        return;
     }
 
-    if (!navigator.onLine) {
+    if (!navigator.onLine && !partialCacheHit) {
         showToast("You are offline", "error");
         window.history.back();
         return;
@@ -101,18 +179,133 @@ async function startLevel() {
             const chapter = Math.ceil(level / LEVELS_PER_CHAPTER);
             levelData = await apiService.generateBossBattle({ topic, chapter });
             if (!levelData || !levelData.questions) throw new Error("AI failed to generate a valid boss battle.");
+            masterQuestionsList = levelData.questions;
             levelCacheService.saveLevel(topic, level, levelData);
             startQuiz();
+        
+        } else if (isInteractiveLevel) {
+            // --- INTERACTIVE LEVEL GENERATION ---
+            if (!partialCacheHit) {
+                elements.loadingText.textContent = "Creating Interactive Challenge...";
+                interactiveData = await apiService.generateInteractiveLevel({ topic, level });
+                
+                if (!interactiveData || !interactiveData.items) throw new Error("Failed to generate challenge.");
+                
+                levelData = { ...interactiveData }; // Merge
+                // Save intermediate
+                levelCacheService.saveLevel(topic, level, levelData);
+            }
+
+            // Generate Lesson for Interactive Level too
+             elements.skipPopup.style.display = 'block';
+             elements.loadingText.textContent = "Writing Challenge Instructions...";
+             
+             lessonAbortController = new AbortController();
+             // Pass interactive items as "questions" context for the lesson generator
+             const contextItems = interactiveData.items.map(i => i.text).join(', ');
+             
+             lessonGenerationPromise = apiService.generateLevelLesson({
+                 topic,
+                 level,
+                 totalLevels,
+                 questions: [{ question: `Interactive Challenge: ${interactiveData.instruction}. Items: ${contextItems}` }], // Mock structure for context
+                 signal: lessonAbortController.signal
+             })
+             .then(lData => {
+                 levelData.lesson = lData.lesson;
+                 levelCacheService.saveLevel(topic, level, levelData);
+                 if (!skippedLesson) renderLesson();
+             })
+             .catch(err => {
+                 if (err.name !== 'AbortError') {
+                     if (!skippedLesson) {
+                         showToast("Lesson failed, starting challenge.", "error");
+                         startQuiz();
+                     }
+                 }
+             });
+
         } else {
-            levelData = await apiService.generateLevel({ topic, level, totalLevels });
-            if (!levelData || !levelData.lesson || !levelData.questions) throw new Error("AI failed to generate valid level content.");
-            levelCacheService.saveLevel(topic, level, levelData);
-            renderLesson();
+            // --- STANDARD MCQ GENERATION ---
+            if (!partialCacheHit) {
+                elements.loadingText.textContent = "Generating Challenge Questions...";
+                const qData = await apiService.generateLevelQuestions({ topic, level, totalLevels });
+                
+                if (!qData || !qData.questions) throw new Error("Failed to generate questions.");
+                
+                masterQuestionsList = qData.questions;
+                levelData.questions = masterQuestionsList;
+                levelCacheService.saveLevel(topic, level, levelData); 
+            } else {
+                console.log("Restored questions from partial cache.");
+            }
+
+            elements.skipPopup.style.display = 'block';
+            elements.loadingText.textContent = "Writing Lesson Plan...";
+
+            lessonAbortController = new AbortController();
+            
+            lessonGenerationPromise = apiService.generateLevelLesson({ 
+                topic, 
+                level, 
+                totalLevels, 
+                questions: masterQuestionsList, 
+                signal: lessonAbortController.signal 
+            })
+                .then(lData => {
+                    levelData.lesson = lData.lesson;
+                    levelCacheService.saveLevel(topic, level, levelData);
+                    if (!skippedLesson) renderLesson();
+                })
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        if (!skippedLesson) {
+                            showToast("Lesson failed, starting quiz.", "error");
+                            startQuiz();
+                        }
+                    }
+                });
         }
+
     } catch (error) {
         showToast(error.message, "error");
         window.history.back();
     }
+}
+
+/**
+ * Triggered on the first incorrect answer.
+ * Generates the *next* attempt's data in the background IF we don't have enough local questions.
+ */
+function triggerRetryGeneration() {
+    if (isInteractiveLevel) return; // Interactive levels don't support multi-set retry yet (would need complex logic)
+
+    const isBoss = levelContext.isBoss;
+    const questionsNeeded = isBoss ? 10 : STANDARD_QUESTIONS_PER_ATTEMPT;
+    const remainingQuestions = masterQuestionsList.length - ((currentAttemptSet + 1) * questionsNeeded);
+
+    if (remainingQuestions >= questionsNeeded) {
+        return;
+    }
+
+    if (retryGenerationPromise) return; 
+
+    console.log("Prefetching fallback retry level...");
+    const { topic, level, totalLevels } = levelContext;
+
+    const generator = isBoss 
+        ? apiService.generateBossBattle({ topic, chapter: Math.ceil(level/LEVELS_PER_CHAPTER) }) 
+        : apiService.generateLevelQuestions({ topic, level, totalLevels });
+
+    retryGenerationPromise = generator
+        .then(data => {
+            console.log("Fallback retry questions prefetched successfully.");
+            return isBoss ? data : { questions: data.questions, lesson: levelData.lesson }; 
+        })
+        .catch(err => {
+            console.error("Prefetch failed", err);
+            return null;
+        });
 }
 
 async function preloadNextLevel() {
@@ -129,8 +322,15 @@ async function preloadNextLevel() {
         if (isBoss) {
             const chapter = Math.ceil(nextLevel / LEVELS_PER_CHAPTER);
             data = await apiService.generateBossBattle({ topic, chapter });
+        } else if (nextLevel % 5 === 0) {
+             // Preload interactive level
+             const iData = await apiService.generateInteractiveLevel({ topic, level: nextLevel });
+             // We won't generate lesson for interactive preload to save tokens/time for now, or could mimic standard logic
+             data = { ...iData }; 
         } else {
-            data = await apiService.generateLevel({ topic, level: nextLevel, totalLevels });
+            const qData = await apiService.generateLevelQuestions({ topic, level: nextLevel, totalLevels });
+            const lData = await apiService.generateLevelLesson({ topic, level: nextLevel, totalLevels, questions: qData.questions });
+            data = { ...qData, ...lData };
         }
 
         if (data) {
@@ -143,6 +343,8 @@ async function preloadNextLevel() {
 }
 
 function renderLesson() {
+    if (!levelData.lesson) return; // Safety check
+
     elements.lessonTitle.textContent = `Level ${levelContext.level}: ${levelContext.topic}`;
     elements.lessonBody.innerHTML = markdownService.render(levelData.lesson);
     
@@ -161,18 +363,61 @@ function renderLesson() {
 }
 
 function startQuiz() {
+    skippedLesson = true;
+    if (lessonAbortController) {
+        lessonAbortController.abort();
+        lessonAbortController = null;
+    }
+
     currentQuestionIndex = 0;
     score = 0;
     userAnswers = [];
     xpGainedThisLevel = 0;
     
+    elements.bossHealthContainer.style.display = 'none';
+
+    if (isInteractiveLevel) {
+        // --- INTERACTIVE MODE SETUP ---
+        elements.questionContainer.style.display = 'none';
+        elements.interactiveContainer.style.display = 'block';
+        elements.interactiveInstruction.textContent = interactiveData.instruction;
+        
+        elements.quizProgressText.textContent = "Challenge Mode";
+        elements.quizProgressBarFill.style.width = "100%";
+        
+        renderInteractiveChallenge();
+        
+        elements.submitAnswerBtn.textContent = 'Verify Solution';
+        elements.submitAnswerBtn.disabled = false;
+        
+        elements.hintBtn.disabled = true; // No hints for interactive yet
+        
+        switchState('level-quiz-state');
+        soundService.playSound('start');
+        startTimer(); // Maybe generous timer?
+        return;
+    }
+
+    // --- STANDARD MCQ MODE SETUP ---
+    elements.interactiveContainer.style.display = 'none';
+    elements.questionContainer.style.display = 'block';
+
     if (levelContext.isBoss) {
+        currentQuestions = masterQuestionsList;
         bossHp = 100;
-        damagePerHit = 100 / levelData.questions.length;
+        damagePerHit = 100 / currentQuestions.length;
         elements.bossHealthContainer.style.display = 'flex';
         elements.bossHealthFill.style.width = '100%';
     } else {
-        elements.bossHealthContainer.style.display = 'none';
+        const startIndex = currentAttemptSet * STANDARD_QUESTIONS_PER_ATTEMPT;
+        const endIndex = startIndex + STANDARD_QUESTIONS_PER_ATTEMPT;
+        
+        if (startIndex >= masterQuestionsList.length) {
+            startLevel(true);
+            return;
+        }
+
+        currentQuestions = masterQuestionsList.slice(startIndex, endIndex);
     }
 
     renderQuestion();
@@ -180,14 +425,273 @@ function startQuiz() {
     soundService.playSound('start');
 }
 
+// --- INTERACTIVE RENDERING ---
+let selectedMatchItem = null; // For Match logic
+
+function renderInteractiveChallenge() {
+    const container = document.getElementById('interactive-playground');
+    container.innerHTML = '';
+    
+    // Feature detection for fine pointer (Mouse) vs coarse pointer (Touch)
+    // We enable Drag if the user has a mouse (fine pointer).
+    // Note: We ALWAYS keep click/tap handlers active for accessibility and hybrid devices.
+    const canDrag = window.matchMedia('(pointer: fine)').matches;
+    
+    if (interactiveData.challengeType === 'sequence') {
+        // Shuffle items for sequence if it's the first render
+        if (interactiveUserState.length === 0) {
+            interactiveUserState = [...interactiveData.items].sort(() => Math.random() - 0.5);
+        }
+        
+        interactiveUserState.forEach((item, index) => {
+            const el = document.createElement('div');
+            el.className = 'sortable-item';
+            el.dataset.id = item.id;
+            el.dataset.index = index;
+            el.innerHTML = `<div class="sort-index">${index + 1}</div><span class="sort-content">${item.text}</span>`;
+            
+            // 1. Drag Support (Mouse/Desktop)
+            if (canDrag) {
+                el.draggable = true;
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragover', handleDragOver);
+                el.addEventListener('drop', handleDrop);
+                el.addEventListener('dragenter', handleDragEnter);
+                el.addEventListener('dragleave', handleDragLeave);
+            }
+
+            // 2. Tap Support (Mobile + Fallback)
+            el.addEventListener('click', () => handleSequenceClick(index));
+            
+            container.appendChild(el);
+        });
+
+    } else if (interactiveData.challengeType === 'match') {
+        interactiveUserState = []; // Stores matches { leftId, rightId }
+        selectedMatchItem = null;
+        
+        const leftCol = document.createElement('div'); leftCol.className = 'match-column';
+        const rightCol = document.createElement('div'); rightCol.className = 'match-column';
+        
+        // Shuffle both sides independently
+        const leftItems = [...interactiveData.items].sort(() => Math.random() - 0.5);
+        const rightItems = [...interactiveData.items].sort(() => Math.random() - 0.5);
+        
+        leftItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'match-item';
+            el.dataset.id = item.id;
+            el.dataset.side = 'left';
+            el.textContent = item.text;
+            el.addEventListener('click', (e) => handleMatchClick(e, item.id, 'left'));
+            leftCol.appendChild(el);
+        });
+
+        rightItems.forEach(item => {
+            const el = document.createElement('div');
+            el.className = 'match-item';
+            el.dataset.id = item.id; // Correct ID match
+            el.dataset.side = 'right';
+            el.textContent = item.match; // The definition/pair
+            el.addEventListener('click', (e) => handleMatchClick(e, item.id, 'right'));
+            rightCol.appendChild(el);
+        });
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'match-container';
+        wrapper.appendChild(leftCol);
+        wrapper.appendChild(rightCol);
+        container.appendChild(wrapper);
+    }
+}
+
+// --- Drag & Drop Handlers (Sequence) ---
+function handleDragStart(e) {
+    if (answered) {
+        e.preventDefault();
+        return;
+    }
+    dragStartIndex = +e.target.closest('.sortable-item').dataset.index;
+    e.dataTransfer.effectAllowed = 'move';
+    e.target.closest('.sortable-item').classList.add('dragging');
+}
+
+function handleDragOver(e) {
+    if (answered) return;
+    e.preventDefault(); // Necessary to allow dropping
+    e.dataTransfer.dropEffect = 'move';
+}
+
+function handleDragEnter(e) {
+    if (answered) return;
+    e.preventDefault();
+    const item = e.target.closest('.sortable-item');
+    if (item && +item.dataset.index !== dragStartIndex) {
+        item.classList.add('drag-over');
+    }
+}
+
+function handleDragLeave(e) {
+    const item = e.target.closest('.sortable-item');
+    if (item) item.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    if (answered) return;
+    e.preventDefault();
+    
+    const dragEndItem = e.target.closest('.sortable-item');
+    document.querySelectorAll('.sortable-item').forEach(el => {
+        el.classList.remove('dragging', 'drag-over');
+    });
+
+    if (!dragEndItem) return;
+
+    const dragEndIndex = +dragEndItem.dataset.index;
+
+    if (dragStartIndex !== null && dragStartIndex !== dragEndIndex) {
+        // Swap items in state
+        const itemToMove = interactiveUserState[dragStartIndex];
+        interactiveUserState.splice(dragStartIndex, 1);
+        interactiveUserState.splice(dragEndIndex, 0, itemToMove);
+        
+        soundService.playSound('click');
+        renderInteractiveChallenge(); // Re-render list
+    }
+    dragStartIndex = null;
+}
+
+
+// --- Tap/Click Handlers ---
+let selectedSequenceIndex = null;
+function handleSequenceClick(index) {
+    if (answered) return;
+    
+    const items = document.querySelectorAll('.sortable-item');
+    
+    if (selectedSequenceIndex === null) {
+        // Select first
+        selectedSequenceIndex = index;
+        items[index].classList.add('selected');
+    } else if (selectedSequenceIndex === index) {
+        // Deselect
+        items[index].classList.remove('selected');
+        selectedSequenceIndex = null;
+    } else {
+        // Swap
+        const temp = interactiveUserState[selectedSequenceIndex];
+        interactiveUserState[selectedSequenceIndex] = interactiveUserState[index];
+        interactiveUserState[index] = temp;
+        
+        selectedSequenceIndex = null;
+        renderInteractiveChallenge(); // Re-render
+        soundService.playSound('click');
+    }
+}
+
+function handleMatchClick(e, id, side) {
+    if (answered) return;
+    const el = e.target.closest('.match-item');
+    
+    if (el.classList.contains('matched')) return;
+
+    // Deselect if clicking same
+    if (selectedMatchItem && selectedMatchItem.el === el) {
+        el.classList.remove('selected');
+        selectedMatchItem = null;
+        return;
+    }
+
+    if (selectedMatchItem) {
+        // If same side, switch selection
+        if (selectedMatchItem.side === side) {
+            selectedMatchItem.el.classList.remove('selected');
+            el.classList.add('selected');
+            selectedMatchItem = { el, id, side };
+            return;
+        }
+        
+        // Attempt Match
+        const isMatch = selectedMatchItem.id === id; // IDs must match for correct pair
+        
+        if (isMatch) {
+            // Visual success
+            el.classList.add('matched');
+            selectedMatchItem.el.classList.add('matched');
+            interactiveUserState.push(id); // Record success
+            soundService.playSound('correct');
+        } else {
+            // Visual error shake
+            el.classList.add('incorrect');
+            selectedMatchItem.el.classList.add('incorrect');
+            soundService.playSound('incorrect');
+            setTimeout(() => {
+                el.classList.remove('incorrect');
+                if(selectedMatchItem) selectedMatchItem.el.classList.remove('incorrect');
+            }, 500);
+        }
+        
+        // Reset selection
+        selectedMatchItem.el.classList.remove('selected');
+        selectedMatchItem = null;
+        
+        // Check win condition immediately for matching
+        if (interactiveUserState.length === interactiveData.items.length) {
+            submitInteractive();
+        }
+
+    } else {
+        // Select first
+        el.classList.add('selected');
+        selectedMatchItem = { el, id, side };
+    }
+}
+
+function submitInteractive() {
+    clearInterval(timerInterval);
+    answered = true;
+    let isCorrect = false;
+
+    if (interactiveData.challengeType === 'sequence') {
+        // Check order against original interactiveData.items
+        const correctOrder = interactiveData.items.map(i => i.id);
+        const userOrder = interactiveUserState.map(i => i.id);
+        isCorrect = JSON.stringify(correctOrder) === JSON.stringify(userOrder);
+        
+        // Visual feedback
+        const domItems = document.querySelectorAll('.sortable-item');
+        domItems.forEach((el, i) => {
+            if (userOrder[i] === correctOrder[i]) el.classList.add('correct');
+            else el.classList.add('incorrect');
+        });
+    } else {
+        // Matching is implicitly correct if they cleared the board
+        isCorrect = interactiveUserState.length === interactiveData.items.length;
+    }
+
+    if (isCorrect) {
+        score = 1; // Binary score for challenge
+        xpGainedThisLevel = 50; // Bonus for interactive
+        soundService.playSound('achievement');
+        announce('Challenge Complete!');
+        showResults(true); // Pass true to indicate it's a challenge
+    } else {
+        score = 0;
+        soundService.playSound('incorrect');
+        announce('Challenge Failed.');
+        showResults(true);
+    }
+}
+
+
 function renderQuestion() {
     answered = false;
     selectedAnswerIndex = null;
     hintUsedThisQuestion = false;
-    const question = levelData.questions[currentQuestionIndex];
+    const question = currentQuestions[currentQuestionIndex];
     
-    elements.quizProgressText.textContent = `Question ${currentQuestionIndex + 1} / ${levelData.questions.length}`;
-    const progress = ((currentQuestionIndex + 1) / levelData.questions.length) * 100;
+    elements.quizProgressText.textContent = `Question ${currentQuestionIndex + 1} / ${currentQuestions.length}`;
+    const progress = ((currentQuestionIndex + 1) / currentQuestions.length) * 100;
     elements.quizProgressBarFill.style.width = `${progress}%`;
     
     elements.quizQuestionText.textContent = question.question;
@@ -232,7 +736,11 @@ function handleTimeUp() {
     soundService.playSound('incorrect');
     selectedAnswerIndex = -1;
     announce('Time is up.');
-    handleSubmitAnswer();
+    if (isInteractiveLevel) {
+        submitInteractive();
+    } else {
+        handleSubmitAnswer();
+    }
 }
 
 function handleOptionClick(event) {
@@ -248,6 +756,11 @@ function handleOptionClick(event) {
 }
 
 function handleSubmitAnswer() {
+    if (isInteractiveLevel) {
+        submitInteractive();
+        return;
+    }
+
     if (answered) {
         handleNextQuestion();
         return;
@@ -256,7 +769,7 @@ function handleSubmitAnswer() {
     answered = true;
     userAnswers[currentQuestionIndex] = selectedAnswerIndex;
 
-    const question = levelData.questions[currentQuestionIndex];
+    const question = currentQuestions[currentQuestionIndex];
     const isCorrect = question.correctAnswerIndex === selectedAnswerIndex;
     
     if (isCorrect) {
@@ -282,6 +795,9 @@ function handleSubmitAnswer() {
             document.body.classList.add('damage-flash');
             setTimeout(() => document.body.classList.remove('damage-flash'), 500);
         }
+
+        // Prefetch backup retry if we don't have enough local questions
+        triggerRetryGeneration();
     }
 
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => {
@@ -292,13 +808,13 @@ function handleSubmitAnswer() {
     });
 
     elements.hintBtn.disabled = true;
-    elements.submitAnswerBtn.textContent = currentQuestionIndex < levelData.questions.length - 1 ? 'Next Question' : 'Show Results';
+    elements.submitAnswerBtn.textContent = currentQuestionIndex < currentQuestions.length - 1 ? 'Next Question' : 'Show Results';
     elements.submitAnswerBtn.disabled = false;
     elements.submitAnswerBtn.focus();
 }
 
 function handleNextQuestion() {
-    if (currentQuestionIndex < levelData.questions.length - 1) {
+    if (currentQuestionIndex < currentQuestions.length - 1) {
         currentQuestionIndex++;
         renderQuestion();
     } else {
@@ -309,7 +825,7 @@ function handleNextQuestion() {
 function handleReviewAnswers() {
     stateService.setNavigationContext({
         ...levelContext,
-        questions: levelData.questions,
+        questions: currentQuestions,
         userAnswers: userAnswers,
     });
     window.location.hash = '#/review';
@@ -325,7 +841,6 @@ function fireConfetti() {
     canvas.height = window.innerHeight;
 
     const particles = [];
-    // NEON CYBER PALETTE for cleaner aesthetic
     const colors = ['#00b8d4', '#9c27b0', '#ff4081', '#f50057', '#00e676', '#2979ff', '#ff9100'];
 
     for (let i = 0; i < 150; i++) {
@@ -352,13 +867,10 @@ function fireConfetti() {
             p.tiltAngle += p.tiltAngleIncremental;
             p.y += (Math.cos(p.tiltAngle) + 3 + p.h / 2) / 2;
             p.x += Math.sin(p.tiltAngle) * 2;
-            p.x += p.dx * 0.5; // reduced explosion velocity over time
+            p.x += p.dx * 0.5;
             p.y += p.dy * 0.5;
-
-            // Friction
             p.dx *= 0.9;
             p.dy *= 0.9;
-            
             p.tilt = Math.sin(p.tiltAngle) * 15;
 
             if (p.y < canvas.height) {
@@ -380,17 +892,26 @@ function fireConfetti() {
     }
     animate();
     
-    // Cleanup after 4 seconds just in case
     setTimeout(() => {
         cancelAnimationFrame(animationId);
         if(document.body.contains(canvas)) canvas.remove();
     }, 4000);
 }
 
-function showResults() {
-    const totalQuestions = levelData.questions.length;
-    const scorePercent = totalQuestions > 0 ? (score / totalQuestions) : 0;
-    const passed = scorePercent >= PASS_THRESHOLD;
+function showResults(isInteractive = false) {
+    let passed = false;
+    let totalQuestions = 1;
+    let scoreDisplay = score;
+
+    if (isInteractive) {
+        passed = score === 1; // Binary pass/fail for now
+        totalQuestions = 1;
+    } else {
+        totalQuestions = currentQuestions.length;
+        const scorePercent = totalQuestions > 0 ? (score / totalQuestions) : 0;
+        passed = scorePercent >= PASS_THRESHOLD;
+        scoreDisplay = score;
+    }
 
     soundService.playSound('finish');
     
@@ -398,23 +919,25 @@ function showResults() {
         topic: `${levelContext.topic} - Level ${levelContext.level}`,
         score: score,
         totalQuestions: totalQuestions,
-        startTime: Date.now() - (totalQuestions * 60000),
+        startTime: Date.now() - (60000), // Approx
         endTime: Date.now(),
         xpGained: xpGainedThisLevel,
     });
 
-    // Auto-Save Mistakes
-    let mistakesSaved = 0;
-    levelData.questions.forEach((q, index) => {
-        if (userAnswers[index] !== q.correctAnswerIndex && userAnswers[index] !== undefined) {
-            if (!libraryService.isQuestionSaved(q)) {
-                libraryService.saveQuestion(q); 
-                mistakesSaved++;
+    if (!isInteractive) {
+        // Auto-Save Mistakes
+        let mistakesSaved = 0;
+        currentQuestions.forEach((q, index) => {
+            if (userAnswers[index] !== q.correctAnswerIndex && userAnswers[index] !== undefined) {
+                if (!libraryService.isQuestionSaved(q)) {
+                    libraryService.saveQuestion(q); 
+                    mistakesSaved++;
+                }
             }
+        });
+        if (mistakesSaved > 0) {
+            showToast(`${mistakesSaved} mistake(s) saved to Library.`, 'info', 4000);
         }
-    });
-    if (mistakesSaved > 0) {
-        showToast(`${mistakesSaved} mistake(s) saved to Library.`, 'info', 4000);
     }
 
     const xpGained = xpGainedThisLevel;
@@ -425,7 +948,7 @@ function showResults() {
         elements.xpGainText.style.display = 'none';
     }
 
-    const reviewBtnHTML = `<button id="review-answers-btn" class="btn">Review Answers</button>`;
+    const reviewBtnHTML = isInteractive ? '' : `<button id="review-answers-btn" class="btn">Review Answers</button>`;
 
     if (passed) {
         elements.resultsIcon.innerHTML = `<svg><use href="/assets/icons/feather-sprite.svg#check-circle"/></svg>`;
@@ -436,7 +959,7 @@ function showResults() {
              elements.resultsDetails.textContent = `You conquered Chapter ${Math.ceil(levelContext.level / LEVELS_PER_CHAPTER)}!`;
         } else {
              elements.resultsTitle.textContent = `Level ${levelContext.level} Complete!`;
-             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}.`;
+             elements.resultsDetails.textContent = isInteractive ? 'Challenge Mastered!' : `You scored ${score} out of ${totalQuestions}.`;
         }
         
         elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn btn-primary">Continue Journey</a> ${reviewBtnHTML}`;
@@ -456,14 +979,58 @@ function showResults() {
              elements.resultsDetails.textContent = `The boss survived. Try again.`;
         } else {
              elements.resultsTitle.textContent = 'Keep Practicing!';
-             elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Review the lesson.`;
+             elements.resultsDetails.textContent = isInteractive ? 'Solution Incorrect.' : `You scored ${score} out of ${totalQuestions}. Review the lesson.`;
         }
        
-        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">Back to Map</a> <button id="retry-level-btn" class="btn btn-primary">Try Again</button> ${reviewBtnHTML}`;
-        document.getElementById('retry-level-btn').addEventListener('click', startQuiz);
+        // Retry logic
+        const canInstantRetry = !levelContext.isBoss && !isInteractive && ((currentAttemptSet + 1) * STANDARD_QUESTIONS_PER_ATTEMPT < masterQuestionsList.length);
+        const retryText = canInstantRetry ? "Try Again (Instant)" : "Try Again";
+        
+        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">Back to Map</a> <button id="retry-level-btn" class="btn btn-primary">${retryText}</button> ${reviewBtnHTML}`;
+        
+        document.getElementById('retry-level-btn').addEventListener('click', async (e) => {
+            const btn = e.target;
+            
+            // OPTION 1: Instant Retry with local questions
+            if (canInstantRetry) {
+                currentAttemptSet++;
+                startQuiz();
+                return;
+            }
+
+            // OPTION 2: Use pre-fetched data (Background generation finished)
+            if (retryGenerationPromise) {
+                // Show loading state on button to handle slow promise resolution
+                btn.disabled = true;
+                btn.innerHTML = `<div class="btn-spinner"></div> Loading...`;
+                
+                try {
+                    const data = await retryGenerationPromise;
+                    if (data) {
+                        levelData = data;
+                        masterQuestionsList = levelData.questions || [];
+                        levelCacheService.saveLevel(levelContext.topic, levelContext.level, data);
+                        retryGenerationPromise = null;
+                        currentAttemptSet = 0;
+                        startQuiz();
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Retry prefetch failed", e);
+                }
+            }
+
+            // OPTION 3: Hard Refresh (Fallback)
+            elements.loadingText.textContent = "Regenerating Level...";
+            elements.skipPopup.style.display = 'none';
+            switchState('level-loading-state');
+            startLevel(true);
+        });
     }
     
-    document.getElementById('review-answers-btn').addEventListener('click', handleReviewAnswers);
+    if (document.getElementById('review-answers-btn')) {
+        document.getElementById('review-answers-btn').addEventListener('click', handleReviewAnswers);
+    }
     switchState('level-results-state');
 }
 
@@ -488,7 +1055,7 @@ async function handleHintClick() {
     elements.hintBtn.disabled = true;
     elements.hintBtn.innerHTML = `<div class="btn-spinner"></div><span>Generating...</span>`;
     try {
-        const question = levelData.questions[currentQuestionIndex];
+        const question = currentQuestions[currentQuestionIndex];
         const hintData = await apiService.generateHint({ topic: levelContext.topic, question: question.question, options: question.options });
         if (hintData && hintData.hint) {
             showToast(`Hint: ${hintData.hint}`, 'info', 5000);
@@ -512,7 +1079,9 @@ async function handleAskAI() {
     elements.askAiAnswer.innerHTML = '<div class="spinner"></div> Analyzing...';
     
     try {
-        const result = await apiService.explainConcept(levelContext.topic, concept, levelData.lesson);
+        // Fallback context: Use lesson if available, otherwise just use the question text to give AI *something*
+        const context = levelData.lesson || `Context: Quiz on ${levelContext.topic}`;
+        const result = await apiService.explainConcept(levelContext.topic, concept, context);
         elements.askAiAnswer.textContent = result.explanation;
     } catch (e) {
         elements.askAiAnswer.textContent = "Could not generate explanation. Please try again.";
@@ -572,6 +1141,10 @@ function stopAudio() {
     }
 }
 
+function handleSkipToQuiz() {
+    startQuiz();
+}
+
 export function init() {
     const { navigationContext } = stateService.getState();
     levelContext = navigationContext;
@@ -580,6 +1153,9 @@ export function init() {
         announcer: document.getElementById('announcer-region'),
         timerAnnouncer: document.getElementById('timer-announcer-region'),
         cancelBtn: document.getElementById('cancel-generation-btn'),
+        loadingText: document.getElementById('loading-status-text'),
+        skipPopup: document.getElementById('skip-lesson-popup'),
+        skipBtn: document.getElementById('skip-to-quiz-btn'),
         lessonTitle: document.getElementById('lesson-title'),
         lessonBody: document.getElementById('lesson-body'),
         startQuizBtn: document.getElementById('start-quiz-btn'),
@@ -604,6 +1180,11 @@ export function init() {
         xpGainText: document.getElementById('xp-gain-text'),
         bossHealthContainer: document.getElementById('boss-health-container'),
         bossHealthFill: document.getElementById('boss-health-fill'),
+        
+        // Interactive Elements
+        questionContainer: document.getElementById('question-container'),
+        interactiveContainer: document.getElementById('interactive-container'),
+        interactiveInstruction: document.getElementById('interactive-instruction'),
     };
 
     elements.cancelBtn.addEventListener('click', () => window.history.back());
@@ -617,8 +1198,12 @@ export function init() {
     elements.quitBtn.addEventListener('click', handleQuit);
     elements.homeBtn.addEventListener('click', () => window.location.hash = '/#/');
     elements.hintBtn.addEventListener('click', handleHintClick);
+    
+    // Skip Handler
+    elements.skipBtn.addEventListener('click', handleSkipToQuiz);
 
-    startLevel();
+    // Initial load: Do NOT force refresh, use cache if available.
+    startLevel(false);
 }
 
 export function destroy() {
@@ -627,5 +1212,9 @@ export function destroy() {
     if (outputAudioContext) {
         outputAudioContext.close().catch(e => console.error(e));
         outputAudioContext = null;
+    }
+    // Cancel any ongoing generation on destroy
+    if (lessonAbortController) {
+        lessonAbortController.abort();
     }
 }
