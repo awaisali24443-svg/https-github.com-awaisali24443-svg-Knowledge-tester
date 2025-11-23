@@ -1,4 +1,3 @@
-
 .settings-group {
     margin-bottom: var(--space-xl);
     padding: var(--space-sm) var(--space-xl);
@@ -79,29 +78,6 @@
     margin-top: var(--space-xl);
     opacity: 0.6;
 }
-
-/* Version Link */
-.version-footer {
-    text-align: center;
-    margin-top: var(--space-xl);
-    margin-bottom: var(--space-xl);
-}
-.version-link {
-    background: none;
-    border: none;
-    font-family: var(--font-family-mono);
-    font-size: var(--fs-sm);
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    text-decoration: underline;
-    opacity: 0.6;
-    transition: opacity 0.2s, color 0.2s;
-}
-.version-link:hover {
-    opacity: 1;
-    color: var(--color-primary);
-}
-
 
 @media (max-width: 600px) {
     .setting-item { grid-template-columns: 1fr; gap: var(--space-md); text-align: center; }

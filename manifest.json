@@ -1,12 +1,11 @@
-
 {
     "name": "Knowledge Tester",
     "short_name": "KnowledgeTester",
-    "description": "The #1 AI-powered learning platform.",
+    "description": "A streamlined, AI-powered quiz application rebuilt from the ground up with vanilla JavaScript for performance and reliability. Generate quizzes on any topic instantly.",
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#38bdf8",
+    "background_color": "#0c0e1a",
+    "theme_color": "#0c0e1a",
     "icons": [
         {
             "src": "/assets/images/icon-192.png",

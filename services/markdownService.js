@@ -1,11 +1,13 @@
 
 /**
  * Renders a Markdown string into a basic HTML string.
+ * Security: Includes basic output sanitization.
  */
 export function render(markdown) {
     if (!markdown) return '';
 
-    // 1. Basic Sanitization (Fallback if DOMPurify is missing)
+    // 1. Basic Sanitization
+    // We remove script tags but allow emojis and standard punctuation.
     let safeMarkdown = markdown
         .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
         .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, "")

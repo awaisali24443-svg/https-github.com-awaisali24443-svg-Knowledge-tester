@@ -41,13 +41,6 @@ function loadSettings() {
     setActiveThemeButton(activeThemeButton, true); 
     
     elements.animationSlider.value = animationLevels.indexOf(config.animationIntensity);
-    
-    if (elements.timerSelect) {
-        elements.timerSelect.value = config.quizTimer || 60;
-    }
-    if (elements.difficultySelect) {
-        elements.difficultySelect.value = config.difficulty || 'medium';
-    }
 }
 
 function handleSoundToggle() {
@@ -57,16 +50,6 @@ function handleSoundToggle() {
 function handleAnimationChange() {
     const level = animationLevels[elements.animationSlider.value];
     configService.setConfig({ animationIntensity: level });
-}
-
-function handleTimerChange() {
-    const duration = parseInt(elements.timerSelect.value, 10);
-    configService.setConfig({ quizTimer: duration });
-}
-
-function handleDifficultyChange() {
-    const diff = elements.difficultySelect.value;
-    configService.setConfig({ difficulty: diff });
 }
 
 function handleThemeToggle(event) {
@@ -133,60 +116,24 @@ function handleInstallClick() {
     });
 }
 
-function handleVersionHistoryClick() {
-    const changelog = `
-        <div style="text-align: left; max-height: 400px; overflow-y: auto;">
-            <div style="margin-bottom: 20px;">
-                <h4 style="color: var(--color-primary); margin-bottom: 8px;">v3.7.0 (Current)</h4>
-                <ul style="padding-left: 20px; color: var(--color-text-secondary); line-height: 1.6;">
-                    <li><strong>Boss Battles:</strong> Challenging end-of-chapter quizzes.</li>
-                    <li><strong>Gamification:</strong> Added XP, Streaks, and Daily Quests.</li>
-                    <li><strong>Leaderboards:</strong> Compete with AI bots locally.</li>
-                </ul>
-            </div>
-            <div style="opacity: 0.8;">
-                <h4 style="color: var(--color-text); margin-bottom: 8px;">v3.6.0</h4>
-                <ul style="padding-left: 20px; color: var(--color-text-secondary); line-height: 1.6;">
-                    <li><strong>Learning Journeys:</strong> AI-generated curriculum paths.</li>
-                    <li><strong>Library Module:</strong> Save and review questions.</li>
-                    <li><strong>Offline Mode:</strong> Full PWA support.</li>
-                </ul>
-            </div>
-        </div>
-    `;
-    
-    showConfirmationModal({
-        title: 'Version History',
-        message: changelog,
-        confirmText: 'OK',
-        cancelText: 'Close'
-    });
-}
-
 export function init() {
     elements = {
         soundToggle: document.getElementById('sound-toggle'),
         animationSlider: document.getElementById('animation-slider'),
-        timerSelect: document.getElementById('quiz-timer-select'),
-        difficultySelect: document.getElementById('difficulty-select'),
         clearDataBtn: document.getElementById('clear-data-btn'),
         themeToggle: document.getElementById('theme-toggle-group'),
         themeToggleButtons: document.querySelectorAll('#theme-toggle-group button'),
         installSection: document.getElementById('install-app-section'),
         installBtn: document.getElementById('install-app-btn'),
-        versionHistoryBtn: document.getElementById('version-history-btn'),
     };
 
     loadSettings();
 
     elements.soundToggle.addEventListener('change', handleSoundToggle);
     elements.animationSlider.addEventListener('input', handleAnimationChange);
-    elements.timerSelect.addEventListener('change', handleTimerChange);
-    elements.difficultySelect.addEventListener('change', handleDifficultyChange);
     elements.clearDataBtn.addEventListener('click', handleClearData);
     elements.themeToggle.addEventListener('click', handleThemeToggle);
     elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
-    if(elements.versionHistoryBtn) elements.versionHistoryBtn.addEventListener('click', handleVersionHistoryClick);
 
     if (window.deferredInstallPrompt) {
         elements.installSection.style.display = 'block';
@@ -197,14 +144,11 @@ export function init() {
 export function destroy() {
     if (elements.soundToggle) elements.soundToggle.removeEventListener('change', handleSoundToggle);
     if (elements.animationSlider) elements.animationSlider.removeEventListener('input', handleAnimationChange);
-    if (elements.timerSelect) elements.timerSelect.removeEventListener('change', handleTimerChange);
-    if (elements.difficultySelect) elements.difficultySelect.removeEventListener('change', handleDifficultyChange);
     if (elements.clearDataBtn) elements.clearDataBtn.removeEventListener('click', handleClearData);
     if (elements.themeToggle) {
         elements.themeToggle.removeEventListener('click', handleThemeToggle);
         elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
     }
     if (elements.installBtn) elements.installBtn.removeEventListener('click', handleInstallClick);
-    if (elements.versionHistoryBtn) elements.versionHistoryBtn.removeEventListener('click', handleVersionHistoryClick);
     elements = {};
 }

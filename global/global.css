@@ -41,6 +41,7 @@ html {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    /* FIX: Base color on HTML so body can be transparent for layers */
     background-color: var(--color-background); 
     color: var(--color-text);
     font-family: var(--font-family-body);
@@ -54,6 +55,7 @@ body {
     height: 100%;
     width: 100%;
     position: relative;
+    /* FIX: Transparent body allows pseudo-elements to show against html bg */
     background-color: transparent; 
     color: var(--color-text);
     transition: color var(--transition-speed-med) ease;
@@ -66,6 +68,42 @@ body {
 ::view-transition-new(root) {
     animation: fade-in 0.3s ease-in-out both;
 }
+
+/* --- WORLD CLASS BACKGROUND SYSTEM: ILLUMINATED GRID --- */
+
+/* Layer 1: Structural Dot Grid (Visible on top of gradients) */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1; /* Behind content, in front of gradients */
+    /* Adaptive dots: uses text color so it works on light & dark themes */
+    background-image: radial-gradient(var(--color-text) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.08; 
+    pointer-events: none;
+}
+
+/* Layer 2: Fluid Aurora (Background Gradient) */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2; /* Behind everything */
+    background: 
+        radial-gradient(circle at 15% 50%, var(--color-primary-transparent) 0%, transparent 50%),
+        radial-gradient(circle at 85% 30%, var(--color-secondary-transparent) 0%, transparent 50%);
+    pointer-events: none;
+    /* PERFORMANCE OPTIMIZATION: Promote to GPU layer */
+    will-change: transform, opacity;
+    animation: aurora-pulse 10s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-pulse {
+    0% { opacity: 0.4; transform: scale(1); }
+    100% { opacity: 0.7; transform: scale(1.1); }
+}
+
 
 /* --- Global Keyframe Animations --- */
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }

@@ -5,8 +5,6 @@ const defaultConfig = {
     theme: 'dark-cyber',
     enableSound: true,
     animationIntensity: 'full', // 'off', 'subtle', 'full'
-    quizTimer: 60,
-    difficulty: 'medium' // 'easy', 'medium', 'hard'
 };
 
 let currentConfig = { ...defaultConfig };

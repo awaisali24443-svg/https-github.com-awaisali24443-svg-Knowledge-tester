@@ -1,3 +1,4 @@
+
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -7,7 +8,6 @@ import * as levelCacheService from '../../services/levelCacheService.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 import * as stateService from '../../services/stateService.js';
 import * as libraryService from '../../services/libraryService.js';
-import * as i18n from '../../services/i18nService.js';
 import { showToast } from '../../services/toastService.js';
 
 let levelData;
@@ -24,7 +24,10 @@ let hintUsedThisQuestion = false;
 let xpGainedThisLevel = 0;
 let outputAudioContext = null;
 let currentAudioSource = null;
-let keyboardHandler = null;
+
+// Boss Battle State
+let bossHp = 100;
+let damagePerHit = 10;
 
 const PASS_THRESHOLD = 0.8;
 const LEVELS_PER_CHAPTER = 50;
@@ -163,6 +166,15 @@ function startQuiz() {
     userAnswers = [];
     xpGainedThisLevel = 0;
     
+    if (levelContext.isBoss) {
+        bossHp = 100;
+        damagePerHit = 100 / levelData.questions.length;
+        elements.bossHealthContainer.style.display = 'flex';
+        elements.bossHealthFill.style.width = '100%';
+    } else {
+        elements.bossHealthContainer.style.display = 'none';
+    }
+
     renderQuestion();
     switchState('level-quiz-state');
     soundService.playSound('start');
@@ -172,20 +184,11 @@ function renderQuestion() {
     answered = false;
     selectedAnswerIndex = null;
     hintUsedThisQuestion = false;
-    
-    elements.feedbackContainer.style.display = 'none'; 
-    
     const question = levelData.questions[currentQuestionIndex];
     
-    // Circular Progress Update
-    const progressIndex = currentQuestionIndex + 1;
-    const totalQs = levelData.questions.length;
-    elements.quizProgressText.textContent = `${progressIndex}/${totalQs}`;
-    
-    const progressPercent = Math.round((currentQuestionIndex / totalQs) * 100);
-    if (elements.quizProgressCircle) {
-        elements.quizProgressCircle.setAttribute('stroke-dasharray', `${progressPercent}, 100`);
-    }
+    elements.quizProgressText.textContent = `Question ${currentQuestionIndex + 1} / ${levelData.questions.length}`;
+    const progress = ((currentQuestionIndex + 1) / levelData.questions.length) * 100;
+    elements.quizProgressBarFill.style.width = `${progress}%`;
     
     elements.quizQuestionText.textContent = question.question;
     elements.quizOptionsContainer.innerHTML = '';
@@ -193,26 +196,17 @@ function renderQuestion() {
     question.options.forEach((optionText, index) => {
         const button = document.createElement('button');
         button.className = 'btn option-btn';
-        const shortcutSpan = document.createElement('span');
-        shortcutSpan.className = 'shortcut-hint';
-        shortcutSpan.textContent = `[${index + 1}]`;
-        shortcutSpan.style.opacity = '0.5';
-        shortcutSpan.style.marginRight = '8px';
-        shortcutSpan.style.fontSize = '0.8em';
-
         const textSpan = document.createElement('span');
         textSpan.textContent = optionText;
-        
-        button.appendChild(shortcutSpan);
         button.appendChild(textSpan);
         button.dataset.index = index;
         elements.quizOptionsContainer.appendChild(button);
     });
 
     elements.submitAnswerBtn.disabled = true;
-    elements.submitAnswerBtn.textContent = i18n.getText('Submit Answer');
+    elements.submitAnswerBtn.textContent = 'Submit Answer';
     elements.hintBtn.disabled = false;
-    elements.hintBtn.innerHTML = `<svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg><span>${i18n.getText('Hint')}</span>`;
+    elements.hintBtn.innerHTML = `<svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg><span>Hint</span>`;
 
     announce(`Question ${currentQuestionIndex + 1}: ${question.question}`);
     startTimer();
@@ -220,17 +214,12 @@ function renderQuestion() {
 
 function startTimer() {
     clearInterval(timerInterval);
-    const { config } = stateService.getState();
-    timeLeft = config.quizTimer || 60;
-    
-    elements.timerText.textContent = `00:${timeLeft}`;
-    
+    timeLeft = 60;
+    elements.timerText.textContent = `01:00`;
     timerInterval = setInterval(() => {
         timeLeft--;
         const seconds = String(timeLeft % 60).padStart(2, '0');
-        const minutes = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        elements.timerText.textContent = `${minutes}:${seconds}`;
-        
+        elements.timerText.textContent = `00:${seconds}`;
         if (timeLeft > 0 && timeLeft % 15 === 0) announce(`${timeLeft} seconds remaining`, true);
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -250,21 +239,12 @@ function handleOptionClick(event) {
     const button = event.target.closest('.option-btn');
     if (answered || !button) return;
     
-    selectOption(parseInt(button.dataset.index, 10));
-}
-
-function selectOption(index) {
-    if (answered) return;
-    
     soundService.playSound('click');
+
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-    
-    const targetBtn = elements.quizOptionsContainer.querySelector(`.option-btn[data-index="${index}"]`);
-    if(targetBtn) {
-        targetBtn.classList.add('selected');
-        selectedAnswerIndex = index;
-        elements.submitAnswerBtn.disabled = false;
-    }
+    button.classList.add('selected');
+    selectedAnswerIndex = parseInt(button.dataset.index, 10);
+    elements.submitAnswerBtn.disabled = false;
 }
 
 function handleSubmitAnswer() {
@@ -279,31 +259,29 @@ function handleSubmitAnswer() {
     const question = levelData.questions[currentQuestionIndex];
     const isCorrect = question.correctAnswerIndex === selectedAnswerIndex;
     
-    elements.feedbackContainer.style.display = 'flex';
-    elements.feedbackExplanation.textContent = question.explanation || "No explanation provided.";
-
     if (isCorrect) {
         score++;
-        
-        const xpForThisQuestion = (hintUsedThisQuestion ? 5 : 10);
+        const xpForThisQuestion = hintUsedThisQuestion ? 5 : 10;
         xpGainedThisLevel += xpForThisQuestion;
-        
         soundService.playSound('correct');
         announce('Correct!');
 
-        elements.feedbackContainer.className = 'feedback-container correct';
-        elements.feedbackTitle.textContent = "Correct!";
+        if (levelContext.isBoss) {
+            bossHp = Math.max(0, bossHp - damagePerHit);
+            elements.bossHealthFill.style.width = `${bossHp}%`;
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+        }
 
     } else {
         soundService.playSound('incorrect');
-        
-        elements.feedbackContainer.className = 'feedback-container incorrect';
-        elements.feedbackTitle.textContent = "Incorrect";
-        
         const correctAnswerText = question.options[question.correctAnswerIndex];
-        elements.feedbackExplanation.innerHTML = `<strong>Answer: ${correctAnswerText}</strong><br/>${question.explanation}`;
-        
         announce(`Incorrect. The correct answer was: ${correctAnswerText}`);
+        
+        if (levelContext.isBoss) {
+            document.body.classList.add('damage-flash');
+            setTimeout(() => document.body.classList.remove('damage-flash'), 500);
+        }
     }
 
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => {
@@ -314,7 +292,7 @@ function handleSubmitAnswer() {
     });
 
     elements.hintBtn.disabled = true;
-    elements.submitAnswerBtn.textContent = currentQuestionIndex < levelData.questions.length - 1 ? i18n.getText('Next Question') : i18n.getText('Show Results');
+    elements.submitAnswerBtn.textContent = currentQuestionIndex < levelData.questions.length - 1 ? 'Next Question' : 'Show Results';
     elements.submitAnswerBtn.disabled = false;
     elements.submitAnswerBtn.focus();
 }
@@ -337,6 +315,78 @@ function handleReviewAnswers() {
     window.location.hash = '#/review';
 }
 
+// Simple Canvas Confetti Implementation
+function fireConfetti() {
+    const canvas = document.createElement('canvas');
+    canvas.id = 'confetti-canvas';
+    document.body.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    // NEON CYBER PALETTE for cleaner aesthetic
+    const colors = ['#00b8d4', '#9c27b0', '#ff4081', '#f50057', '#00e676', '#2979ff', '#ff9100'];
+
+    for (let i = 0; i < 150; i++) {
+        particles.push({
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            w: Math.random() * 10 + 5,
+            h: Math.random() * 10 + 5,
+            dx: (Math.random() - 0.5) * 20,
+            dy: (Math.random() - 0.5) * 20,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10,
+            tiltAngle: Math.random() * 10,
+            tiltAngleIncremental: (Math.random() * 0.07) + 0.05
+        });
+    }
+
+    let animationId;
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let active = 0;
+
+        particles.forEach(p => {
+            p.tiltAngle += p.tiltAngleIncremental;
+            p.y += (Math.cos(p.tiltAngle) + 3 + p.h / 2) / 2;
+            p.x += Math.sin(p.tiltAngle) * 2;
+            p.x += p.dx * 0.5; // reduced explosion velocity over time
+            p.y += p.dy * 0.5;
+
+            // Friction
+            p.dx *= 0.9;
+            p.dy *= 0.9;
+            
+            p.tilt = Math.sin(p.tiltAngle) * 15;
+
+            if (p.y < canvas.height) {
+                active++;
+                ctx.beginPath();
+                ctx.lineWidth = p.w / 2;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.w / 2, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.h / 2);
+                ctx.stroke();
+            }
+        });
+
+        if (active > 0) {
+            animationId = requestAnimationFrame(animate);
+        } else {
+            canvas.remove();
+        }
+    }
+    animate();
+    
+    // Cleanup after 4 seconds just in case
+    setTimeout(() => {
+        cancelAnimationFrame(animationId);
+        if(document.body.contains(canvas)) canvas.remove();
+    }, 4000);
+}
+
 function showResults() {
     const totalQuestions = levelData.questions.length;
     const scorePercent = totalQuestions > 0 ? (score / totalQuestions) : 0;
@@ -353,6 +403,7 @@ function showResults() {
         xpGained: xpGainedThisLevel,
     });
 
+    // Auto-Save Mistakes
     let mistakesSaved = 0;
     levelData.questions.forEach((q, index) => {
         if (userAnswers[index] !== q.correctAnswerIndex && userAnswers[index] !== undefined) {
@@ -374,7 +425,7 @@ function showResults() {
         elements.xpGainText.style.display = 'none';
     }
 
-    const reviewBtnHTML = `<button id="review-answers-btn" class="btn">${i18n.getText('Review Answers')}</button>`;
+    const reviewBtnHTML = `<button id="review-answers-btn" class="btn">Review Answers</button>`;
 
     if (passed) {
         elements.resultsIcon.innerHTML = `<svg><use href="/assets/icons/feather-sprite.svg#check-circle"/></svg>`;
@@ -393,6 +444,7 @@ function showResults() {
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
 
+        fireConfetti(); // CELEBRATION!
         preloadNextLevel();
 
     } else {
@@ -407,7 +459,7 @@ function showResults() {
              elements.resultsDetails.textContent = `You scored ${score} out of ${totalQuestions}. Review the lesson.`;
         }
        
-        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">${i18n.getText('Back to Map')}</a> <button id="retry-level-btn" class="btn btn-primary">${i18n.getText('Try Again')}</button> ${reviewBtnHTML}`;
+        elements.resultsActions.innerHTML = `<a href="#/game/${encodeURIComponent(levelContext.topic)}" class="btn">Back to Map</a> <button id="retry-level-btn" class="btn btn-primary">Try Again</button> ${reviewBtnHTML}`;
         document.getElementById('retry-level-btn').addEventListener('click', startQuiz);
     }
     
@@ -417,9 +469,9 @@ function showResults() {
 
 async function handleQuit() {
     const confirmed = await showConfirmationModal({
-        title: i18n.getText('Quit'),
+        title: 'Quit Quiz?',
         message: 'Your progress in this level will not be saved.',
-        confirmText: i18n.getText('Quit'),
+        confirmText: 'Yes, Quit',
         cancelText: 'Cancel',
         danger: true,
     });
@@ -446,7 +498,7 @@ async function handleHintClick() {
         showToast(error.message, 'error');
         elements.hintBtn.disabled = false;
     } finally {
-        elements.hintBtn.innerHTML = `<svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg><span>${i18n.getText('Hint')}</span>`;
+        elements.hintBtn.innerHTML = `<svg class="icon"><use href="/assets/icons/feather-sprite.svg#lightbulb"/></svg><span>Hint</span>`;
     }
 }
 
@@ -520,29 +572,6 @@ function stopAudio() {
     }
 }
 
-function handleGlobalKeydown(e) {
-    if (document.getElementById('level-quiz-state').classList.contains('active')) {
-        if (['1', '2', '3', '4'].includes(e.key)) {
-            const idx = parseInt(e.key) - 1;
-            selectOption(idx);
-        }
-        if (e.key === 'Enter') {
-            if (!elements.submitAnswerBtn.disabled) {
-                handleSubmitAnswer();
-            }
-        }
-        if (e.key.toLowerCase() === 'n') { // Prompt Compliance: "N=next question"
-            if (answered && currentQuestionIndex < levelData.questions.length - 1) {
-                handleNextQuestion();
-            }
-        }
-    } else if (document.getElementById('level-lesson-state').classList.contains('active')) {
-         if (e.key === 'Enter') {
-            startQuiz();
-         }
-    }
-}
-
 export function init() {
     const { navigationContext } = stateService.getState();
     levelContext = navigationContext;
@@ -564,7 +593,7 @@ export function init() {
         hintBtn: document.getElementById('hint-btn'),
         timerText: document.getElementById('timer-text'),
         quizProgressText: document.getElementById('quiz-progress-text'),
-        quizProgressCircle: document.getElementById('quiz-progress-circle'), // Circular
+        quizProgressBarFill: document.getElementById('quiz-progress-bar-fill'),
         quizQuestionText: document.getElementById('quiz-question-text'),
         quizOptionsContainer: document.getElementById('quiz-options-container'),
         submitAnswerBtn: document.getElementById('submit-answer-btn'),
@@ -573,15 +602,9 @@ export function init() {
         resultsDetails: document.getElementById('results-details'),
         resultsActions: document.getElementById('results-actions'),
         xpGainText: document.getElementById('xp-gain-text'),
-        feedbackContainer: document.getElementById('feedback-container'),
-        feedbackTitle: document.getElementById('feedback-title'),
-        feedbackExplanation: document.getElementById('feedback-explanation')
+        bossHealthContainer: document.getElementById('boss-health-container'),
+        bossHealthFill: document.getElementById('boss-health-fill'),
     };
-
-    // Apply text translations to static buttons
-    elements.startQuizBtn.querySelector('span').textContent = i18n.getText("Let's Go!");
-    elements.quitBtn.textContent = i18n.getText('Quit');
-    elements.homeBtn.querySelector('span').textContent = i18n.getText('Home');
 
     elements.cancelBtn.addEventListener('click', () => window.history.back());
     elements.startQuizBtn.addEventListener('click', startQuiz);
@@ -595,9 +618,6 @@ export function init() {
     elements.homeBtn.addEventListener('click', () => window.location.hash = '/#/');
     elements.hintBtn.addEventListener('click', handleHintClick);
 
-    keyboardHandler = handleGlobalKeydown;
-    document.addEventListener('keydown', keyboardHandler);
-
     startLevel();
 }
 
@@ -607,8 +627,5 @@ export function destroy() {
     if (outputAudioContext) {
         outputAudioContext.close().catch(e => console.error(e));
         outputAudioContext = null;
-    }
-    if (keyboardHandler) {
-        document.removeEventListener('keydown', keyboardHandler);
     }
 }

@@ -60,8 +60,15 @@
         <header class="new-quiz-header">
             <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
                 <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="sidebar-logo-img">
-                <span class="sidebar-logo-text">Knowledge Tester</span>
+                <span class="sidebar-logo-text">AI Quiz Nexus</span>
             </a>
+            <!-- Boss Health Bar (Hidden by default) -->
+            <div id="boss-health-container" class="boss-health-container" style="display: none;">
+                <span class="boss-label">BOSS HP</span>
+                <div class="boss-health-bar">
+                    <div id="boss-health-fill" class="boss-health-fill" style="width: 100%;"></div>
+                </div>
+            </div>
             <div class="quiz-header-actions">
                 <button id="quit-btn" class="btn btn-danger">Quit</button>
             </div>
@@ -69,33 +76,20 @@
         <div class="new-quiz-content">
             <div class="quiz-status-card">
                 <div class="timer-section">
-                    <p>Time</p>
+                    <p>Time Left</p>
                     <span id="timer-text">01:00</span>
                 </div>
-                <!-- CIRCULAR PROGRESS BAR -->
-                <div class="question-progress-section circular">
-                    <div class="progress-circle-container">
-                       <svg viewBox="0 0 36 36" class="circular-chart">
-                          <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                          <path id="quiz-progress-circle" class="circle" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                       </svg>
-                       <span id="quiz-progress-text" class="percentage">1/5</span>
+                <div class="question-progress-section">
+                    <p id="quiz-progress-text">Question 1 of 5</p>
+                    <div class="progress-bar">
+                        <div id="quiz-progress-bar-fill" class="progress-bar-fill"></div>
                     </div>
-                    <p style="margin-top: 5px; font-size: 0.8rem;">Progress</p>
                 </div>
             </div>
             <div id="question-container" class="card main-question-card">
                 <h2 id="quiz-question-text">Loading question...</h2>
                 <div id="quiz-options-container" class="options-grid">
                     <!-- Options will be injected here -->
-                </div>
-                <!-- Instant Feedback Container -->
-                <div id="feedback-container" class="feedback-container" style="display: none;">
-                    <div class="feedback-icon"></div>
-                    <div class="feedback-text">
-                        <h3 id="feedback-title">Correct!</h3>
-                        <p id="feedback-explanation">Explanation goes here.</p>
-                    </div>
                 </div>
             </div>
         </div>
@@ -115,15 +109,12 @@
     
     <!-- State 4: Results -->
     <div id="level-results-state" class="game-level-state">
-        <div id="share-capture-area" class="state-content card results-content">
+        <div class="state-content card results-content">
             <div id="results-icon" class="results-icon"></div>
             <h1 id="results-title"></h1>
             <p id="xp-gain-text" class="xp-gain"></p>
             <p id="results-details"></p>
-            
-            <div id="results-actions" class="results-actions">
-                <!-- Buttons injected by JS -->
-            </div>
+            <div id="results-actions" class="results-actions"></div>
         </div>
     </div>
 
