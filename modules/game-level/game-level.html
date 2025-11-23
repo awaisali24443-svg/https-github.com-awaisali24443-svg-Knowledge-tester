@@ -1,5 +1,3 @@
-
-
 <div class="game-level-container">
     <div class="sr-only" id="announcer-region" role="alert" aria-live="assertive"></div>
     <div class="sr-only" id="timer-announcer-region" role="status" aria-live="polite"></div>
@@ -62,20 +60,8 @@
         <header class="new-quiz-header">
             <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
                 <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="sidebar-logo-img">
-                <span class="sidebar-logo-text">AI Quiz Nexus</span>
+                <span class="sidebar-logo-text">Knowledge Tester</span>
             </a>
-            <!-- Boss Health Bar (Hidden by default) -->
-            <div id="boss-health-container" class="boss-health-container" style="display: none;">
-                <span class="boss-label">BOSS HP</span>
-                <div class="boss-health-bar">
-                    <div id="boss-health-fill" class="boss-health-fill" style="width: 100%;"></div>
-                </div>
-            </div>
-            <!-- Combo Meter -->
-            <div id="combo-display" class="combo-display" style="opacity: 0;">
-                <span class="combo-multiplier">x2</span>
-                <span class="combo-label">Streak!</span>
-            </div>
             <div class="quiz-header-actions">
                 <button id="quit-btn" class="btn btn-danger">Quit</button>
             </div>
@@ -138,13 +124,6 @@
             <div id="results-actions" class="results-actions">
                 <!-- Buttons injected by JS -->
             </div>
-        </div>
-        <!-- Separate share button outside capture area to avoid recursion -->
-        <div class="share-container" style="margin-top: 20px;">
-            <button id="share-result-btn" class="btn" style="background: var(--color-surface-active); border-color: var(--color-accent); color: var(--color-accent);">
-                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#award"/></svg>
-                <span>Share Victory</span>
-            </button>
         </div>
     </div>
 

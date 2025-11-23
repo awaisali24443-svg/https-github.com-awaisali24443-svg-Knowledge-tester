@@ -1,6 +1,4 @@
 
-
-
 .game-level-container {
     height: 100%;
     width: 100%;
@@ -10,32 +8,6 @@
     justify-content: center;
     background-color: var(--color-background);
     overflow: hidden;
-    perspective: 300px;
-}
-
-.game-level-container::before {
-    content: '';
-    position: absolute;
-    inset: -50%;
-    background-image:
-        linear-gradient(var(--color-primary-transparent) 1px, transparent 1px),
-        linear-gradient(to right, var(--color-primary-transparent) 1px, transparent 1px);
-    background-size: 50px 50px;
-    transform-origin: center center;
-    animation: move-grid-perspective 10s linear infinite;
-}
-
-.game-level-container::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 30%, var(--color-background) 80%);
-    z-index: 1;
-}
-
-@keyframes move-grid-perspective {
-    from { transform: rotateX(70deg) translateY(0px); }
-    to { transform: rotateX(70deg) translateY(200px); }
 }
 
 .game-level-state {
@@ -68,25 +40,6 @@
     margin-bottom: var(--space-lg);
 }
 .lesson-header h1 { color: var(--color-primary); margin-bottom: 0; }
-
-/* PHASE 6: Dynamic Image Styles */
-.lesson-image-container {
-    width: 100%;
-    height: 250px;
-    margin-bottom: 25px;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    background-color: var(--color-surface-hover);
-    border: 1px solid var(--color-border);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.image-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, var(--color-card-background) 0%, transparent 40%);
-    z-index: 1;
-}
 
 /* PRESENTATION STYLE TYPOGRAPHY */
 .lesson-body {
@@ -224,82 +177,6 @@
 .new-quiz-header .sidebar-logo-text { font-size: 1.2rem; color: var(--color-text); font-family: var(--font-family-heading); }
 .quiz-header-actions { display: flex; align-items: center; gap: var(--space-md); }
 
-/* --- BOSS BATTLE STYLES --- */
-.boss-health-container {
-    flex-grow: 1;
-    margin: 0 var(--space-xl);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    animation: pop-in 0.5s ease-out;
-}
-.boss-label {
-    font-family: var(--font-family-heading);
-    font-weight: 800;
-    font-size: 0.9rem;
-    color: #ff4040;
-    margin-bottom: 4px;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px rgba(255, 64, 64, 0.5);
-}
-.boss-health-bar {
-    width: 100%;
-    max-width: 400px;
-    height: 16px;
-    background-color: #2a0000;
-    border: 1px solid #500;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 0 15px rgba(255, 0, 0, 0.2);
-}
-.boss-health-fill {
-    height: 100%;
-    background: repeating-linear-gradient(
-        45deg,
-        #ff0000,
-        #ff0000 10px,
-        #ff4d4d 10px,
-        #ff4d4d 20px
-    );
-    background-size: 28px 28px;
-    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.3);
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    animation: boss-bar-stripes 1s linear infinite;
-}
-
-@keyframes boss-bar-stripes {
-    0% { background-position: 0 0; }
-    100% { background-position: 28px 0; }
-}
-
-@keyframes shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  10% { transform: translate(-1px, -2px) rotate(-1deg); }
-  20% { transform: translate(-3px, 0px) rotate(1deg); }
-  30% { transform: translate(3px, 2px) rotate(0deg); }
-  40% { transform: translate(1px, -1px) rotate(1deg); }
-  50% { transform: translate(-1px, 2px) rotate(-1deg); }
-  60% { transform: translate(-3px, 1px) rotate(0deg); }
-  70% { transform: translate(3px, 1px) rotate(-1deg); }
-  80% { transform: translate(-1px, -1px) rotate(1deg); }
-  90% { transform: translate(1px, 2px) rotate(0deg); }
-  100% { transform: translate(1px, -2px) rotate(-1deg); }
-}
-.shake {
-  animation: shake 0.5s;
-  animation-iteration-count: 1;
-}
-
-@keyframes flash-red {
-    0% { box-shadow: inset 0 0 0 0 rgba(255, 0, 0, 0); }
-    50% { box-shadow: inset 0 0 100px 50px rgba(255, 0, 0, 0.3); }
-    100% { box-shadow: inset 0 0 0 0 rgba(255, 0, 0, 0); }
-}
-.damage-flash {
-    animation: flash-red 0.5s ease-out;
-}
-
-
 .new-quiz-content { width: 100%; max-width: 900px; margin: 0 auto; }
 
 .quiz-status-card {
@@ -314,7 +191,7 @@
     align-items: center;
     justify-content: space-between;
 }
-.timer-section { padding-right: var(--space-lg); border-right: 1px solid var(--color-border); text-align: center; min-width: 100px; }
+.timer-section { padding-right: var(--space-lg); border-right: 1px solid var(--color-border); border-bottom: none; padding-bottom: 0; padding-right: 10px; }
 .timer-section p { margin: 0 0 var(--space-sm) 0; font-size: var(--fs-sm); color: var(--color-text-secondary); }
 #timer-text { font-size: 1.8rem; font-weight: 700; font-family: var(--font-family-heading); color: var(--color-primary); }
 
@@ -380,21 +257,6 @@
 .option-btn.incorrect::before { background-color: var(--color-error); border-color: var(--color-error); color: #fff; content: '✖'; }
 .option-btn.correct.selected::before { content: '✔'; }
 
-/* PHASE 3: Combo & Feedback (Gamification) */
-.combo-display {
-    display: flex; flex-direction: column; align-items: center; margin-right: 20px;
-    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    transition: transform 0.2s ease;
-    text-shadow: 0 0 15px rgba(255, 152, 0, 0.6);
-}
-.combo-multiplier { 
-    font-size: 2rem; 
-    font-weight: 800; 
-    color: #ff9800; 
-    font-family: var(--font-family-heading);
-}
-.combo-label { font-size: 0.7rem; color: #ff9800; text-transform: uppercase; letter-spacing: 1px; }
-
 .feedback-container {
     margin-top: 20px; padding: 15px; border-radius: 8px; border: 1px solid transparent;
     display: flex; gap: 15px; align-items: flex-start; 
@@ -456,6 +318,5 @@
     .options-grid { grid-template-columns: 1fr; }
     .quiz-status-card { flex-direction: row; gap: 10px; padding: 10px; }
     .timer-section { border-right: 1px solid var(--color-border); border-bottom: none; padding-bottom: 0; padding-right: 10px; }
-    .boss-health-container { display: none !important; } 
     #timer-text { font-size: 1.4rem; }
 }

@@ -1,4 +1,3 @@
-
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -26,13 +25,6 @@ let xpGainedThisLevel = 0;
 let outputAudioContext = null;
 let currentAudioSource = null;
 let keyboardHandler = null;
-
-// Combo Mechanics
-let comboStreak = 0;
-
-// Boss Battle State
-let bossHp = 100;
-let damagePerHit = 10;
 
 const PASS_THRESHOLD = 0.8;
 const LEVELS_PER_CHAPTER = 50;
@@ -168,35 +160,12 @@ function renderLesson() {
 function startQuiz() {
     currentQuestionIndex = 0;
     score = 0;
-    comboStreak = 0;
     userAnswers = [];
     xpGainedThisLevel = 0;
     
-    if (levelContext.isBoss) {
-        bossHp = 100;
-        damagePerHit = 100 / levelData.questions.length;
-        elements.bossHealthContainer.style.display = 'flex';
-        elements.bossHealthFill.style.width = '100%';
-    } else {
-        elements.bossHealthContainer.style.display = 'none';
-    }
-
     renderQuestion();
-    updateComboDisplay();
     switchState('level-quiz-state');
     soundService.playSound('start');
-}
-
-function updateComboDisplay() {
-    if (comboStreak > 1) {
-        elements.comboDisplay.style.opacity = '1';
-        elements.comboDisplay.style.transform = 'scale(1.2)';
-        setTimeout(() => elements.comboDisplay.style.transform = 'scale(1)', 200);
-        elements.comboMultiplier.textContent = `x${comboStreak}`;
-        elements.comboLabel.textContent = comboStreak > 4 ? "ON FIRE! 🔥" : "Streak!";
-    } else {
-        elements.comboDisplay.style.opacity = '0';
-    }
 }
 
 function renderQuestion() {
@@ -315,10 +284,8 @@ function handleSubmitAnswer() {
 
     if (isCorrect) {
         score++;
-        comboStreak++;
-        updateComboDisplay();
         
-        const xpForThisQuestion = (hintUsedThisQuestion ? 5 : 10) + (comboStreak > 1 ? comboStreak * 2 : 0);
+        const xpForThisQuestion = (hintUsedThisQuestion ? 5 : 10);
         xpGainedThisLevel += xpForThisQuestion;
         
         soundService.playSound('correct');
@@ -327,16 +294,7 @@ function handleSubmitAnswer() {
         elements.feedbackContainer.className = 'feedback-container correct';
         elements.feedbackTitle.textContent = "Correct!";
 
-        if (levelContext.isBoss) {
-            bossHp = Math.max(0, bossHp - damagePerHit);
-            elements.bossHealthFill.style.width = `${bossHp}%`;
-            document.body.classList.add('shake');
-            setTimeout(() => document.body.classList.remove('shake'), 500);
-        }
-
     } else {
-        comboStreak = 0;
-        updateComboDisplay();
         soundService.playSound('incorrect');
         
         elements.feedbackContainer.className = 'feedback-container incorrect';
@@ -346,11 +304,6 @@ function handleSubmitAnswer() {
         elements.feedbackExplanation.innerHTML = `<strong>Answer: ${correctAnswerText}</strong><br/>${question.explanation}`;
         
         announce(`Incorrect. The correct answer was: ${correctAnswerText}`);
-        
-        if (levelContext.isBoss) {
-            document.body.classList.add('damage-flash');
-            setTimeout(() => document.body.classList.remove('damage-flash'), 500);
-        }
     }
 
     elements.quizOptionsContainer.querySelectorAll('.option-btn').forEach(btn => {
@@ -382,74 +335,6 @@ function handleReviewAnswers() {
         userAnswers: userAnswers,
     });
     window.location.hash = '#/review';
-}
-
-function fireConfetti() {
-    const canvas = document.createElement('canvas');
-    canvas.id = 'confetti-canvas';
-    document.body.appendChild(canvas);
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    const particles = [];
-    const colors = ['#00b8d4', '#9c27b0', '#ff4081', '#f50057', '#00e676', '#2979ff', '#ff9100'];
-
-    for (let i = 0; i < 150; i++) {
-        particles.push({
-            x: canvas.width / 2,
-            y: canvas.height / 2,
-            w: Math.random() * 10 + 5,
-            h: Math.random() * 10 + 5,
-            dx: (Math.random() - 0.5) * 20,
-            dy: (Math.random() - 0.5) * 20,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            tilt: Math.random() * 10,
-            tiltAngle: Math.random() * 10,
-            tiltAngleIncremental: (Math.random() * 0.07) + 0.05
-        });
-    }
-
-    let animationId;
-    function animate() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        let active = 0;
-
-        particles.forEach(p => {
-            p.tiltAngle += p.tiltAngleIncremental;
-            p.y += (Math.cos(p.tiltAngle) + 3 + p.h / 2) / 2;
-            p.x += Math.sin(p.tiltAngle) * 2;
-            p.x += p.dx * 0.5; 
-            p.y += p.dy * 0.5;
-
-            p.dx *= 0.9;
-            p.dy *= 0.9;
-            
-            p.tilt = Math.sin(p.tiltAngle) * 15;
-
-            if (p.y < canvas.height) {
-                active++;
-                ctx.beginPath();
-                ctx.lineWidth = p.w / 2;
-                ctx.strokeStyle = p.color;
-                ctx.moveTo(p.x + p.tilt + p.w / 2, p.y);
-                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.h / 2);
-                ctx.stroke();
-            }
-        });
-
-        if (active > 0) {
-            animationId = requestAnimationFrame(animate);
-        } else {
-            canvas.remove();
-        }
-    }
-    animate();
-    
-    setTimeout(() => {
-        cancelAnimationFrame(animationId);
-        if(document.body.contains(canvas)) canvas.remove();
-    }, 4000);
 }
 
 function showResults() {
@@ -508,9 +393,6 @@ function showResults() {
         const journey = learningPathService.getJourneyById(levelContext.journeyId);
         if (journey && journey.currentLevel === levelContext.level) learningPathService.completeLevel(levelContext.journeyId);
 
-        if (scorePercent === 1) {
-            fireConfetti(); // Strict compliance: Only on Perfect Scores
-        }
         preloadNextLevel();
 
     } else {
@@ -531,62 +413,6 @@ function showResults() {
     
     document.getElementById('review-answers-btn').addEventListener('click', handleReviewAnswers);
     switchState('level-results-state');
-}
-
-async function handleShare() {
-    const btn = document.getElementById('share-result-btn');
-    if (!btn) return;
-    
-    const originalText = btn.innerHTML;
-    btn.innerHTML = `<div class="btn-spinner"></div> Capturing...`;
-    btn.disabled = true;
-
-    try {
-        const elementToCapture = document.getElementById('share-capture-area');
-        
-        const canvas = await html2canvas(elementToCapture, {
-            backgroundColor: '#0f172a', 
-            scale: 2, 
-            logging: false,
-            useCORS: true
-        });
-
-        canvas.toBlob(async (blob) => {
-            const file = new File([blob], 'my-quiz-victory.png', { type: 'image/png' });
-
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: 'I beat the AI Quiz Master!',
-                        text: `I just scored ${score}/${levelData.questions.length} on ${levelContext.topic}!`,
-                        files: [file]
-                    });
-                    showToast('Shared successfully!', 'success');
-                } catch (err) {
-                    console.log('Share cancelled or failed', err);
-                    downloadImage(canvas); 
-                }
-            } else {
-                downloadImage(canvas);
-            }
-            
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        });
-    } catch (e) {
-        console.error(e);
-        showToast('Failed to capture image', 'error');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
-
-function downloadImage(canvas) {
-    const link = document.createElement('a');
-    link.download = `quiz-result-${Date.now()}.png`;
-    link.href = canvas.toDataURL();
-    link.click();
-    showToast('Image downloaded!', 'success');
 }
 
 async function handleQuit() {
@@ -710,10 +536,6 @@ function handleGlobalKeydown(e) {
                 handleNextQuestion();
             }
         }
-    } else if (document.getElementById('level-results-state').classList.contains('active')) {
-        if (e.key.toLowerCase() === 's') {
-            handleShare();
-        }
     } else if (document.getElementById('level-lesson-state').classList.contains('active')) {
          if (e.key === 'Enter') {
             startQuiz();
@@ -751,12 +573,6 @@ export function init() {
         resultsDetails: document.getElementById('results-details'),
         resultsActions: document.getElementById('results-actions'),
         xpGainText: document.getElementById('xp-gain-text'),
-        bossHealthContainer: document.getElementById('boss-health-container'),
-        bossHealthFill: document.getElementById('boss-health-fill'),
-        shareBtn: document.getElementById('share-result-btn'),
-        comboDisplay: document.getElementById('combo-display'),
-        comboMultiplier: document.querySelector('.combo-multiplier'),
-        comboLabel: document.querySelector('.combo-label'),
         feedbackContainer: document.getElementById('feedback-container'),
         feedbackTitle: document.getElementById('feedback-title'),
         feedbackExplanation: document.getElementById('feedback-explanation')
@@ -778,7 +594,6 @@ export function init() {
     elements.quitBtn.addEventListener('click', handleQuit);
     elements.homeBtn.addEventListener('click', () => window.location.hash = '/#/');
     elements.hintBtn.addEventListener('click', handleHintClick);
-    if(elements.shareBtn) elements.shareBtn.addEventListener('click', handleShare);
 
     keyboardHandler = handleGlobalKeydown;
     document.addEventListener('keydown', keyboardHandler);

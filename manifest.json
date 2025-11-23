@@ -1,7 +1,8 @@
+
 {
-    "name": "IT Quiz Master 2025",
-    "short_name": "ITQuizMaster",
-    "description": "The #1 AI-powered IT & Programming quiz platform.",
+    "name": "Knowledge Tester",
+    "short_name": "KnowledgeTester",
+    "description": "The #1 AI-powered learning platform.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",
