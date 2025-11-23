@@ -2,6 +2,7 @@
 
 
 
+
 export const LOCAL_STORAGE_KEYS = {
     CONFIG: 'knowledge-tester-config',
     LIBRARY: 'knowledge-tester-library',
@@ -13,7 +14,7 @@ export const LOCAL_STORAGE_KEYS = {
 
 // Re-enabling all features and routes for the full application experience.
 export const FEATURES = {
-    AURAL_MODE: true,
+    AURAL_MODE: false,
 };
 
 export const ROUTES = [

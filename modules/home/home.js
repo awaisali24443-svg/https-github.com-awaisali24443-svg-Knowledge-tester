@@ -79,12 +79,11 @@ function renderRecentHistory() {
     container.addEventListener('click', historyClickHandler);
 }
 
-// --- NEW: Daily Challenge Logic ---
+// --- Daily Challenge Logic ---
 async function initDailyChallenge() {
     const container = document.getElementById('daily-challenge-card');
     const statusText = document.getElementById('daily-challenge-status');
     challengeBtn = document.getElementById('start-daily-challenge-btn');
-    const notifyBtn = document.getElementById('notify-btn');
     
     if (gamificationService.isDailyChallengeCompleted()) {
         container.classList.add('completed');
@@ -92,28 +91,11 @@ async function initDailyChallenge() {
         challengeBtn.disabled = true;
         challengeBtn.textContent = "Done";
         container.style.display = 'block';
-        if(notifyBtn) notifyBtn.style.display = 'none';
         return;
     }
 
     container.style.display = 'block';
 
-    if (notifyBtn) {
-        notifyBtn.onclick = async () => {
-            if (!('Notification' in window)) {
-                showToast('Notifications not supported', 'error');
-                return;
-            }
-            const permission = await Notification.requestPermission();
-            if (permission === 'granted') {
-                showToast('Reminder set for tomorrow!', 'success');
-                notifyBtn.style.color = 'var(--color-primary)';
-            } else {
-                showToast('Notifications blocked.', 'info');
-            }
-        };
-    }
-    
     challengeBtn.onclick = async () => {
         challengeBtn.disabled = true;
         challengeBtn.textContent = "Loading...";
@@ -159,7 +141,6 @@ async function initDailyChallenge() {
                     container.classList.add('completed');
                     statusText.textContent = "Challenge Completed!";
                     challengeBtn.textContent = "Done";
-                    if(notifyBtn) notifyBtn.style.display = 'none';
                 } else {
                     showToast(`Wrong! It was: ${challenge.options[challenge.correctAnswerIndex]}`, "error");
                 }
