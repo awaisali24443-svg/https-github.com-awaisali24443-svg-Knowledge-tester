@@ -1,13 +1,12 @@
 
 /**
  * Renders a Markdown string into a basic HTML string.
- * Security: Includes basic output sanitization.
+ * Security: Includes basic output sanitization via DOMPurify if available.
  */
 export function render(markdown) {
     if (!markdown) return '';
 
-    // 1. Basic Sanitization
-    // We remove script tags but allow emojis and standard punctuation.
+    // 1. Basic Sanitization (Fallback if DOMPurify is missing)
     let safeMarkdown = markdown
         .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gim, "")
         .replace(/<iframe\b[^>]*>([\s\S]*?)<\/iframe>/gim, "")
@@ -97,6 +96,15 @@ export function render(markdown) {
          } else {
             html += `<pre data-lang="${codeBlockLang}"><code class="language-${codeBlockLang}">${codeBlockContent.join('\n')}</code></pre>`;
          }
+    }
+
+    // PHASE 7: Security Hardening
+    if (window.DOMPurify) {
+        // Configure DOMPurify to allow specific tags/attributes if necessary
+        return window.DOMPurify.sanitize(html, {
+            ADD_TAGS: ['div', 'span', 'pre', 'code', 'svg', 'use', 'path'], // Ensure mermaid/code blocks aren't stripped excessively
+            ADD_ATTR: ['class', 'data-lang', 'href', 'viewBox', 'd', 'fill']
+        });
     }
 
     return html;

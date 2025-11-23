@@ -1,4 +1,5 @@
 
+
 import * as configService from '../../services/configService.js';
 import { showConfirmationModal } from '../../services/modalService.js';
 import { LOCAL_STORAGE_KEYS } from '../../constants.js';
@@ -116,6 +117,26 @@ function handleInstallClick() {
     });
 }
 
+// PHASE 6: Mock Payment Logic
+function handleUpgradeClick() {
+    // Simulate opening a Stripe checkout via a modal or redirection
+    showConfirmationModal({
+        title: 'Upgrade to Pro?',
+        message: 'This is a demo. In production, this would open Stripe Checkout.\n\nBenefits:\n- Unlimited AI Requests\n- GPT-4 Level Tuning\n- Cloud Sync',
+        confirmText: 'Pay $0.00 (Demo)',
+        cancelText: 'Maybe Later'
+    }).then(confirmed => {
+        if (confirmed) {
+            showToast('Welcome to Pro! (Demo Mode)', 'success');
+            const btn = document.getElementById('upgrade-pro-btn');
+            if(btn) {
+                btn.textContent = "Pro Active";
+                btn.disabled = true;
+            }
+        }
+    });
+}
+
 export function init() {
     elements = {
         soundToggle: document.getElementById('sound-toggle'),
@@ -125,6 +146,7 @@ export function init() {
         themeToggleButtons: document.querySelectorAll('#theme-toggle-group button'),
         installSection: document.getElementById('install-app-section'),
         installBtn: document.getElementById('install-app-btn'),
+        upgradeBtn: document.getElementById('upgrade-pro-btn'), // PHASE 6
     };
 
     loadSettings();
@@ -134,6 +156,7 @@ export function init() {
     elements.clearDataBtn.addEventListener('click', handleClearData);
     elements.themeToggle.addEventListener('click', handleThemeToggle);
     elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
+    if(elements.upgradeBtn) elements.upgradeBtn.addEventListener('click', handleUpgradeClick);
 
     if (window.deferredInstallPrompt) {
         elements.installSection.style.display = 'block';
@@ -150,5 +173,6 @@ export function destroy() {
         elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
     }
     if (elements.installBtn) elements.installBtn.removeEventListener('click', handleInstallClick);
+    if (elements.upgradeBtn) elements.upgradeBtn.removeEventListener('click', handleUpgradeClick);
     elements = {};
 }

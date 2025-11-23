@@ -1,4 +1,5 @@
 
+
 import * as apiService from '../../services/apiService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as markdownService from '../../services/markdownService.js';
@@ -147,6 +148,19 @@ function renderLesson() {
     elements.lessonTitle.textContent = `Level ${levelContext.level}: ${levelContext.topic}`;
     elements.lessonBody.innerHTML = markdownService.render(levelData.lesson);
     
+    // PHASE 6: Dynamic AI Image Injection
+    if (elements.lessonImage && elements.lessonImageContainer) {
+        const encodedTopic = encodeURIComponent(`futuristic technology illustration for ${levelContext.topic}`);
+        // Using Pollinations.ai for dynamic generation
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedTopic}?width=800&height=400&nologo=true&seed=${levelContext.level}`;
+        
+        elements.lessonImage.onload = () => {
+            elements.lessonImage.style.opacity = '1';
+        };
+        elements.lessonImage.src = imageUrl;
+        elements.lessonImageContainer.style.display = 'block';
+    }
+
     if (window.mermaid) {
         setTimeout(() => {
             try {
@@ -680,6 +694,8 @@ export function init() {
         cancelBtn: document.getElementById('cancel-generation-btn'),
         lessonTitle: document.getElementById('lesson-title'),
         lessonBody: document.getElementById('lesson-body'),
+        lessonImage: document.getElementById('lesson-image'), // PHASE 6
+        lessonImageContainer: document.getElementById('lesson-image-container'), // PHASE 6
         startQuizBtn: document.getElementById('start-quiz-btn'),
         readAloudBtn: document.getElementById('read-aloud-btn'),
         askAiBtn: document.getElementById('ask-ai-btn'),
