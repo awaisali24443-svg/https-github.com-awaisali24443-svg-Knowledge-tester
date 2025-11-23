@@ -12,8 +12,8 @@
         SHOW_PRESETS: true,
         DEBUG_MODE: false,
         SELECTORS: {
-            input: 'input[type="text"]',
-            button: 'button',
+            input: '#topicInput',      // Hardened selector
+            button: '#generateBtn',    // Hardened selector to avoid nav conflicts
             container: 'body'
         }
     };
@@ -49,6 +49,8 @@
         "logic", "design", "hack", "cloud", "robot", "sys", "db", "sql", "git"
     ];
 
+    let isGenerating = false;
+
     function initPhase1() {
         if (CONFIG.DEBUG_MODE) console.log("Phase 1 Initializing...");
         mountUI();
@@ -57,7 +59,14 @@
 
     function mountUI() {
         const inputEl = document.querySelector(CONFIG.SELECTORS.input);
-        const mountPoint = inputEl ? inputEl.parentElement : document.body;
+        
+        // If input doesn't exist (e.g., not on home page), exit safely
+        if (!inputEl) return;
+
+        const mountPoint = inputEl.parentElement;
+
+        // Prevent duplicate mounting
+        if (document.getElementById('it-preset-container')) return;
 
         const container = document.createElement('div');
         container.id = 'it-preset-container';
@@ -95,11 +104,7 @@
             container.appendChild(grid);
         }
 
-        if (inputEl) {
-            mountPoint.insertBefore(container, inputEl);
-        } else {
-            document.body.insertBefore(container, document.body.firstChild);
-        }
+        mountPoint.insertBefore(container, inputEl);
 
         // Setup Help Modal
         document.getElementById('help-icon-btn')?.addEventListener('click', showHelpModal);
@@ -141,16 +146,42 @@
             input.value = topicName;
             input.focus();
             input.style.transition = "background-color 0.3s";
-            input.style.backgroundColor = "rgba(0, 255, 136, 0.1)";
+            input.style.backgroundColor = "var(--color-primary-transparent)";
             setTimeout(() => input.style.backgroundColor = "", 300);
         }
     }
 
     function handleSurpriseMe(e) {
         e.preventDefault();
+        if (isGenerating) return; 
+
+        const btn = document.querySelector(CONFIG.SELECTORS.button);
+        if (btn && btn.disabled) return; // App is busy
+
+        isGenerating = true;
+        const surpriseBtn = document.getElementById('it-surprise-btn');
+        if(surpriseBtn) {
+             surpriseBtn.disabled = true;
+             surpriseBtn.innerHTML = '🎲 Picking...';
+        }
+
         const randomTopic = IT_PRESETS[Math.floor(Math.random() * IT_PRESETS.length)];
         selectTopic(randomTopic.name);
-        showToast(`Selected: ${randomTopic.name}. Hit Generate!`, 'success');
+        
+        showToast(`Selected: ${randomTopic.name}. Generating...`, 'success');
+        
+        // Auto-click generate after a brief delay for visual feedback
+        setTimeout(() => {
+            if (btn) btn.click();
+            // Reset state after a delay sufficient for app to handle request start
+            setTimeout(() => {
+                isGenerating = false;
+                if(surpriseBtn) {
+                    surpriseBtn.disabled = false;
+                    surpriseBtn.innerHTML = '🎲 Surprise Me!';
+                }
+            }, 2000); 
+        }, 800);
     }
 
     function attachInterceptors() {
@@ -260,9 +291,11 @@
 
     function highlightGrid() {
         const grid = document.querySelector('.it-preset-grid');
-        grid.style.transition = "transform 0.2s";
-        grid.style.transform = "scale(1.02)";
-        setTimeout(() => grid.style.transform = "scale(1)", 200);
+        if(grid) {
+            grid.style.transition = "transform 0.2s";
+            grid.style.transform = "scale(1.02)";
+            setTimeout(() => grid.style.transform = "scale(1)", 200);
+        }
     }
 
     if (document.readyState === 'loading') {
