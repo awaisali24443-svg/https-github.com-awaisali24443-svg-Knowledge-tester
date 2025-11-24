@@ -42,18 +42,21 @@ const INTEREST_DATA = {
 };
 
 function checkOnboarding() {
-    const hasSeenOnboarding = localStorage.getItem('kt_onboarding_complete');
+    // EXPO MODE: Ignored the localStorage check so it ALWAYS shows for the demo.
+    // const hasSeenOnboarding = localStorage.getItem('kt_onboarding_complete');
     const overlay = document.getElementById('onboarding-overlay');
     
-    if (!hasSeenOnboarding && overlay) {
+    if (overlay) {
         overlay.style.display = 'flex';
         
         // Add listeners to buttons
         overlay.querySelectorAll('.interest-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const category = card.dataset.category;
-                
-                localStorage.setItem('kt_onboarding_complete', 'true');
+            // Remove old listeners to prevent duplicates if re-initialized
+            const newCard = card.cloneNode(true);
+            card.parentNode.replaceChild(newCard, card);
+            
+            newCard.addEventListener('click', () => {
+                const category = newCard.dataset.category;
                 
                 // Fade out
                 overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => {
@@ -301,7 +304,7 @@ export function init() {
     renderRecentHistory();
     renderMemoryHealth();
     initDailyChallenge();
-    checkOnboarding();
+    checkOnboarding(); // Will now trigger every time for Expo
     
     // Trigger preload after a short delay to let main thread settle
     setTimeout(preloadCriticalModules, 1000);
