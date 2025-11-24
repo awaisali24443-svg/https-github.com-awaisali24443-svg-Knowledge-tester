@@ -1,4 +1,5 @@
 
+
 import * as gamificationService from '../../services/gamificationService.js';
 import * as historyService from '../../services/historyService.js';
 import * as learningPathService from '../../services/learningPathService.js';
@@ -20,6 +21,7 @@ function checkOnboarding() {
     if (existingInterest) {
         if (overlay) {
             overlay.style.display = 'none'; // Instant hide
+            overlay.classList.remove('visible');
             overlay.remove(); // Remove from DOM
         }
         return;

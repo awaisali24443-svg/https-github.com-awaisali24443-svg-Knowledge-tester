@@ -16,28 +16,94 @@ let stats = { ...defaultStats };
 
 const ACHIEVEMENTS = {
     // --- Starter ---
-    novice: { name: "First Step", description: "Complete your first quiz.", icon: "award", color: "linear-gradient(135deg, #8e2de2, #4a00e0)", condition: (s, h) => h.length >= 1 },
+    novice: { 
+        name: "First Step", 
+        description: "Complete your first quiz.", 
+        icon: "award", 
+        color: "linear-gradient(135deg, #00b8d4, #00e5ff)", // Electric Cyan
+        condition: (s, h) => h.length >= 1 
+    },
     
     // --- Volume ---
-    scholar: { name: "Scholar", description: "Complete 10 quizzes.", icon: "book", color: "linear-gradient(135deg, #11998e, #38ef7d)", condition: (s, h) => h.length >= 10 },
-    library_builder: { name: "Librarian", description: "Save 5 questions to your library.", icon: "book", color: "linear-gradient(135deg, #f2994a, #f2c94c)", condition: (s, h, q, lib) => lib && lib.length >= 5 },
-    veteran: { name: "Veteran", description: "Complete 50 quizzes.", icon: "shield", color: "linear-gradient(135deg, #ec008c, #fc6767)", condition: (s, h) => h.length >= 50 },
+    scholar: { 
+        name: "Scholar", 
+        description: "Complete 10 quizzes.", 
+        icon: "book", 
+        color: "linear-gradient(135deg, #9c27b0, #d500f9)", // Neon Purple
+        condition: (s, h) => h.length >= 10 
+    },
+    library_builder: { 
+        name: "Librarian", 
+        description: "Save 5 questions to your library.", 
+        icon: "book", 
+        color: "linear-gradient(135deg, #ff9100, #ffea00)", // Solar Gold
+        condition: (s, h, q, lib) => lib && lib.length >= 5 
+    },
+    veteran: { 
+        name: "Veteran", 
+        description: "Complete 50 quizzes.", 
+        icon: "shield", 
+        color: "linear-gradient(135deg, #ff1744, #ff4081)", // Red/Pink
+        condition: (s, h) => h.length >= 50 
+    },
     
     // --- Skill ---
-    perfectionist: { name: "Perfectionist", description: "Get 100% on a quiz.", icon: "star", color: "linear-gradient(135deg, #ffd700, #fdb931)", condition: (s, h, q) => q && q.totalQuestions > 0 && q.score === q.totalQuestions },
-    speed_demon: { name: "Speed Demon", description: "Complete a quiz in under 30 seconds.", icon: "zap", color: "linear-gradient(135deg, #ffff00, #ff0000)", condition: (s, h, q) => q && (new Date(q.endTime) - new Date(q.startTime)) < 30000 },
+    perfectionist: { 
+        name: "Perfectionist", 
+        description: "Get 100% on a quiz.", 
+        icon: "star", 
+        color: "linear-gradient(135deg, #00c853, #69f0ae)", // Emerald
+        condition: (s, h, q) => q && q.totalQuestions > 0 && q.score === q.totalQuestions 
+    },
+    speed_demon: { 
+        name: "Speed Demon", 
+        description: "Complete a quiz in under 30 seconds.", 
+        icon: "zap", 
+        color: "linear-gradient(135deg, #ffea00, #ff9100)", // Lightning
+        condition: (s, h, q) => q && (new Date(q.endTime) - new Date(q.startTime)) < 30000 
+    },
     
     // --- Streaks & Habits ---
-    three_peat: { name: "Heating Up", description: "3-day streak.", icon: "zap", color: "linear-gradient(135deg, #ff416c, #ff4b2b)", condition: (s) => s.currentStreak >= 3 },
-    week_warrior: { name: "Unstoppable", description: "7-day streak.", icon: "zap", color: "linear-gradient(135deg, #a8ff78, #78ffd6)", condition: (s) => s.currentStreak >= 7 },
-    night_owl: { name: "Night Owl", description: "Complete a quiz after 10 PM.", icon: "target", color: "linear-gradient(135deg, #2c3e50, #4ca1af)", condition: (s, h, q) => q && new Date(q.endTime).getHours() >= 22 },
-    early_bird: { name: "Early Bird", description: "Complete a quiz before 8 AM.", icon: "target", color: "linear-gradient(135deg, #ff9966, #ff5e62)", condition: (s, h, q) => q && new Date(q.endTime).getHours() < 8 },
+    three_peat: { 
+        name: "Heating Up", 
+        description: "3-day streak.", 
+        icon: "zap", 
+        color: "linear-gradient(135deg, #ff4081, #f50057)", // Hot Pink
+        condition: (s) => s.currentStreak >= 3 
+    },
+    week_warrior: { 
+        name: "Unstoppable", 
+        description: "7-day streak.", 
+        icon: "zap", 
+        color: "linear-gradient(135deg, #2979ff, #00b0ff)", // Electric Blue
+        condition: (s) => s.currentStreak >= 7 
+    },
+    night_owl: { 
+        name: "Night Owl", 
+        description: "Complete a quiz after 10 PM.", 
+        icon: "target", 
+        color: "linear-gradient(135deg, #304ffe, #7c4dff)", // Deep Indigo
+        condition: (s, h, q) => q && new Date(q.endTime).getHours() >= 22 
+    },
+    early_bird: { 
+        name: "Early Bird", 
+        description: "Complete a quiz before 8 AM.", 
+        icon: "target", 
+        color: "linear-gradient(135deg, #00e5ff, #1de9b6)", // Sunrise Teal
+        condition: (s, h, q) => q && new Date(q.endTime).getHours() < 8 
+    },
 
     // --- Mastery ---
-    polymath: { name: "Polymath", description: "Complete quizzes in 3 different topics.", icon: "cpu", color: "linear-gradient(135deg, #fc466b, #3f5efb)", condition: (s, h) => {
-        const topics = new Set(h.map(i => i.topic.split('-')[0].trim()));
-        return topics.size >= 3;
-    }},
+    polymath: { 
+        name: "Polymath", 
+        description: "Complete quizzes in 3 different topics.", 
+        icon: "cpu", 
+        color: "linear-gradient(135deg, #ff4081, #9c27b0)", // Brand Gradient
+        condition: (s, h) => {
+            const topics = new Set(h.map(i => i.topic.split('-')[0].trim()));
+            return topics.size >= 3;
+        }
+    },
 };
 
 const QUEST_TYPES = [
