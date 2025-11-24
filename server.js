@@ -29,6 +29,33 @@ function isValidNumber(num) {
     return typeof num === 'number' && !isNaN(num);
 }
 
+// Helper to sanitize JSON from AI (handles markdown blocks)
+function cleanAndParseJSON(text) {
+    if (!text) return null;
+    try {
+        // 1. Try direct parse
+        return JSON.parse(text);
+    } catch (e) {
+        // 2. Strip markdown code blocks
+        let clean = text.replace(/```json/g, '').replace(/```/g, '');
+        
+        // 3. Extract content between first { and last }
+        const firstOpen = clean.indexOf('{');
+        const lastClose = clean.lastIndexOf('}');
+        
+        if (firstOpen !== -1 && lastClose !== -1) {
+            clean = clean.substring(firstOpen, lastClose + 1);
+        }
+        
+        try {
+            return JSON.parse(clean);
+        } catch (e2) {
+            console.error("Failed to parse JSON even after cleaning:", clean);
+            throw new Error("AI returned invalid JSON format.");
+        }
+    }
+}
+
 // --- GEMINI API SETUP ---
 let ai;
 try {
@@ -212,7 +239,7 @@ async function generateJourneyPlan(topic) {
                 responseSchema: journeyPlanSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Journey Plan for ${topic}):`, error);
         throw new Error('Failed to generate a learning plan.');
@@ -242,7 +269,7 @@ async function generateCurriculumOutline(topic, totalLevels) {
                 responseSchema: curriculumOutlineSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Curriculum Outline for ${topic}):`, error);
         throw new Error('Failed to generate a curriculum outline.');
@@ -288,7 +315,7 @@ async function generateLevelQuestions(topic, level, totalLevels) {
                 responseSchema: questionsGenerationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Level Questions ${level}):`, error);
         throw new Error('Failed to generate questions.');
@@ -318,7 +345,7 @@ async function generateInteractiveLevel(topic, level) {
                 responseSchema: interactiveChallengeSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Interactive Level ${level}):`, error);
         throw new Error('Failed to generate interactive challenge.');
@@ -356,7 +383,7 @@ async function generateLevelLesson(topic, level, totalLevels, questionsContext) 
                 responseSchema: lessonGenerationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Level Lesson ${level}):`, error);
         throw new Error('Failed to generate lesson.');
@@ -388,7 +415,7 @@ async function generateBossBattleContent(topic, chapter) {
                 responseSchema: bossBattleGenerationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Boss Battle Generation for ${topic} Ch. ${chapter}):`, error);
         throw new Error('Failed to generate the boss battle.');
@@ -423,7 +450,7 @@ async function generateHint(topic, question, options) {
                 responseSchema: hintGenerationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Hint Generation for ${topic}):`, error);
         throw new Error('Failed to generate a hint.');
@@ -485,7 +512,7 @@ async function explainConcept(topic, concept, context) {
                 responseSchema: explanationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error(`Gemini API Error (Explain Concept):`, error);
         throw new Error('Failed to generate explanation.');
@@ -510,7 +537,7 @@ async function generateDailyChallenge() {
                 responseSchema: dailyChallengeSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error("Daily Challenge Error:", error);
         throw new Error("Failed to generate challenge.");
@@ -537,7 +564,7 @@ async function explainError(topic, question, userChoice, correctChoice) {
                 responseSchema: explanationSchema,
             }
         });
-        return JSON.parse(response.text);
+        return cleanAndParseJSON(response.text);
     } catch (error) {
         console.error("Error Explanation Error:", error);
         throw new Error("Failed to explain error.");

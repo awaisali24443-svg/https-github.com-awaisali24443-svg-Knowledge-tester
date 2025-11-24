@@ -138,6 +138,15 @@ function finalizeLiveTranscription() {
 async function startConversation() {
     if (currentState !== STATE.IDLE && currentState !== STATE.ERROR) return;
     
+    // --- CRITICAL FIX FOR MOBILE SAFARI ---
+    // Initialize and resume contexts synchronously within the user gesture (click)
+    if (!inputAudioContext) inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    if (inputAudioContext.state === 'suspended') await inputAudioContext.resume();
+
+    if (!outputAudioContext) outputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+    if (outputAudioContext.state === 'suspended') await outputAudioContext.resume();
+    // --------------------------------------
+
     transcriptLog = [];
     sessionStartTime = Date.now();
     elements.log.innerHTML = ''; 
@@ -155,11 +164,6 @@ async function startConversation() {
 
     try {
         mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        inputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-        if (inputAudioContext.state === 'suspended') await inputAudioContext.resume();
-
-        outputAudioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
-        if (outputAudioContext.state === 'suspended') await outputAudioContext.resume();
         
         const blob = new Blob([workletCode], { type: 'application/javascript' });
         const workletUrl = URL.createObjectURL(blob);
@@ -274,8 +278,9 @@ function stopConversation() {
     }
     if (audioWorkletNode) { audioWorkletNode.disconnect(); audioWorkletNode = null; }
     if (mediaStream) { mediaStream.getTracks().forEach(track => track.stop()); mediaStream = null; }
-    if (inputAudioContext) { inputAudioContext.close().catch(()=>{}); inputAudioContext = null; }
-    if (outputAudioContext) { sources.forEach(s => s.stop()); sources.clear(); outputAudioContext.close().catch(()=>{}); outputAudioContext = null; }
+    // Do not close audio contexts here; reuse them or they will need new user gesture
+    if (outputAudioContext) { sources.forEach(s => s.stop()); sources.clear(); }
+    
     if (elements.log) elements.log.innerHTML = '';
     if (elements.placeholder) elements.placeholder.style.display = 'flex';
     updateUI(STATE.IDLE);

@@ -4,6 +4,8 @@ import * as historyService from '../../services/historyService.js';
 import * as learningPathService from '../../services/learningPathService.js';
 import * as stateService from '../../services/stateService.js';
 
+let resizeObserver;
+
 function renderStats() {
     const gamificationStats = gamificationService.getStats();
     const history = historyService.getHistory();
@@ -114,14 +116,11 @@ function renderNeuralNexus() {
 
     if (journeys.length === 0) return;
 
-    // 4. Calculate Layout
-    const containerRect = container.getBoundingClientRect();
-    // Use a virtual center for calculations (0,0 is center of container)
-    // But SVG needs absolute coords relative to container (width/2, height/2)
-    // Since the container is responsive, we rely on percent or absolute logic.
-    // Simpler: Assume container is flex centered. We just need radius.
-    
-    const radius = 140; 
+    // 4. Calculate Layout (Responsive)
+    const containerRect = visualizerContainer.getBoundingClientRect();
+    // Dynamic radius based on smallest dimension to prevent clipping
+    const minDim = Math.min(containerRect.width, containerRect.height);
+    const radius = Math.max(100, minDim * 0.35); // Minimum 100px, or 35% of container
     
     journeys.forEach((journey, index) => {
         const angle = (index / journeys.length) * 2 * Math.PI - (Math.PI / 2); // Start top
@@ -141,8 +140,6 @@ function renderNeuralNexus() {
         // Inner visual div
         const visual = document.createElement('div');
         visual.className = 'node-visual';
-        
-        // Optional icon or initial
         visual.textContent = topicName.charAt(0).toUpperCase();
         
         node.appendChild(visual);
@@ -172,38 +169,46 @@ function renderNeuralNexus() {
         container.appendChild(node);
 
         // 6. Create SVG Path (Bezier Curve)
-        // We need coordinates relative to the SVG center (which is 50%, 50%)
-        // Since SVG is 100% width/height, we can use percentage or viewbox.
-        // Let's use a coordinate system where 0,0 is center.
-        
-        // We can map the div offsets (x,y) directly if we set SVG viewbox carefully.
-        // Or simply: SVG spans the whole div. Center is (W/2, H/2).
-        // The node transform translates from center. So node pos is (W/2 + x, H/2 + y).
-        
-        // HOWEVER: The container size might not be known perfectly at render time if hidden.
-        // Hack: Use a fixed coordinate system for SVG and CSS transform the SVG layer if needed.
-        // Better: Use JS to get center.
-        
-        // SIMPLIFIED: We know x,y are offsets from center.
-        // Let's make SVG have overflow:visible and 0x0 size at center? No.
-        // Let's map 50% + x px.
-        
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("id", `line-${index}`);
-        path.setAttribute("class", "connection-path");
-        
-        // Start at center (0,0 relative to center) -> we use calc() logic in d? No.
-        // We have to use absolute units or percentage in SVG.
-        // Let's assume a 600x600 coordinate space for the visualizer and scale it via CSS?
-        // Easier: Use percentages combined with pixels? No SVG doesn't support calc in d attribute well.
-        
-        // Solution: We use a fixed viewbox -300 -300 600 600.
-        // 0,0 is center.
+        // We use a fixed viewbox centered at 0,0 so logic matches CSS transform
         svgLayer.setAttribute("viewBox", "-300 -300 600 600");
         
         // Control point for curve (slight arc)
         const cx = x * 0.5; 
         const cy = y * 0.5;
+        
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("id", `line-${index}`);
+        path.setAttribute("class", "connection-path");
+        
+        // Adjust d logic based on radius scale if viewbox is fixed but radius changes?
+        // Wait, if we use CSS transform for nodes (pixels), we must use pixels in SVG too.
+        // The viewBox -300 to 300 maps to pixels if the svg is 600px wide. 
+        // But it's 100% width.
+        // FIX: We must calculate the SVG coordinates to match the CSS pixel offsets.
+        
+        // Since layout is responsive, we can't rely on a static viewBox matching pixels exactly
+        // unless we update viewBox on resize.
+        // EASIER: Use % in SVG? No.
+        // Solution: Let's just set the d attribute using the raw X/Y from above.
+        // And assume 1 unit in SVG = 1 pixel. 
+        // To do this, we need overflow: visible on SVG and 0x0 size centered.
+        // OR we update viewbox to match container rect.
+        
+        // Let's try the overflow visible approach which is simplest for centered layouts.
+        // CSS handles the centering of the SVG element itself.
+        svgLayer.style.overflow = 'visible';
+        // We don't set viewbox. Defaults to pixels? 
+        // We set x/y to start from center.
+        // M 0 0 is top left of SVG.
+        // We need center.
+        // Let's shift the group.
+        
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        g.setAttribute("transform", `translate(${containerRect.width/2}, ${containerRect.height/2})`);
+        // Actually, easier to just use the calculated x,y assuming 0,0 is center 
+        // and set viewBox based on container dimensions dynamically.
+        
+        svgLayer.setAttribute("viewBox", `${-containerRect.width/2} ${-containerRect.height/2} ${containerRect.width} ${containerRect.height}`);
         
         const d = `M 0 0 Q ${cx} ${cy} ${x} ${y}`;
         path.setAttribute("d", d);
@@ -217,13 +222,22 @@ export function init() {
     renderQuests();
     renderAchievements();
     
-    // Slight delay to ensure layout is stable for calculations if needed
+    // Initial Render
     setTimeout(renderNeuralNexus, 50);
     
-    // Re-render on resize to handle responsive layout if we used absolute coords
-    // But since we used viewBox centered logic, it should scale automatically!
+    // Setup Observer for responsive layout
+    const container = document.querySelector('.nexus-visualizer-container');
+    if (container) {
+        resizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(renderNeuralNexus);
+        });
+        resizeObserver.observe(container);
+    }
 }
 
 export function destroy() {
-    // Cleanup
+    if (resizeObserver) {
+        resizeObserver.disconnect();
+        resizeObserver = null;
+    }
 }
