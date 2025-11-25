@@ -9,7 +9,7 @@ import * as historyService from './services/historyService.js';
 import * as themeService from './services/themeService.js';
 import * as gamificationService from './services/gamificationService.js';
 import * as stateService from './services/stateService.js';
-import { init as initVoice } from './services/voiceCommandService.js';
+import { init as initVoice, toggleListening } from './services/voiceCommandService.js';
 
 const moduleCache = new Map();
 let currentModule = null;
@@ -226,13 +226,11 @@ async function preloadCriticalModules() {
 
 async function main() {
     try {
-        // Client-side heartbeat to prevent sleep during active use
-        // Pings the health endpoint every 5 minutes
+        // Client-side heartbeat
         setInterval(() => {
-            fetch('/health').catch(() => {}); // Silent fail is fine
+            fetch('/health').catch(() => {}); 
         }, 5 * 60 * 1000);
 
-        // PWA Install Capture
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             window.deferredInstallPrompt = e;
@@ -246,7 +244,7 @@ async function main() {
         historyService.init();
         gamificationService.init();
         stateService.initState();
-        initVoice(); // Initialize Voice Command Service
+        initVoice(); // Initialize Voice Command
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
@@ -254,7 +252,17 @@ async function main() {
             });
         }
 
-        renderSidebar(document.getElementById('sidebar'));
+        const sidebarEl = document.getElementById('sidebar');
+        renderSidebar(sidebarEl);
+        
+        // Attach voice toggle listener
+        const voiceToggleBtn = document.getElementById('sidebar-voice-toggle');
+        if (voiceToggleBtn) {
+            voiceToggleBtn.addEventListener('click', () => {
+                toggleListening();
+                voiceToggleBtn.classList.toggle('active');
+            });
+        }
 
         window.addEventListener('hashchange', handleRouteChange);
         window.addEventListener('settings-changed', (e) => applyAppSettings(e.detail));
@@ -302,7 +310,6 @@ async function main() {
                 if (!hasBeenWelcomed) {
                     showWelcomeScreen();
                 }
-                // Start aggressive preload after splash is gone
                 setTimeout(preloadCriticalModules, 500);
             };
             splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
