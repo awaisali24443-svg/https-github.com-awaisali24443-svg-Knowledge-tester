@@ -47,12 +47,10 @@ function renderQuests() {
     if (list) {
         list.innerHTML = quests.map(quest => `
             <div class="quest-item ${quest.completed ? 'completed' : ''}">
-                <div class="quest-left">
-                    <div class="quest-status-icon">
-                        <svg class="icon"><use href="/assets/icons/feather-sprite.svg#${quest.completed ? 'check-circle' : 'circle'}"/></svg>
-                    </div>
-                    <span class="quest-text">${quest.text}</span>
+                <div class="quest-status-icon">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#${quest.completed ? 'check-circle' : 'circle'}"/></svg>
                 </div>
+                <span class="quest-text">${quest.text}</span>
                 <span class="quest-xp">+${quest.xp} XP</span>
             </div>
         `).join('');
@@ -68,22 +66,21 @@ function renderAchievements() {
 
     achievements.forEach(ach => {
         const card = document.createElement('div');
-        card.className = `card achievement-card ${ach.unlocked ? 'unlocked' : ''}`;
+        card.className = `achievement-card ${ach.unlocked ? 'unlocked' : 'locked'}`;
         card.setAttribute('title', ach.description);
 
         let iconStyle = '';
         if (ach.unlocked && ach.color) {
-            iconStyle = `background: ${ach.color}; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); color: white;`;
+            iconStyle = `background: ${ach.color}; color: white; box-shadow: 0 0 20px ${ach.color};`;
         }
 
         card.innerHTML = `
             <div class="achievement-icon" style="${iconStyle}">
                 <svg><use href="/assets/icons/feather-sprite.svg#${ach.icon}"/></svg>
             </div>
-            <div class="achievement-info">
-                <h3 class="achievement-name">${ach.name}</h3>
-                <p class="achievement-description">${ach.description}</p>
-            </div>
+            <h3 class="achievement-name">${ach.name}</h3>
+            <p class="achievement-description">${ach.description}</p>
+            <span class="achievement-status-label">${ach.unlocked ? 'DECRYPTED' : 'LOCKED'}</span>
         `;
         grid.appendChild(card);
     });
@@ -180,33 +177,8 @@ function renderNeuralNexus() {
         path.setAttribute("id", `line-${index}`);
         path.setAttribute("class", "connection-path");
         
-        // Adjust d logic based on radius scale if viewbox is fixed but radius changes?
-        // Wait, if we use CSS transform for nodes (pixels), we must use pixels in SVG too.
-        // The viewBox -300 to 300 maps to pixels if the svg is 600px wide. 
-        // But it's 100% width.
-        // FIX: We must calculate the SVG coordinates to match the CSS pixel offsets.
-        
-        // Since layout is responsive, we can't rely on a static viewBox matching pixels exactly
-        // unless we update viewBox on resize.
-        // EASIER: Use % in SVG? No.
-        // Solution: Let's just set the d attribute using the raw X/Y from above.
-        // And assume 1 unit in SVG = 1 pixel. 
-        // To do this, we need overflow: visible on SVG and 0x0 size centered.
-        // OR we update viewbox to match container rect.
-        
-        // Let's try the overflow visible approach which is simplest for centered layouts.
-        // CSS handles the centering of the SVG element itself.
+        // Ensure overflow handles large layouts
         svgLayer.style.overflow = 'visible';
-        // We don't set viewbox. Defaults to pixels? 
-        // We set x/y to start from center.
-        // M 0 0 is top left of SVG.
-        // We need center.
-        // Let's shift the group.
-        
-        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        g.setAttribute("transform", `translate(${containerRect.width/2}, ${containerRect.height/2})`);
-        // Actually, easier to just use the calculated x,y assuming 0,0 is center 
-        // and set viewBox based on container dimensions dynamically.
         
         svgLayer.setAttribute("viewBox", `${-containerRect.width/2} ${-containerRect.height/2} ${containerRect.width} ${containerRect.height}`);
         
