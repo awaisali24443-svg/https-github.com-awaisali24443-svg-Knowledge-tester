@@ -14,6 +14,9 @@ function toggleMode() {
     elements.toggleText.textContent = isLoginMode ? 'New user?' : 'Already have an account?';
     elements.toggleBtn.textContent = isLoginMode ? 'Initialize New Account' : 'Login with Existing ID';
     elements.error.style.display = 'none';
+    
+    // Hide forgot button in register mode
+    if (elements.forgotBtn) elements.forgotBtn.style.display = isLoginMode ? 'block' : 'none';
 }
 
 async function handleSubmit(e) {
@@ -58,6 +61,55 @@ async function handleGuestLogin() {
         // Auth listener handles redirect
     } catch (error) {
         handleError(error);
+    }
+}
+
+// --- Reset Password Logic ---
+function openResetModal() {
+    elements.resetModal.style.display = 'block';
+    elements.resetEmailInput.value = elements.emailInput.value; // Pre-fill if available
+    elements.resetEmailInput.focus();
+    elements.resetFeedback.style.display = 'none';
+}
+
+function closeResetModal() {
+    elements.resetModal.style.display = 'none';
+}
+
+async function handleResetSubmit() {
+    const email = elements.resetEmailInput.value.trim();
+    if (!email) return;
+
+    const btn = elements.confirmResetBtn;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+    elements.resetFeedback.style.display = 'none';
+
+    try {
+        await firebaseService.resetPassword(email);
+        elements.resetFeedback.textContent = `Reset link sent to ${email}. Check your inbox.`;
+        elements.resetFeedback.style.color = 'var(--color-success)';
+        elements.resetFeedback.style.backgroundColor = 'var(--color-success-bg)';
+        elements.resetFeedback.style.display = 'block';
+        
+        setTimeout(() => {
+            closeResetModal();
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }, 3000);
+    } catch (error) {
+        console.error(error);
+        let msg = "Failed to send reset email.";
+        if (error.code === 'auth/user-not-found') msg = "No account found with this email.";
+        if (error.code === 'auth/invalid-email') msg = "Invalid email address.";
+        
+        elements.resetFeedback.textContent = msg;
+        elements.resetFeedback.style.color = 'var(--color-error)';
+        elements.resetFeedback.style.backgroundColor = 'var(--color-error-bg)';
+        elements.resetFeedback.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 }
 
@@ -106,16 +158,33 @@ export function init() {
                 toggleBtn: document.getElementById('auth-toggle-btn'),
                 guestBtn: document.getElementById('guest-login-btn'),
                 googleBtn: document.getElementById('google-login-btn'),
+                forgotBtn: document.getElementById('forgot-password-btn'),
                 title: document.getElementById('auth-title'),
                 subtitle: document.getElementById('auth-subtitle'),
                 toggleText: document.getElementById('auth-toggle-text'),
-                error: document.getElementById('auth-error')
+                error: document.getElementById('auth-error'),
+                
+                // Reset Modal Elements
+                resetModal: document.getElementById('reset-password-modal'),
+                resetEmailInput: document.getElementById('reset-email-input'),
+                cancelResetBtn: document.getElementById('cancel-reset-btn'),
+                confirmResetBtn: document.getElementById('confirm-reset-btn'),
+                resetFeedback: document.getElementById('reset-feedback')
             };
             
             elements.form.addEventListener('submit', handleSubmit);
             elements.toggleBtn.addEventListener('click', toggleMode);
             elements.guestBtn.addEventListener('click', handleGuestLogin);
             elements.googleBtn.addEventListener('click', handleGoogleLogin);
+            
+            if (elements.forgotBtn) elements.forgotBtn.addEventListener('click', openResetModal);
+            if (elements.cancelResetBtn) elements.cancelResetBtn.addEventListener('click', closeResetModal);
+            if (elements.confirmResetBtn) elements.confirmResetBtn.addEventListener('click', handleResetSubmit);
+            
+            // Close modal on backdrop click
+            elements.resetModal.addEventListener('click', (e) => {
+                if (e.target === elements.resetModal) closeResetModal();
+            });
         });
 }
 

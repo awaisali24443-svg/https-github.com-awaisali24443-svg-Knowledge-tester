@@ -41,9 +41,9 @@ export function renderSidebar(container) {
     });
 
     const html = `
-        <a href="/#/" class="sidebar-logo" aria-label="Knowledge Tester Home">
-            <img src="assets/icons/favicon.svg" alt="Knowledge Tester Logo" class="sidebar-logo-img">
-            <span class="sidebar-logo-text">Knowledge Tester</span>
+        <a href="/#/" class="sidebar-logo" aria-label="Skill Apex Home">
+            <img src="assets/icons/favicon.svg" alt="Skill Apex Logo" class="sidebar-logo-img">
+            <span class="sidebar-logo-text">Skill Apex</span>
         </a>
         <ul class="sidebar-links">
             ${filteredMainLinks.map((link, i) => createNavLink(link, i)).join('')}
@@ -52,6 +52,9 @@ export function renderSidebar(container) {
         <ul class="sidebar-links">
              ${footerLinks.map((link, i) => createNavLink(link, i + filteredMainLinks.length)).join('')}
         </ul>
+        <div class="sidebar-footer-credit">
+            <span class="credit-text">Built by <strong>AWAIS ALI</strong></span>
+        </div>
     `;
     container.innerHTML = html;
 }

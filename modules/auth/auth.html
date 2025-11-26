@@ -3,13 +3,13 @@
     <div class="auth-card card">
         <div class="auth-header">
             <img src="assets/icons/favicon.svg" alt="Logo" class="auth-logo">
-            <h1 id="auth-title">System Login</h1>
-            <p id="auth-subtitle">Identify yourself to access the neural network.</p>
+            <h1 id="auth-title">Skill Apex</h1>
+            <p id="auth-subtitle">Reach the peak of mastery. Sign in to begin.</p>
         </div>
 
         <form id="auth-form" class="auth-form">
             <div class="form-group">
-                <label for="auth-email" class="form-label">Email Identity</label>
+                <label for="auth-email" class="form-label">Email</label>
                 <div class="input-with-icon">
                     <svg class="icon"><use href="/assets/icons/feather-sprite.svg#user"/></svg>
                     <input type="email" id="auth-email" class="form-input" placeholder="user@domain.com" required>
@@ -17,7 +17,10 @@
             </div>
             
             <div class="form-group">
-                <label for="auth-password" class="form-label">Access Key</label>
+                <div class="label-row">
+                    <label for="auth-password" class="form-label">Password</label>
+                    <button type="button" id="forgot-password-btn" class="btn-link-small">Forgot?</button>
+                </div>
                 <div class="input-with-icon">
                     <svg class="icon"><use href="/assets/icons/feather-sprite.svg#lock"/></svg>
                     <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required minlength="6">
@@ -27,14 +30,14 @@
             <div id="auth-error" class="auth-error" style="display: none;"></div>
 
             <button type="submit" id="auth-submit-btn" class="btn btn-primary btn-block">
-                <span class="btn-text">Connect</span>
+                <span class="btn-text">Sign In</span>
                 <div class="spinner" style="display: none; width: 20px; height: 20px; border-width: 2px;"></div>
             </button>
         </form>
 
         <div class="auth-footer">
             <p id="auth-toggle-text">New user?</p>
-            <button id="auth-toggle-btn" class="btn-text">Initialize New Account</button>
+            <button id="auth-toggle-btn" class="btn-text">Create Account</button>
         </div>
 
         <div class="guest-divider">
@@ -54,5 +57,26 @@
         <button id="guest-login-btn" class="btn btn-ghost btn-block" style="margin-top: 10px;">
             Continue as Guest (Anonymous)
         </button>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="reset-password-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Reset Password</h2>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 1rem; color: var(--color-text-secondary);">Enter your email address. We'll send you a link to reset your password.</p>
+            <div class="input-with-icon">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#mail"/></svg>
+                <input type="email" id="reset-email-input" class="form-input" placeholder="user@domain.com">
+            </div>
+            <p id="reset-feedback" style="display: none; margin-top: 10px; font-size: 0.9rem; padding: 8px; border-radius: 4px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="cancel-reset-btn" class="btn">Cancel</button>
+            <button id="confirm-reset-btn" class="btn btn-primary">Send Link</button>
+        </div>
     </div>
 </div>

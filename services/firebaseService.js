@@ -13,7 +13,8 @@ import {
     onAuthStateChanged,
     linkWithPopup,
     linkWithCredential,
-    EmailAuthProvider
+    EmailAuthProvider,
+    sendPasswordResetEmail
 } from "firebase/auth";
 
 // Configuration provided by user
@@ -75,6 +76,10 @@ function logout() {
     return firebaseSignOut(auth);
 }
 
+function resetPassword(email) {
+    return sendPasswordResetEmail(auth, email);
+}
+
 function onAuthChange(callback) {
     authStateCallback = callback;
     // Standard Firebase listener
@@ -102,6 +107,7 @@ export {
     getUserId, getUserEmail, isGuest, 
     analytics, 
     login, register, loginWithGoogle, loginAsGuest, logout, 
+    resetPassword,
     linkGoogle, linkEmail,
     onAuthChange 
 };

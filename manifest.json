@@ -1,7 +1,8 @@
+
 {
-    "name": "Knowledge Tester",
-    "short_name": "KnowledgeTester",
-    "description": "A streamlined, AI-powered quiz application rebuilt from the ground up with vanilla JavaScript for performance and reliability. Generate quizzes on any topic instantly.",
+    "name": "Skill Apex",
+    "short_name": "Skill Apex",
+    "description": "A streamlined, AI-powered quiz application to forge new skills instantly.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0c0e1a",
