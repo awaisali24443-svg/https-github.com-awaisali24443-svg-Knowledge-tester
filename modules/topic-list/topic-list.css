@@ -1,5 +1,4 @@
 
-
 .topic-list-container h2 {
     margin-bottom: var(--space-lg);
     font-size: var(--fs-h3);
@@ -51,6 +50,21 @@
     margin-bottom: var(--space-xxl);
     border-color: var(--color-primary);
     background: linear-gradient(145deg, var(--color-surface-hover), hsl(from var(--color-surface) h s l+4));
+    position: relative;
+    overflow: hidden;
+}
+
+/* Abstract tech background for creator card */
+.journey-creator-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.15;
+    mix-blend-mode: screen;
+    pointer-events: none;
 }
 
 .creator-icon {
@@ -64,10 +78,18 @@
     justify-content: center;
     color: #fff;
     box-shadow: 0 0 20px var(--color-primary-transparent-heavy);
+    position: relative;
+    z-index: 2;
 }
 .creator-icon svg {
     width: 40px;
     height: 40px;
+}
+
+.creator-content {
+    position: relative;
+    z-index: 2;
+    flex-grow: 1;
 }
 
 .creator-content h2 {
@@ -83,10 +105,48 @@
 .creator-form {
     display: flex;
     gap: var(--space-md);
+    align-items: center;
 }
 
-.creator-form .form-input {
+.input-group {
+    display: flex;
     flex-grow: 1;
+    position: relative;
+    align-items: center;
+}
+
+.input-group .form-input {
+    width: 100%;
+    padding-right: 50px; /* Space for camera button */
+}
+
+/* Styling for the embedded camera button */
+.scan-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--color-text-secondary);
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 5;
+}
+
+.scan-btn:hover {
+    color: var(--color-primary);
+    background: var(--color-surface-hover);
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 0 10px var(--color-primary-transparent);
+}
+
+.btn-icon-only {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* --- Topic Grid --- */
@@ -112,24 +172,31 @@
     border-radius: var(--border-radius);
     background-size: cover;
     background-position: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    border: 1px solid transparent;
+    background-color: var(--color-surface); /* Fallback */
 }
 
 .topic-card:hover {
     transform: translateY(-5px) scale(1.03);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+    border-color: rgba(255,255,255,0.3);
+    z-index: 10;
 }
 
+/* Gradient overlay to ensure text readability */
 .topic-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 20%, transparent 70%);
+    /* Heavy gradient from bottom to allow text reading */
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.3) 100%);
     z-index: 1;
-    transition: background var(--transition-speed-fast) ease;
+    transition: opacity var(--transition-speed-fast) ease;
 }
 
 .topic-card:hover::before {
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, transparent 80%);
+    opacity: 0.8; /* Lighten slightly on hover */
 }
 
 .topic-card-content {
@@ -142,14 +209,20 @@
     color: #fff;
     margin-bottom: var(--space-sm);
     font-size: 1.5rem;
-    text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    font-weight: 700;
 }
 
 .topic-description {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 0;
     line-height: 1.5;
     font-size: 0.95rem;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* Active Journey Styles */
@@ -157,12 +230,15 @@
     position: absolute;
     top: -60px; /* Push up into negative space of padding, visual tweak */
     right: 0;
-    background: rgba(0,0,0,0.6);
-    border: 1px solid rgba(255,255,255,0.2);
-    padding: 4px 8px;
-    border-radius: 4px;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--color-primary);
+    padding: 4px 10px;
+    border-radius: 20px;
     font-size: 0.8rem;
     font-family: var(--font-family-mono);
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    color: var(--color-primary);
 }
 
 .journey-progress-bar {
@@ -171,6 +247,7 @@
     border-radius: 3px;
     margin-top: var(--space-md);
     overflow: hidden;
+    backdrop-filter: blur(4px);
 }
 
 .journey-progress-fill {
@@ -180,16 +257,73 @@
     border-radius: 3px;
 }
 
-/* Topic-specific background styles */
-.topic-card.topic-programming { background-color: #0d214f; background-image: radial-gradient(circle at 10% 20%, rgba(0, 184, 212, 0.3), transparent 50%), radial-gradient(circle at 80% 90%, rgba(156, 39, 176, 0.2), transparent 60%); }
-.topic-card.topic-biology { background-color: #0c3b31; background-image: radial-gradient(circle at 90% 10%, rgba(0, 255, 135, 0.25), transparent 40%), radial-gradient(circle at 20% 80%, rgba(0, 184, 212, 0.2), transparent 50%); }
-.topic-card.topic-space { background-color: #1a143b; background-image: radial-gradient(circle at 20% 15%, rgba(255, 64, 129, 0.3), transparent 40%), radial-gradient(circle at 85% 80%, rgba(156, 39, 176, 0.3), transparent 50%); }
-.topic-card.topic-robotics { background-color: #3e3c3b; background-image: radial-gradient(circle at 5% 5%, rgba(224, 224, 224, 0.1), transparent 30%), radial-gradient(circle at 95% 95%, rgba(224, 224, 224, 0.1), transparent 30%); }
-.topic-card.topic-finance { background-color: #1e4620; background-image: radial-gradient(circle at 80% 20%, rgba(76, 175, 80, 0.3), transparent 40%), radial-gradient(circle at 10% 90%, rgba(0, 255, 135, 0.2), transparent 50%); }
-.topic-card.topic-arts { background-color: #4a144e; background-image: radial-gradient(circle at 15% 85%, rgba(255, 64, 129, 0.3), transparent 40%), radial-gradient(circle at 85% 15%, rgba(255, 111, 0, 0.2), transparent 50%); }
-.topic-card.topic-medicine { background-color: #2b4f6b; background-image: radial-gradient(circle at 90% 80%, rgba(0, 229, 255, 0.2), transparent 40%), radial-gradient(circle at 10% 20%, rgba(245, 247, 250, 0.15), transparent 50%); }
-.topic-card.topic-ecology { background-color: #2e4d20; background-image: radial-gradient(circle at 20% 80%, rgba(139, 195, 74, 0.3), transparent 40%), radial-gradient(circle at 80% 20%, rgba(205, 220, 57, 0.2), transparent 50%); }
-.topic-card.topic-philosophy { background-color: #281a4d; background-image: radial-gradient(circle at 80% 85%, rgba(156, 39, 176, 0.3), transparent 40%), radial-gradient(circle at 15% 15%, rgba(13, 71, 161, 0.2), transparent 50%); }
+/* 
+   --- TOPIC BACKGROUNDS --- 
+   Using Unsplash images with a darkened multiply/overlay layer to ensure white text is legible.
+*/
+
+/* Programming: Code/Matrix */
+.topic-card.topic-programming { 
+    background-image: 
+        linear-gradient(rgba(10, 25, 47, 0.8), rgba(10, 25, 47, 0.6)),
+        url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Biology: Nature/Cells */
+.topic-card.topic-biology { 
+    background-image: 
+        linear-gradient(rgba(10, 40, 20, 0.8), rgba(10, 40, 20, 0.6)),
+        url('https://images.unsplash.com/photo-1530026405186-ed1f139313f8?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Space: Galaxy/Stars */
+.topic-card.topic-space { 
+    background-image: 
+        linear-gradient(rgba(20, 10, 40, 0.8), rgba(20, 10, 40, 0.6)),
+        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Robotics: Metal/Tech */
+.topic-card.topic-robotics { 
+    background-image: 
+        linear-gradient(rgba(30, 30, 35, 0.85), rgba(30, 30, 35, 0.7)),
+        url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Finance: Architecture/Graph */
+.topic-card.topic-finance { 
+    background-image: 
+        linear-gradient(rgba(20, 40, 30, 0.85), rgba(20, 40, 30, 0.7)),
+        url('https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Arts: Paint/Color */
+.topic-card.topic-arts { 
+    background-image: 
+        linear-gradient(rgba(50, 10, 40, 0.8), rgba(50, 10, 40, 0.6)),
+        url('https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Medicine: Blue/Clean */
+.topic-card.topic-medicine { 
+    background-image: 
+        linear-gradient(rgba(10, 40, 60, 0.8), rgba(10, 40, 60, 0.6)),
+        url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Ecology: Leaves */
+.topic-card.topic-ecology { 
+    background-image: 
+        linear-gradient(rgba(20, 50, 20, 0.8), rgba(20, 50, 20, 0.6)),
+        url('https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?q=80&w=600&auto=format&fit=crop');
+}
+
+/* Philosophy: Old Paper/Books */
+.topic-card.topic-philosophy { 
+    background-image: 
+        linear-gradient(rgba(30, 20, 10, 0.85), rgba(30, 20, 10, 0.7)),
+        url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600&auto=format&fit=crop');
+}
 
 
 @media (max-width: 600px) {
@@ -199,5 +333,9 @@
     }
     .creator-form {
         flex-direction: column;
+        width: 100%;
+    }
+    .input-group {
+        width: 100%;
     }
 }

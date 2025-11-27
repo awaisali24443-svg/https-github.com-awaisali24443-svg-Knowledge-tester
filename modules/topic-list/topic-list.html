@@ -21,10 +21,18 @@
         </div>
         <div class="creator-content">
             <h2>Create Your Own Journey</h2>
-            <p>Enter any topic you can imagine, and our AI will build a personalized learning path for you.</p>
+            <p>Enter any topic or scan an image (book, notes, diagram), and our AI will build a personalized learning path.</p>
             <form id="journey-creator-form" class="creator-form">
-                <input type="text" id="custom-topic-input" class="form-input" placeholder="e.g., 'The History of Jazz Music'" required>
-                <button type="submit" class="btn btn-primary">
+                <div class="input-group">
+                    <input type="text" id="custom-topic-input" class="form-input" placeholder="e.g., 'The History of Jazz Music'" required>
+                    <!-- NEW: Camera/Upload Button -->
+                    <button type="button" id="camera-btn" class="btn btn-icon-only scan-btn" title="Scan Image">
+                        <svg class="icon"><use href="/assets/icons/feather-sprite.svg#target"/></svg>
+                    </button>
+                    <!-- Hidden File Input -->
+                    <input type="file" id="image-upload-input" accept="image/*" style="display: none;">
+                </div>
+                <button type="submit" id="generate-btn" class="btn btn-primary">
                     <svg class="icon"><use href="/assets/icons/feather-sprite.svg#zap"/></svg>
                     <span>Generate</span>
                 </button>

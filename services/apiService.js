@@ -75,6 +75,20 @@ export async function generateJourneyPlan(topic) {
     }
 }
 
+// NEW: Frontend call for image-based generation
+export async function generateJourneyFromImage(imageBase64, mimeType) {
+    try {
+        const response = await fetchWithTimeout('/api/generate-journey-from-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ imageBase64, mimeType })
+        }, 60000); // 60s timeout for heavier image processing
+        return await handleResponse(response);
+    } catch (error) {
+        throw error;
+    }
+}
+
 export async function generateCurriculumOutline({ topic, totalLevels }) {
     try {
         const response = await fetchWithTimeout('/api/generate-curriculum-outline', {

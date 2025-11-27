@@ -8,11 +8,23 @@ import { showToast } from '../../services/toastService.js';
 
 let topicGrid, activeJourneysGrid, activeJourneysSection, skeletonGrid, activeFilterContainer;
 let template, activeJourneyTemplate;
-let journeyCreatorForm;
+let journeyCreatorForm, cameraBtn, fileInput, generateBtn;
 let currentTopicsList = [];
 let prefetchQueue = [];
 let isPrefetching = false;
 let prefetchTimeout = null;
+
+// Available styles defined in CSS with background images
+const STYLE_CLASSES = [
+    'topic-programming', 
+    'topic-space', 
+    'topic-biology', 
+    'topic-arts', 
+    'topic-finance', 
+    'topic-robotics',
+    'topic-medicine',
+    'topic-philosophy'
+];
 
 function renderTopics(topics) {
     if (!topicGrid) return; // Safety check
@@ -108,9 +120,21 @@ function renderActiveJourneys() {
         const cardEl = card.querySelector('.topic-card');
         cardEl.dataset.topic = journey.goal;
         
-        const styles = ['topic-programming', 'topic-space', 'topic-biology', 'topic-arts', 'topic-finance', 'topic-robotics'];
-        const styleIndex = journey.goal.length % styles.length;
-        cardEl.classList.add(styles[styleIndex]);
+        let styleClass;
+        
+        // 1. Check if journey has a saved visual style
+        if (journey.styleClass) {
+            styleClass = journey.styleClass;
+        } else {
+            // 2. Fallback: Assign a consistent style based on hash
+            let styleIndex = 0;
+            for (let i = 0; i < journey.goal.length; i++) {
+                styleIndex += journey.goal.charCodeAt(i);
+            }
+            styleClass = STYLE_CLASSES[styleIndex % STYLE_CLASSES.length];
+        }
+        
+        cardEl.classList.add(styleClass);
         
         cardEl.style.animationDelay = `${index * 30}ms`;
         
@@ -132,7 +156,8 @@ function handleTopicSelection(topicName) {
     if (topicData && topicData.totalLevels) {
         learningPathService.startOrGetJourney(topicName, {
             totalLevels: topicData.totalLevels,
-            description: topicData.description
+            description: topicData.description,
+            styleClass: topicData.styleClass // Pass style from preset
         }).then(() => {
             stateService.setNavigationContext({ topic: topicName });
             window.location.hash = `#/game/${encodeURIComponent(topicName)}`;
@@ -168,53 +193,111 @@ function handleClearFilter() {
     showToast('Filter cleared. Showing all topics.', 'info');
 }
 
+function setGeneratingState(isGenerating) {
+    const buttonText = generateBtn.querySelector('span');
+    const buttonIcon = generateBtn.querySelector('svg');
+    const input = document.getElementById('custom-topic-input');
+
+    if (isGenerating) {
+        generateBtn.disabled = true;
+        buttonText.textContent = 'Generating...';
+        buttonIcon.innerHTML = `<div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>`;
+        cameraBtn.disabled = true;
+        input.disabled = true;
+    } else {
+        generateBtn.disabled = false;
+        buttonText.textContent = 'Generate';
+        buttonIcon.innerHTML = `<svg class="icon"><use href="/assets/icons/feather-sprite.svg#zap"/></svg>`;
+        cameraBtn.disabled = false;
+        input.disabled = false;
+    }
+}
+
 async function handleJourneyCreatorSubmit(event) {
     event.preventDefault();
     const input = document.getElementById('custom-topic-input');
     const topic = input.value.trim();
     if (!topic) return;
 
-    const button = journeyCreatorForm.querySelector('button[type="submit"]');
-    const buttonText = button.querySelector('span');
-    const buttonIcon = button.querySelector('svg');
-    const originalButtonText = buttonText.textContent;
-    const originalIconHTML = buttonIcon.innerHTML;
-
-    button.disabled = true;
-    buttonText.textContent = 'Generating...';
-    buttonIcon.innerHTML = `<div class="spinner" style="width: 16px; height: 16px; border-width: 2px;"></div>`;
+    setGeneratingState(true);
 
     try {
         const plan = await apiService.generateJourneyPlan(topic);
-        const outline = await apiService.generateCurriculumOutline({ topic, totalLevels: plan.totalLevels });
-
-        const curriculumHtml = `
-            <p>The AI has designed a <strong>${plan.totalLevels}-level journey</strong> for "${topic}". Here is the proposed curriculum:</p>
-            <ul class="curriculum-list">
-                ${outline.chapters.map(chapter => `<li>${chapter}</li>`).join('')}
-            </ul>
-        `;
-
-        const confirmed = await modalService.showConfirmationModal({
-            title: 'Journey Preview',
-            message: curriculumHtml,
-            confirmText: 'Begin Journey',
-            cancelText: 'Cancel'
-        });
-
-        if (confirmed) {
-            await learningPathService.startOrGetJourney(topic, plan);
-            handleTopicSelection(topic);
-        }
-
+        await confirmAndStartJourney(topic, plan);
     } catch (error) {
         showToast(`Error creating journey: ${error.message}`, 'error');
     } finally {
-        button.disabled = false;
-        buttonText.textContent = originalButtonText;
-        buttonIcon.innerHTML = originalIconHTML;
+        setGeneratingState(false);
         input.value = '';
     }
+}
+
+async function confirmAndStartJourney(topic, plan) {
+    const outline = await apiService.generateCurriculumOutline({ topic, totalLevels: plan.totalLevels });
+
+    const curriculumHtml = `
+        <p>The AI has designed a <strong>${plan.totalLevels}-level journey</strong> for "${topic}". Here is the proposed curriculum:</p>
+        <ul class="curriculum-list">
+            ${outline.chapters.map(chapter => `<li>${chapter}</li>`).join('')}
+        </ul>
+    `;
+
+    const confirmed = await modalService.showConfirmationModal({
+        title: 'Journey Preview',
+        message: curriculumHtml,
+        confirmText: 'Begin Journey',
+        cancelText: 'Cancel'
+    });
+
+    if (confirmed) {
+        // Assign a random style class for visual variety since we don't have metadata yet
+        const randomStyle = STYLE_CLASSES[Math.floor(Math.random() * STYLE_CLASSES.length)];
+        
+        await learningPathService.startOrGetJourney(topic, {
+            ...plan,
+            styleClass: randomStyle // Persist this style
+        });
+        handleTopicSelection(topic);
+    }
+}
+
+// --- Image Handling ---
+function handleCameraClick() {
+    fileInput.click();
+}
+
+async function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Reset input so same file can be selected again if needed
+    event.target.value = '';
+
+    setGeneratingState(true);
+    const btnText = generateBtn.querySelector('span');
+    btnText.textContent = 'Scanning Image...';
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+        const base64String = reader.result.split(',')[1]; // Remove data:image/png;base64,
+        const mimeType = file.type;
+
+        try {
+            const plan = await apiService.generateJourneyFromImage(base64String, mimeType);
+            
+            // Auto-fill the input with the detected topic so user sees what happened
+            const input = document.getElementById('custom-topic-input');
+            input.value = plan.topicName;
+            
+            await confirmAndStartJourney(plan.topicName, plan);
+        } catch (error) {
+            console.error("Image gen error", error);
+            showToast(`Could not analyze image: ${error.message}`, 'error');
+        } finally {
+            setGeneratingState(false);
+        }
+    };
+    reader.readAsDataURL(file);
 }
 
 
@@ -228,12 +311,18 @@ export async function init() {
     template = document.getElementById('topic-card-template');
     activeJourneyTemplate = document.getElementById('active-journey-template');
     journeyCreatorForm = document.getElementById('journey-creator-form');
+    cameraBtn = document.getElementById('camera-btn');
+    fileInput = document.getElementById('image-upload-input');
+    generateBtn = document.getElementById('generate-btn');
 
     topicGrid.addEventListener('click', handleGridInteraction);
     topicGrid.addEventListener('keydown', handleGridInteraction);
     activeJourneysGrid.addEventListener('click', handleGridInteraction);
     activeJourneysGrid.addEventListener('keydown', handleGridInteraction);
+    
     journeyCreatorForm.addEventListener('submit', handleJourneyCreatorSubmit);
+    cameraBtn.addEventListener('click', handleCameraClick);
+    fileInput.addEventListener('change', handleFileSelect);
     
     const clearFilterBtn = document.getElementById('clear-filter-btn');
     if (clearFilterBtn) clearFilterBtn.addEventListener('click', handleClearFilter);

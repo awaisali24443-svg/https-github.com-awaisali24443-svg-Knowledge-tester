@@ -74,6 +74,10 @@ try {
 const journeyPlanSchema = {
     type: Type.OBJECT,
     properties: {
+        topicName: {
+            type: Type.STRING,
+            description: "The identified core topic from the image (e.g., 'Mitosis', 'Pythagorean Theorem')."
+        },
         totalLevels: {
             type: Type.INTEGER,
             description: "The ideal total number of levels (e.g., 70, 250, 600) to comprehensively teach this topic from a complete beginner to an expert. This should be a multiple of 10."
@@ -83,7 +87,7 @@ const journeyPlanSchema = {
             description: "A new, compelling, one-sentence description for this learning journey."
         }
     },
-    required: ["totalLevels", "description"]
+    required: ["topicName", "totalLevels", "description"]
 };
 
 const curriculumOutlineSchema = {
@@ -227,6 +231,7 @@ async function generateJourneyPlan(topic) {
     1. The total number of levels must be a multiple of 10.
     2. A simple topic (e.g., "CSS Flexbox") might be 50-100 levels. A complex topic (e.g., "Quantum Mechanics") might be 700+ levels. Use your judgment.
     3. Also, write a new, exciting one-sentence description for this learning journey.
+    4. Set "topicName" to the cleaned up version of "${topic}".
     
     Return your response in the provided JSON schema.`;
     
@@ -243,6 +248,46 @@ async function generateJourneyPlan(topic) {
     } catch (error) {
         console.error(`Gemini API Error (Journey Plan for ${topic}):`, error);
         throw new Error('Failed to generate a learning plan.');
+    }
+}
+
+async function generateJourneyPlanFromImage(imageBase64, mimeType) {
+    if (!ai) throw new Error("AI Service not initialized.");
+    
+    const prompt = `You are an expert curriculum designer with vision capabilities.
+    
+    TASK: Analyze this image. Identify the educational concept, diagram, code snippet, or historical event shown.
+    
+    1. Identify the core "Topic Name".
+    2. Create a comprehensive learning journey plan for this specific topic.
+    3. Determine the ideal number of levels (multiple of 10).
+    4. Write a compelling description based on the image content.
+    
+    Return the response in the provided JSON schema.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-3-pro-preview',
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: imageBase64
+                        }
+                    },
+                    { text: prompt }
+                ]
+            },
+            config: {
+                responseMimeType: 'application/json',
+                responseSchema: journeyPlanSchema,
+            }
+        });
+        return cleanAndParseJSON(response.text);
+    } catch (error) {
+        console.error(`Gemini API Error (Image Analysis):`, error);
+        throw new Error('Failed to analyze image.');
     }
 }
 
@@ -583,7 +628,8 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 
-app.use(express.json());
+// Increased payload limit to support base64 image uploads
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 
 const apiLimiter = rateLimit({
@@ -606,6 +652,18 @@ app.post('/api/generate-journey-plan', async (req, res) => {
     if (!isValidTopic(topic)) return res.status(400).json({ error: 'Invalid parameter: topic' });
     try {
         const plan = await generateJourneyPlan(topic);
+        res.json(plan);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// NEW: Image Analysis Endpoint
+app.post('/api/generate-journey-from-image', async (req, res) => {
+    const { imageBase64, mimeType } = req.body;
+    if (!imageBase64 || !mimeType) return res.status(400).json({ error: 'Invalid parameters: image required' });
+    try {
+        const plan = await generateJourneyPlanFromImage(imageBase64, mimeType);
         res.json(plan);
     } catch (error) {
         res.status(500).json({ error: error.message });

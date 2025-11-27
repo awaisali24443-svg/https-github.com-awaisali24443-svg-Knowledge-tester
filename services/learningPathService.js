@@ -138,6 +138,7 @@ export function startOrGetJourney(goal, preCalculatedPlan = null) {
             description: preCalculatedPlan.description,
             currentLevel: 1,
             totalLevels: preCalculatedPlan.totalLevels,
+            styleClass: preCalculatedPlan.styleClass || null, // Persist visual style
             createdAt: new Date().toISOString(),
         };
 
