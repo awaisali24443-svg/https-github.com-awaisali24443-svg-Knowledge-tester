@@ -197,6 +197,15 @@
     height: 20px;
 }
 
+/* --- FIX FOR RESET PASSWORD MODAL LAYERING --- */
+/* The auth wrapper is z-index 9999. We must force the modal higher. */
+#reset-password-modal {
+    z-index: 10000 !important; 
+}
+#reset-password-modal .modal-content {
+    z-index: 10001 !important;
+}
+
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-5px); }

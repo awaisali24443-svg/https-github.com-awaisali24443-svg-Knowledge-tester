@@ -99,7 +99,7 @@ async function handleResetSubmit() {
             btn.textContent = originalText;
         }, 3000);
     } catch (error) {
-        console.error(error);
+        console.error("Reset Password Error:", error);
         let msg = "Failed to send reset email.";
         if (error.code === 'auth/user-not-found') msg = "No account found with this email.";
         if (error.code === 'auth/invalid-email') msg = "Invalid email address.";
@@ -141,11 +141,13 @@ export function init() {
         .then(html => {
             container.innerHTML = html;
             
-            // Inject CSS dynamically
-            const link = document.createElement('link');
-            link.rel = 'stylesheet';
-            link.href = './modules/auth/auth.css';
-            document.head.appendChild(link);
+            // Inject CSS dynamically (Only if not already present)
+            if (!document.querySelector('link[href="./modules/auth/auth.css"]')) {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = './modules/auth/auth.css';
+                document.head.appendChild(link);
+            }
             
             // Bind Elements
             elements = {
@@ -172,19 +174,21 @@ export function init() {
                 resetFeedback: document.getElementById('reset-feedback')
             };
             
-            elements.form.addEventListener('submit', handleSubmit);
-            elements.toggleBtn.addEventListener('click', toggleMode);
-            elements.guestBtn.addEventListener('click', handleGuestLogin);
-            elements.googleBtn.addEventListener('click', handleGoogleLogin);
+            if(elements.form) elements.form.addEventListener('submit', handleSubmit);
+            if(elements.toggleBtn) elements.toggleBtn.addEventListener('click', toggleMode);
+            if(elements.guestBtn) elements.guestBtn.addEventListener('click', handleGuestLogin);
+            if(elements.googleBtn) elements.googleBtn.addEventListener('click', handleGoogleLogin);
             
             if (elements.forgotBtn) elements.forgotBtn.addEventListener('click', openResetModal);
             if (elements.cancelResetBtn) elements.cancelResetBtn.addEventListener('click', closeResetModal);
             if (elements.confirmResetBtn) elements.confirmResetBtn.addEventListener('click', handleResetSubmit);
             
             // Close modal on backdrop click
-            elements.resetModal.addEventListener('click', (e) => {
-                if (e.target === elements.resetModal) closeResetModal();
-            });
+            if (elements.resetModal) {
+                elements.resetModal.addEventListener('click', (e) => {
+                    if (e.target === elements.resetModal) closeResetModal();
+                });
+            }
         });
 }
 
