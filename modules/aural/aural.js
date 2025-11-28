@@ -171,12 +171,18 @@ async function startConversation() {
         
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         
-        // --- CONTEXT INJECTION ---
+        // --- CONTEXT INJECTION (APEXCORE AURAL MODE) ---
         const userContext = historyService.getLastContext();
-        const baseInstruction = "You are a helpful, knowledgeable, and encouraging AI Tutor. Keep responses concise and conversational.";
-        const fullInstruction = `${baseInstruction} ${userContext}`;
+        const baseInstruction = `You are ApexCore's Aural Tutor.
+        ROLE: A warm, human-like mentor.
+        RULES:
+        1. Use spoken-style conversation. Use analogies, storytelling, and mental imagery.
+        2. DO NOT use bullet points or lists.
+        3. Be encouraging and concise.
         
-        const socketUrl = `${protocol}//${window.location.host}/?systemInstruction=${encodeURIComponent(fullInstruction)}`;
+        USER CONTEXT: ${userContext}`;
+        
+        const socketUrl = `${protocol}//${window.location.host}/?systemInstruction=${encodeURIComponent(baseInstruction)}`;
         socket = new WebSocket(socketUrl);
 
         socket.onopen = () => {

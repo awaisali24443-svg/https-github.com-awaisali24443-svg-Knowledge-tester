@@ -16,6 +16,25 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let topicsCache = null;
 
+// --- APEXCORE IDENTITY & SYSTEM INSTRUCTIONS ---
+const APEX_CORE_IDENTITY = `You are **ApexCore**, the master AI engine for the Skill Apex learning platform.
+Your function: Generate deeply structured, gamified, and adaptive learning content.
+Persona: A fusion of a Senior Educator, Cognitive Psychologist, and Lead Game Designer.
+
+**CORE OPERATING RULES:**
+1. **Instructional Design:** Apply Bloom's Taxonomy. Concepts must spiral from simple definitions to complex application.
+2. **Gamification:** Treat knowledge acquisition as an RPG. Exams are "Boss Battles".
+3. **Visual Learning:** Always support abstract concepts with Mermaid.js diagrams or analogies.
+4. **Brevity:** High signal-to-noise ratio. Use bullet points, bold text, and emojis. No fluff.
+5. **Format:** Output strictly valid JSON when requested.
+
+**DIFFICULTY CLUSTERS:**
+- **Levels 1-10 (Novice):** Focus on definitions, identification, and basic concepts.
+- **Levels 11-30 (Pro):** Focus on scenarios, application, and "How-to".
+- **Levels 31-45 (Expert):** Focus on analysis, edge cases, and troubleshooting.
+- **Levels 46-50 (Mastery):** Multi-step reasoning, synthesis, and complex challenges.
+`;
+
 // --- VALIDATION HELPERS ---
 function isValidTopic(topic) {
     return typeof topic === 'string' && topic.length > 0 && topic.length <= 100;
@@ -76,15 +95,15 @@ const journeyPlanSchema = {
     properties: {
         topicName: {
             type: Type.STRING,
-            description: "The identified core topic from the image (e.g., 'Mitosis', 'Pythagorean Theorem')."
+            description: "The identified core topic from the image or text (e.g., 'Mitosis', 'Pythagorean Theorem')."
         },
         totalLevels: {
             type: Type.INTEGER,
-            description: "The ideal total number of levels (e.g., 70, 250, 600) to comprehensively teach this topic from a complete beginner to an expert. This should be a multiple of 10."
+            description: "The ideal total number of levels (e.g., 50, 100, 300) to comprehensively teach this topic. Multiple of 10."
         },
         description: {
             type: Type.STRING,
-            description: "A new, compelling, one-sentence description for this learning journey."
+            description: "A compelling, gamified one-sentence description for this learning journey."
         }
     },
     required: ["topicName", "totalLevels", "description"]
@@ -223,14 +242,14 @@ const dailyChallengeSchema = {
 
 async function generateJourneyPlan(topic) {
     if (!ai) throw new Error("AI Service not initialized.");
-    const prompt = `You are an expert curriculum designer. Analyze the topic "${topic}".
+    const prompt = `Analyze the topic "${topic}".
     
-    Your task is to determine the ideal number of levels to create a comprehensive learning journey that takes a user from a complete novice to an expert.
+    Task: Determine the ideal number of levels to create a comprehensive learning journey that takes a user from a complete novice to an expert.
     
     RULES:
     1. The total number of levels must be a multiple of 10.
-    2. A simple topic (e.g., "CSS Flexbox") might be 50-100 levels. A complex topic (e.g., "Quantum Mechanics") might be 700+ levels. Use your judgment.
-    3. Also, write a new, exciting one-sentence description for this learning journey.
+    2. A simple topic might be 50 levels. A complex topic (e.g., "Quantum Mechanics") might be 200+ levels.
+    3. Write a new, exciting one-sentence description for this learning journey.
     4. Set "topicName" to the cleaned up version of "${topic}".
     
     Return your response in the provided JSON schema.`;
@@ -240,6 +259,7 @@ async function generateJourneyPlan(topic) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: journeyPlanSchema,
             }
@@ -254,9 +274,7 @@ async function generateJourneyPlan(topic) {
 async function generateJourneyPlanFromImage(imageBase64, mimeType) {
     if (!ai) throw new Error("AI Service not initialized.");
     
-    const prompt = `You are an expert curriculum designer with vision capabilities.
-    
-    TASK: Analyze this image. Identify the educational concept, diagram, code snippet, or historical event shown.
+    const prompt = `Analyze this image. Identify the educational concept, diagram, code snippet, or historical event shown.
     
     1. Identify the core "Topic Name".
     2. Create a comprehensive learning journey plan for this specific topic.
@@ -280,6 +298,7 @@ async function generateJourneyPlanFromImage(imageBase64, mimeType) {
                 ]
             },
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: journeyPlanSchema,
             }
@@ -294,14 +313,14 @@ async function generateJourneyPlanFromImage(imageBase64, mimeType) {
 async function generateCurriculumOutline(topic, totalLevels) {
     if (!ai) throw new Error("AI Service not initialized.");
     const numChapters = Math.ceil(totalLevels / 50);
-    const prompt = `You are an expert curriculum designer. A learning journey for the topic "${topic}" has been scoped to ${totalLevels} levels.
+    const prompt = `A learning journey for the topic "${topic}" has been scoped to ${totalLevels} levels.
     
-    Your task is to break this journey down into exactly ${numChapters} logical chapters.
+    Task: Break this journey down into exactly ${numChapters} logical chapters.
     
     RULES:
     1. Provide an array of exactly ${numChapters} chapter titles.
     2. Each title should be concise and descriptive.
-    3. The chapters must be in a logical, progressive order.
+    3. The chapters must be in a logical, progressive order following the Spiral Curriculum method.
     
     Return the list of chapter titles in the provided JSON schema.`;
     
@@ -310,6 +329,7 @@ async function generateCurriculumOutline(topic, totalLevels) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: curriculumOutlineSchema,
             }
@@ -324,30 +344,29 @@ async function generateCurriculumOutline(topic, totalLevels) {
 async function generateLevelQuestions(topic, level, totalLevels) {
     if (!ai) throw new Error("AI Service not initialized.");
     
-    // Adaptive Roleplay Logic: Levels > 10 get scenarios instead of definitions
-    const isScenarioMode = level > 10;
-    
-    let instructions = `
-    1. The questions should introduce and test a specific concept appropriate for this level.
-    2. Questions must be challenging but fair.
-    3. Include plausible distractors.`;
-
-    if (isScenarioMode) {
-        instructions = `
-        1. **ROLEPLAY MODE:** Do NOT ask "What is X?". Instead, generate a **Scenario**.
-           - Format: "You are a [Job Role]. [Situation happens]. What action do you take?"
-           - Example: "You are a SysAdmin. A server hits 100% CPU. Which command identifies the culprit?"
-        2. Test practical application of the concept, not just memory.
-        3. Make the distractors plausible mistakes a junior might make in that situation.`;
+    // ApexCore Difficulty Clusters
+    let complexityInstruction = "";
+    if (level <= 10) {
+        complexityInstruction = "**NOVICE MODE:** Focus on definitions, identification, and basic concepts. Questions should be foundational.";
+    } else if (level <= 30) {
+        complexityInstruction = "**PRO MODE:** Focus on scenarios, practical application, and 'What would you do?' situations. Do not ask simple definitions.";
+    } else if (level <= 45) {
+        complexityInstruction = "**EXPERT MODE:** Focus on complex analysis, troubleshooting edge cases, and nuance.";
+    } else {
+        complexityInstruction = "**MASTERY MODE:** High-difficulty, multi-step reasoning required.";
     }
 
-    const prompt = `You are an expert educator creating a quiz for a student learning "${topic}".
+    const prompt = `Create a quiz for a student learning "${topic}".
     Current Level: ${level} / ${totalLevels}.
+    
+    ${complexityInstruction}
     
     TASK: Generate exactly 6 multiple-choice questions for this specific level.
     
     RULES:
-    ${instructions}
+    1. Questions must match the requested difficulty cluster.
+    2. Distractors must be plausible misconceptions, not random wrong answers.
+    3. Provide a brief, clear explanation for why the answer is correct.
     
     Generate the JSON response.`;
 
@@ -356,6 +375,7 @@ async function generateLevelQuestions(topic, level, totalLevels) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: questionsGenerationSchema,
             }
@@ -370,12 +390,12 @@ async function generateLevelQuestions(topic, level, totalLevels) {
 async function generateInteractiveLevel(topic, level) {
     if (!ai) throw new Error("AI Service not initialized.");
     
-    const prompt = `You are a game designer creating an interactive challenge for the topic "${topic}" at Level ${level}.
+    const prompt = `Create an interactive challenge for the topic "${topic}" at Level ${level}.
     
     TASK: Create either a "Sequence" challenge (ordering items) OR a "Match" challenge (pairing items). Choose the one that best fits the concept for this level.
     
     RULES:
-    - If Sequence: Provide 4-5 steps/items in the CORRECT order.
+    - If Sequence: Provide 4-5 steps/items in the CORRECT order. Example: Chronological order of events, logical flow of code, or steps in a process.
     - If Match: Provide 4 pairs of terms and definitions/associations.
     - Keep items concise (max 5-7 words).
     
@@ -386,6 +406,7 @@ async function generateInteractiveLevel(topic, level) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: interactiveChallengeSchema,
             }
@@ -408,11 +429,11 @@ async function generateLevelLesson(topic, level, totalLevels, questionsContext) 
         contextInstruction = `CONTEXT: Design a lesson for Level ${level} of the topic "${topic}". Cover key concepts suitable for this stage.`;
     }
     
-    const prompt = `You are a charismatic, world-class keynote speaker. You are teaching a masterclass on "${topic}" (Level ${level}).
+    const prompt = `You are teaching a masterclass on "${topic}" (Level ${level}).
     
     ${contextInstruction}
     
-    YOUR GOAL: Write a high-impact, "Presentation Style" lesson that teaches the concepts required.
+    YOUR GOAL: Write a high-impact, "Presentation Style" lesson.
     
     RULES:
     1. **NO WALLS OF TEXT.** Do not write standard paragraphs.
@@ -421,7 +442,7 @@ async function generateLevelLesson(topic, level, totalLevels, questionsContext) 
        - Start with a "Hook" (1 sentence).
        - Use **Bullet Points** with EMOJIS (🚀, 💡, 🔑) for core concepts.
        - Use **Bold** for key terms.
-    4. **Visualization:** If the concept involves a process or hierarchy, you MUST include a Mermaid.js diagram (start with \`\`\`mermaid).
+    4. **Visualization:** You MUST include a Mermaid.js diagram (start with \`\`\`mermaid) to visualize the concept (flowchart, graph, or sequence).
     
     Generate the JSON response.`;
 
@@ -430,6 +451,7 @@ async function generateLevelLesson(topic, level, totalLevels, questionsContext) 
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: lessonGenerationSchema,
             }
@@ -446,7 +468,7 @@ async function generateBossBattleContent(topic, chapter) {
     const startLevel = (chapter - 1) * 50 + 1;
     const endLevel = chapter * 50;
     
-    const prompt = `You are a tough but fair AI quiz master creating a "Boss Battle" for a learning game about "${topic}". This is a cumulative test for Chapter ${chapter} (levels ${startLevel}-${endLevel}).
+    const prompt = `Create a "Boss Battle" exam for a learning game about "${topic}". This is a cumulative test for Chapter ${chapter} (levels ${startLevel}-${endLevel}).
     
     RULES:
     1. Generate exactly 10 challenging multiple-choice questions.
@@ -457,11 +479,11 @@ async function generateBossBattleContent(topic, chapter) {
     Generate the 10 questions based on these rules and the provided JSON schema.`;
 
     try {
-        // Using gemini-3-pro-preview for complex reasoning tasks like Boss Battles
         const response = await ai.models.generateContent({
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: bossBattleGenerationSchema,
             }
@@ -478,7 +500,7 @@ async function generateHint(topic, question, options) {
     
     const optionsString = options.map((opt, i) => `${String.fromCharCode(65 + i)}. ${opt}`).join('\n');
     
-    const prompt = `You are an AI Tutor providing a hint for a quiz.
+    const prompt = `Provide a hint for this quiz question.
     
     Topic: "${topic}"
     Question: "${question}"
@@ -488,7 +510,7 @@ async function generateHint(topic, question, options) {
     RULES:
     1. Generate a single, short, helpful hint.
     2. DO NOT reveal the correct answer directly.
-    3. Guide the user's thinking.
+    3. Guide the user's logic using Socratic questioning or a partial clue.
     
     Return the hint in the provided JSON schema.`;
 
@@ -497,6 +519,7 @@ async function generateHint(topic, question, options) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: hintGenerationSchema,
             }
@@ -541,8 +564,7 @@ async function generateSpeech(text) {
 
 async function explainConcept(topic, concept, context) {
     if (!ai) throw new Error("AI Service not initialized.");
-    const prompt = `You are a Socratic AI tutor. 
-    Topic: ${topic}
+    const prompt = `Topic: ${topic}
     Context: ${context}
     
     The student is asking about: "${concept}"
@@ -559,6 +581,7 @@ async function explainConcept(topic, concept, context) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: explanationSchema,
             }
@@ -584,6 +607,7 @@ async function generateDailyChallenge() {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: dailyChallengeSchema,
             }
@@ -611,6 +635,7 @@ async function explainError(topic, question, userChoice, correctChoice) {
             model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
+                systemInstruction: APEX_CORE_IDENTITY,
                 responseMimeType: 'application/json',
                 responseSchema: explanationSchema,
             }
