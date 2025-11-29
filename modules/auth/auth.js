@@ -191,9 +191,20 @@ function handleError(error) {
 }
 
 function checkUrlForReset() {
+    // Check both standard query params and hash-based params (depending on router behavior)
     const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
-    const oobCode = urlParams.get('oobCode');
+    let mode = urlParams.get('mode');
+    let oobCode = urlParams.get('oobCode');
+
+    // Fallback: Check hash if router moves params there
+    if (!mode || !oobCode) {
+        const hashParts = window.location.hash.split('?');
+        if (hashParts.length > 1) {
+            const hashParams = new URLSearchParams(hashParts[1]);
+            if (!mode) mode = hashParams.get('mode');
+            if (!oobCode) oobCode = hashParams.get('oobCode');
+        }
+    }
 
     if (mode === 'resetPassword' && oobCode) {
         resetOobCode = oobCode;

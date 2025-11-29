@@ -62,8 +62,8 @@ function loadSettings() {
             if(elements.upgradeSection) elements.upgradeSection.style.display = 'none';
             
             // Show Security Section ONLY if logged in with password provider
+            // Provider is typically 'password' for email login.
             if (elements.securitySection) {
-                // provider usually 'password' for email/pass auth
                 elements.securitySection.style.display = (provider === 'password') ? 'block' : 'none';
             }
         }

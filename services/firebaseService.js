@@ -87,8 +87,8 @@ function logout() {
 }
 
 function resetPassword(email) {
-    // Construct absolute URL for the app root
-    const url = window.location.protocol + '//' + window.location.host + window.location.pathname;
+    // Construct absolute URL for the app root, stripping any hash or query params
+    const url = window.location.origin + window.location.pathname;
     
     const actionCodeSettings = {
         // Redirect back to this app to handle the reset
