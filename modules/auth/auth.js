@@ -4,6 +4,7 @@ import { showToast } from '../../services/toastService.js';
 
 let elements = {};
 let isLoginMode = true;
+let resetOobCode = null;
 
 function toggleMode() {
     isLoginMode = !isLoginMode;
@@ -64,7 +65,7 @@ async function handleGuestLogin() {
     }
 }
 
-// --- Reset Password Logic ---
+// --- Reset Password Logic (Request Link) ---
 function openResetModal() {
     elements.resetModal.style.display = 'block';
     elements.resetEmailInput.value = elements.emailInput.value; // Pre-fill if available
@@ -87,6 +88,7 @@ async function handleResetSubmit() {
     elements.resetFeedback.style.display = 'none';
 
     try {
+        // This now uses custom settings to redirect back to the app
         await firebaseService.resetPassword(email);
         elements.resetFeedback.textContent = `Reset link sent to ${email}. Check your inbox.`;
         elements.resetFeedback.style.color = 'var(--color-success)';
@@ -113,6 +115,61 @@ async function handleResetSubmit() {
     }
 }
 
+// --- Confirm New Password Logic (From Email Link) ---
+async function handleNewPasswordSubmit() {
+    if (!resetOobCode) return;
+    
+    const newPassword = elements.newPasswordInput.value.trim();
+    if (newPassword.length < 6) {
+        elements.newPasswordFeedback.textContent = "Password must be at least 6 characters.";
+        elements.newPasswordFeedback.style.color = 'var(--color-error)';
+        elements.newPasswordFeedback.style.backgroundColor = 'var(--color-error-bg)';
+        elements.newPasswordFeedback.style.display = 'block';
+        return;
+    }
+
+    const btn = elements.confirmNewPasswordBtn;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Updating...";
+    elements.newPasswordFeedback.style.display = 'none';
+
+    try {
+        await firebaseService.confirmReset(resetOobCode, newPassword);
+        
+        elements.newPasswordFeedback.textContent = "Password updated successfully! Logging you in...";
+        elements.newPasswordFeedback.style.color = 'var(--color-success)';
+        elements.newPasswordFeedback.style.backgroundColor = 'var(--color-success-bg)';
+        elements.newPasswordFeedback.style.display = 'block';
+        
+        showToast("Password updated! Please sign in.", "success");
+        
+        // Clear params to prevent re-triggering
+        window.history.replaceState({}, document.title, window.location.pathname);
+        resetOobCode = null;
+
+        setTimeout(() => {
+            elements.newPasswordModal.style.display = 'none';
+            // Auto-fill login email if possible? Hard to know email here without asking.
+            // Just focus login
+            elements.passwordInput.focus();
+        }, 2000);
+
+    } catch (error) {
+        console.error("Confirm Password Error:", error);
+        let msg = "Failed to reset password. Link may be expired.";
+        if (error.code === 'auth/expired-action-code') msg = "This link has expired. Please request a new one.";
+        if (error.code === 'auth/invalid-action-code') msg = "Invalid link. Please request a new one.";
+        
+        elements.newPasswordFeedback.textContent = msg;
+        elements.newPasswordFeedback.style.color = 'var(--color-error)';
+        elements.newPasswordFeedback.style.backgroundColor = 'var(--color-error-bg)';
+        elements.newPasswordFeedback.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
 function handleError(error) {
     console.error(error);
     let msg = error.message;
@@ -130,6 +187,24 @@ function handleError(error) {
     elements.submitBtn.disabled = false;
     elements.submitBtnText.style.display = 'block';
     elements.submitBtnSpinner.style.display = 'none';
+}
+
+function checkUrlForReset() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const oobCode = urlParams.get('oobCode');
+
+    if (mode === 'resetPassword' && oobCode) {
+        resetOobCode = oobCode;
+        // Clean URL visually to hide codes/keys immediately
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Show Modal
+        if (elements.newPasswordModal) {
+            elements.newPasswordModal.style.display = 'block';
+            elements.newPasswordInput.focus();
+        }
+    }
 }
 
 export function init() {
@@ -171,7 +246,13 @@ export function init() {
                 resetEmailInput: document.getElementById('reset-email-input'),
                 cancelResetBtn: document.getElementById('cancel-reset-btn'),
                 confirmResetBtn: document.getElementById('confirm-reset-btn'),
-                resetFeedback: document.getElementById('reset-feedback')
+                resetFeedback: document.getElementById('reset-feedback'),
+
+                // New Password Modal Elements
+                newPasswordModal: document.getElementById('new-password-modal'),
+                newPasswordInput: document.getElementById('new-password-input'),
+                confirmNewPasswordBtn: document.getElementById('confirm-new-password-btn'),
+                newPasswordFeedback: document.getElementById('new-password-feedback')
             };
             
             if(elements.form) elements.form.addEventListener('submit', handleSubmit);
@@ -182,6 +263,7 @@ export function init() {
             if (elements.forgotBtn) elements.forgotBtn.addEventListener('click', openResetModal);
             if (elements.cancelResetBtn) elements.cancelResetBtn.addEventListener('click', closeResetModal);
             if (elements.confirmResetBtn) elements.confirmResetBtn.addEventListener('click', handleResetSubmit);
+            if (elements.confirmNewPasswordBtn) elements.confirmNewPasswordBtn.addEventListener('click', handleNewPasswordSubmit);
             
             // Close modal on backdrop click
             if (elements.resetModal) {
@@ -189,6 +271,9 @@ export function init() {
                     if (e.target === elements.resetModal) closeResetModal();
                 });
             }
+
+            // Check if we arrived here via a reset email link
+            checkUrlForReset();
         });
 }
 

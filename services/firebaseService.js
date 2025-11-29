@@ -14,7 +14,10 @@ import {
     linkWithPopup,
     linkWithCredential,
     EmailAuthProvider,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    confirmPasswordReset,
+    updatePassword,
+    reauthenticateWithCredential
 } from "firebase/auth";
 
 // Configuration provided by user
@@ -54,6 +57,13 @@ function isGuest() {
     return currentUser ? currentUser.isAnonymous : false;
 }
 
+function getUserProvider() {
+    if (!currentUser) return null;
+    if (currentUser.isAnonymous) return 'anonymous';
+    // Return the first provider ID (e.g., 'password', 'google.com')
+    return currentUser.providerData.length > 0 ? currentUser.providerData[0].providerId : 'unknown';
+}
+
 // --- Auth Functions ---
 
 function login(email, password) {
@@ -77,7 +87,16 @@ function logout() {
 }
 
 function resetPassword(email) {
-    return sendPasswordResetEmail(auth, email);
+    const actionCodeSettings = {
+        // Redirect back to this app to handle the reset
+        url: window.location.origin + window.location.pathname + '?mode=resetPassword',
+        handleCodeInApp: true,
+    };
+    return sendPasswordResetEmail(auth, email, actionCodeSettings);
+}
+
+function confirmReset(code, newPassword) {
+    return confirmPasswordReset(auth, code, newPassword);
 }
 
 function onAuthChange(callback) {
@@ -89,7 +108,7 @@ function onAuthChange(callback) {
     });
 }
 
-// --- Account Upgrading (Linking) ---
+// --- Account Management ---
 
 function linkGoogle() {
     if (!currentUser) return Promise.reject("No user");
@@ -102,12 +121,23 @@ function linkEmail(email, password) {
     return linkWithCredential(currentUser, credential);
 }
 
+function reauthenticate(password) {
+    if (!currentUser) return Promise.reject(new Error("No user"));
+    const cred = EmailAuthProvider.credential(currentUser.email, password);
+    return reauthenticateWithCredential(currentUser, cred);
+}
+
+function changePassword(newPassword) {
+    if (!currentUser) return Promise.reject(new Error("No user"));
+    return updatePassword(currentUser, newPassword);
+}
+
 export { 
     db, doc, getDoc, setDoc, 
-    getUserId, getUserEmail, isGuest, 
+    getUserId, getUserEmail, isGuest, getUserProvider,
     analytics, 
     login, register, loginWithGoogle, loginAsGuest, logout, 
-    resetPassword,
-    linkGoogle, linkEmail,
+    resetPassword, confirmReset,
+    linkGoogle, linkEmail, reauthenticate, changePassword,
     onAuthChange 
 };

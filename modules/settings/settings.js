@@ -45,6 +45,7 @@ function loadSettings() {
     elements.animationSlider.value = animationLevels.indexOf(config.animationIntensity);
     
     const isGuest = firebaseService.isGuest();
+    const provider = firebaseService.getUserProvider();
 
     // Show Email or Guest
     if (elements.emailDisplay) {
@@ -53,11 +54,17 @@ function loadSettings() {
             if(elements.guestWarning) elements.guestWarning.style.display = 'block';
             if(elements.logoutBtnText) elements.logoutBtnText.textContent = "Exit Guest Mode";
             if(elements.upgradeSection) elements.upgradeSection.style.display = 'grid';
+            if(elements.securitySection) elements.securitySection.style.display = 'none';
         } else {
             elements.emailDisplay.textContent = firebaseService.getUserEmail() || 'Anonymous';
             if(elements.guestWarning) elements.guestWarning.style.display = 'none';
             if(elements.logoutBtnText) elements.logoutBtnText.textContent = "Logout";
             if(elements.upgradeSection) elements.upgradeSection.style.display = 'none';
+            
+            // Show Security Section ONLY if logged in with password
+            if (elements.securitySection) {
+                elements.securitySection.style.display = (provider === 'password') ? 'block' : 'none';
+            }
         }
     }
 }
@@ -242,6 +249,66 @@ async function handleConfirmLinkEmail() {
     }
 }
 
+// --- Password Update Logic ---
+
+function openUpdatePassModal() {
+    elements.updatePassModal.style.display = 'block';
+    elements.currentPassInput.value = '';
+    elements.newPassInput.value = '';
+    elements.updatePassError.style.display = 'none';
+    elements.currentPassInput.focus();
+}
+
+function closeUpdatePassModal() {
+    elements.updatePassModal.style.display = 'none';
+}
+
+async function handleUpdatePassword() {
+    const currentPass = elements.currentPassInput.value;
+    const newPass = elements.newPassInput.value;
+    
+    if (!currentPass) {
+        elements.updatePassError.textContent = "Please enter your current password.";
+        elements.updatePassError.style.display = 'block';
+        return;
+    }
+    
+    if (newPass.length < 6) {
+        elements.updatePassError.textContent = "New password must be at least 6 characters.";
+        elements.updatePassError.style.display = 'block';
+        return;
+    }
+    
+    const btn = elements.confirmUpdatePassBtn;
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Updating...";
+    
+    try {
+        // 1. Re-authenticate
+        await firebaseService.reauthenticate(currentPass);
+        
+        // 2. Update Password
+        await firebaseService.changePassword(newPass);
+        
+        showToast("Password updated successfully!", "success");
+        closeUpdatePassModal();
+        
+    } catch (e) {
+        console.error(e);
+        let msg = "Failed to update password.";
+        if (e.code === 'auth/wrong-password') msg = "Current password is incorrect.";
+        if (e.code === 'auth/weak-password') msg = "Password is too weak.";
+        if (e.code === 'auth/requires-recent-login') msg = "Please sign out and sign in again.";
+        
+        elements.updatePassError.textContent = msg;
+        elements.updatePassError.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+    }
+}
+
 export function init() {
     elements = {
         soundToggle: document.getElementById('sound-toggle'),
@@ -266,7 +333,17 @@ export function init() {
         linkPassInput: document.getElementById('link-pass-input'),
         cancelLinkBtn: document.getElementById('cancel-link-btn'),
         confirmLinkBtn: document.getElementById('confirm-link-btn'),
-        linkError: document.getElementById('link-error')
+        linkError: document.getElementById('link-error'),
+        
+        // Security Elements
+        securitySection: document.getElementById('security-section'),
+        changePassBtn: document.getElementById('change-password-btn'),
+        updatePassModal: document.getElementById('update-password-modal'),
+        currentPassInput: document.getElementById('current-pass-input'),
+        newPassInput: document.getElementById('new-pass-input'),
+        updatePassError: document.getElementById('update-pass-error'),
+        cancelUpdatePassBtn: document.getElementById('cancel-update-pass-btn'),
+        confirmUpdatePassBtn: document.getElementById('confirm-update-pass-btn')
     };
 
     loadSettings();
@@ -289,6 +366,11 @@ export function init() {
     if (elements.linkEmailBtn) elements.linkEmailBtn.addEventListener('click', openLinkEmailModal);
     if (elements.cancelLinkBtn) elements.cancelLinkBtn.addEventListener('click', closeLinkEmailModal);
     if (elements.confirmLinkBtn) elements.confirmLinkBtn.addEventListener('click', handleConfirmLinkEmail);
+    
+    // Password Change Listeners
+    if (elements.changePassBtn) elements.changePassBtn.addEventListener('click', openUpdatePassModal);
+    if (elements.cancelUpdatePassBtn) elements.cancelUpdatePassBtn.addEventListener('click', closeUpdatePassModal);
+    if (elements.confirmUpdatePassBtn) elements.confirmUpdatePassBtn.addEventListener('click', handleUpdatePassword);
 }
 
 export function destroy() {
@@ -307,6 +389,10 @@ export function destroy() {
     if (elements.linkEmailBtn) elements.linkEmailBtn.removeEventListener('click', openLinkEmailModal);
     if (elements.cancelLinkBtn) elements.cancelLinkBtn.removeEventListener('click', closeLinkEmailModal);
     if (elements.confirmLinkBtn) elements.confirmLinkBtn.removeEventListener('click', handleConfirmLinkEmail);
+    
+    if (elements.changePassBtn) elements.changePassBtn.removeEventListener('click', openUpdatePassModal);
+    if (elements.cancelUpdatePassBtn) elements.cancelUpdatePassBtn.removeEventListener('click', closeUpdatePassModal);
+    if (elements.confirmUpdatePassBtn) elements.confirmUpdatePassBtn.removeEventListener('click', handleUpdatePassword);
     
     elements = {};
 }

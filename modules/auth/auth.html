@@ -80,3 +80,23 @@
         </div>
     </div>
 </div>
+
+<!-- Set New Password Modal (Redirection Target) -->
+<div id="new-password-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Set New Password</h2>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 1rem;">Create a new secure password for your account.</p>
+            <div class="input-with-icon">
+                <svg class="icon"><use href="/assets/icons/feather-sprite.svg#lock"/></svg>
+                <input type="password" id="new-password-input" class="form-input" placeholder="New Password" required minlength="6">
+            </div>
+            <p id="new-password-feedback" style="display: none; margin-top: 10px; font-size: 0.9rem; padding: 8px; border-radius: 4px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="confirm-new-password-btn" class="btn btn-primary">Update Password</button>
+        </div>
+    </div>
+</div>

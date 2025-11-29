@@ -49,6 +49,22 @@
         </div>
     </section>
 
+    <!-- Security Section (Only for Password Users) -->
+    <section id="security-section" class="settings-group card" style="display: none; border-color: var(--color-text-secondary);">
+        <h2 style="font-size: 1.2rem; margin-bottom: 1rem; color: var(--color-text);">Security</h2>
+        <div class="setting-item">
+            <div class="setting-info">
+                <label>Password</label>
+                <p>Update your account password. You will need to re-enter your current password.</p>
+            </div>
+            <div class="setting-control">
+                <button id="change-password-btn" class="btn">
+                    <svg class="icon"><use href="/assets/icons/feather-sprite.svg#lock"/></svg> Update
+                </button>
+            </div>
+        </div>
+    </section>
+
     <section id="install-app-section" class="settings-group card" style="display: none; border-color: var(--color-primary);">
         <div class="setting-item">
             <div class="setting-info">
@@ -145,7 +161,7 @@
         </div>
     </section>
 
-    <p class="app-version">Version 4.2.0 (Guest Mode Enabled)</p>
+    <p class="app-version">Version 4.3.0</p>
 </div>
 
 <!-- Link Email Modal -->
@@ -163,6 +179,30 @@
         <div class="modal-footer">
             <button id="cancel-link-btn" class="btn">Cancel</button>
             <button id="confirm-link-btn" class="btn btn-primary">Link Account</button>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="update-password-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Change Password</h2>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--color-text-secondary);">For your security, please verify your current password.</p>
+            
+            <label class="form-label" style="font-size:0.9rem;">Current Password</label>
+            <input type="password" id="current-pass-input" class="form-input" style="margin-bottom: 1rem;">
+            
+            <label class="form-label" style="font-size:0.9rem;">New Password</label>
+            <input type="password" id="new-pass-input" class="form-input">
+            
+            <p id="update-pass-error" style="color: var(--color-error); display: none; margin-top: 10px; font-size: 0.9rem; background: var(--color-error-bg); padding: 8px; border-radius: 4px;"></p>
+        </div>
+        <div class="modal-footer">
+            <button id="cancel-update-pass-btn" class="btn">Cancel</button>
+            <button id="confirm-update-pass-btn" class="btn btn-primary">Update</button>
         </div>
     </div>
 </div>
