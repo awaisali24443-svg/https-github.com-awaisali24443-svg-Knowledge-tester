@@ -29,137 +29,126 @@
 /* --- JOURNEY CREATOR CARD --- */
 .journey-creator-card {
     display: flex; gap: var(--space-xl); align-items: center;
-    padding: 3rem; margin-bottom: var(--space-xxl);
+    padding: 2.5rem; margin-bottom: var(--space-xxl);
     border: 1px solid var(--color-primary-transparent-heavy);
-}
-
-/* Creator Pattern */
-.journey-creator-card::before {
-    content: ''; position: absolute; inset: 0;
-    -webkit-mask-image: var(--mask-business); mask-image: var(--mask-business);
-    -webkit-mask-size: 40px 40px; mask-size: 40px 40px;
-    background-color: var(--color-primary); opacity: 0.05; z-index: 0;
+    background: linear-gradient(135deg, var(--color-surface), rgba(0, 184, 212, 0.05));
 }
 
 .creator-icon {
-    width: 80px; height: 80px; flex-shrink: 0;
+    width: 70px; height: 70px; flex-shrink: 0;
     background: var(--brand-gradient);
-    border-radius: 20px;
+    border-radius: 18px;
     display: flex; align-items: center; justify-content: center;
     color: #fff;
     box-shadow: var(--shadow-glow);
     position: relative; z-index: 2; transform: rotate(-3deg);
 }
-.creator-icon svg { width: 40px; height: 40px; }
+.creator-icon svg { width: 32px; height: 32px; }
 
 .creator-content { position: relative; z-index: 2; flex-grow: 1; }
-.creator-content h2 { margin-top: 0; margin-bottom: var(--space-sm); color: var(--color-text); font-size: 1.8rem; }
-.creator-content p { margin-bottom: var(--space-lg); color: var(--color-text-secondary); font-size: 1.1rem; }
+.creator-content h2 { margin-top: 0; margin-bottom: var(--space-sm); color: var(--color-text); font-size: 1.6rem; }
+.creator-content p { margin-bottom: var(--space-lg); color: var(--color-text-secondary); font-size: 1.05rem; }
 
 .creator-form { display: flex; gap: var(--space-md); align-items: center; }
 
 .input-group { display: flex; flex-grow: 1; position: relative; align-items: center; }
-.input-group .form-input { padding-right: 50px; height: 50px; }
+.input-group .form-input { padding-right: 50px; height: 48px; }
 
 .scan-btn {
-    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
     background: var(--color-surface-active); border: none; color: var(--color-text-secondary);
     padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; z-index: 5;
+    height: 32px; width: 32px; display: flex; align-items: center; justify-content: center;
 }
 .scan-btn:hover { background: var(--color-primary); color: #fff; }
 
-#generate-btn { height: 50px; padding: 0 2rem; font-size: 1rem; }
+#generate-btn { height: 48px; padding: 0 1.5rem; font-size: 1rem; white-space: nowrap; }
 
 /* --- TOPIC GRID --- */
 .topic-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--space-lg);
 }
 
 .topic-card {
     cursor: pointer; animation: fade-slide-in 0.4s ease-out forwards;
-    opacity: 0; transform: translateY(20px); aspect-ratio: 16 / 9;
+    opacity: 0; transform: translateY(20px); 
+    min-height: 180px;
     display: flex; flex-direction: column; justify-content: flex-end;
     padding: var(--space-lg);
-    background-color: var(--color-surface); /* Clean base */
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
 }
 
-/* Gradient Overlay for Text Readability */
+/* Gradient Overlay for Text Readability - Stronger at bottom */
 .topic-card::after {
     content: ''; position: absolute; inset: 0;
-    background: linear-gradient(to top, var(--color-surface) 10%, transparent 80%);
-    z-index: 1; pointer-events: none;
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+    z-index: 2; pointer-events: none;
+    border-radius: var(--border-radius);
 }
 
-/* --- TOPIC PATTERNS (Using Mask System) --- */
-
-/* Tech */
-.topic-card.topic-programming::before {
-    -webkit-mask-image: var(--mask-tech); mask-image: var(--mask-tech);
-    -webkit-mask-size: 120px 120px; mask-size: 120px 120px;
-    background-color: var(--color-primary); opacity: 0.1;
+/* --- PATTERNS (Applied via pseudo-element) --- */
+.topic-card::before {
+    content: ''; position: absolute; inset: 0; 
+    opacity: 0.15; z-index: 1; 
+    background-size: 80px 80px;
+    mix-blend-mode: overlay;
 }
 
-/* Arts / History */
-.topic-card.topic-arts::before, .topic-card.topic-history::before, .topic-card.topic-philosophy::before {
-    -webkit-mask-image: var(--mask-history); mask-image: var(--mask-history);
-    -webkit-mask-size: 150px 150px; mask-size: 150px 150px;
-    background-color: var(--color-secondary); opacity: 0.1;
-}
+.topic-programming::before { background-image: var(--pat-tech); background-color: rgba(0, 184, 212, 0.1); }
+.topic-science::before { background-image: var(--pat-science); background-color: rgba(0, 230, 118, 0.1); }
+.topic-history::before { background-image: var(--pat-history); background-color: rgba(156, 39, 176, 0.1); }
+.topic-business::before { background-image: var(--pat-business); background-color: rgba(255, 64, 129, 0.1); }
 
-/* Science */
-.topic-card.topic-science::before, .topic-card.topic-biology::before, .topic-card.topic-medicine::before {
-    -webkit-mask-image: var(--mask-science); mask-image: var(--mask-science);
-    -webkit-mask-size: 60px 100px; mask-size: 60px 100px;
-    background-color: var(--color-success); opacity: 0.1;
-}
-
-/* Business / Finance */
-.topic-card.topic-business::before, .topic-card.topic-finance::before, .topic-card.topic-robotics::before {
-    -webkit-mask-image: var(--mask-business); mask-image: var(--mask-business);
-    -webkit-mask-size: 40px 40px; mask-size: 40px 40px;
-    background-color: var(--color-accent); opacity: 0.1;
-}
-
-.topic-card-content { position: relative; z-index: 2; width: 100%; }
+.topic-card-content { position: relative; z-index: 5; width: 100%; }
 
 .topic-name {
-    color: var(--color-text); margin-bottom: 6px; font-size: 1.4rem; font-weight: 700;
+    color: #fff; margin-bottom: 6px; font-size: 1.3rem; font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .topic-description {
-    color: var(--color-text-secondary); margin-bottom: 0; line-height: 1.5; font-size: 0.9rem;
+    color: rgba(255,255,255,0.8); margin-bottom: 0; line-height: 1.4; font-size: 0.9rem;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 
+/* ACTIVE JOURNEY CARD SPECIFIC */
+.active-journey-card .journey-status-badge {
+    background: var(--color-primary); color: #fff; padding: 4px 8px; border-radius: 4px;
+    font-size: 0.75rem; font-weight: bold; display: inline-block; margin-bottom: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.journey-progress-bar { width: 100%; height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; margin-top: 10px; }
+.journey-progress-fill { height: 100%; background: var(--color-primary); border-radius: 3px; }
+
 /* INTEREST CARDS (Onboarding) */
 .interest-card {
-    height: 200px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    height: 180px; display: flex; flex-direction: column; justify-content: center; align-items: center;
     gap: var(--space-md); text-align: center;
-}
-.interest-card::before {
-    content: ''; position: absolute; inset: 0; z-index: 0;
-    -webkit-mask-image: var(--mask-science); mask-image: var(--mask-science);
-    background-color: var(--color-text); opacity: 0.03;
+    border: 1px solid var(--color-border);
 }
 
 .interest-icon {
-    width: 64px; height: 64px; border-radius: 18px;
+    width: 56px; height: 56px; border-radius: 16px;
     border: 1px solid var(--color-border);
     display: flex; align-items: center; justify-content: center;
     background: var(--color-surface-hover);
     color: var(--color-text-secondary);
     transition: all 0.3s ease; position: relative; z-index: 2;
 }
-.interest-icon svg { width: 32px; height: 32px; stroke-width: 2px; }
+.interest-icon svg { width: 28px; height: 28px; }
 
-/* Interest Colors */
-.interest-card.cs:hover .interest-icon { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
-.interest-card.history:hover .interest-icon { background: var(--color-secondary); color: #fff; border-color: var(--color-secondary); }
-.interest-card.science:hover .interest-icon { background: var(--color-success); color: #fff; border-color: var(--color-success); }
-.interest-card.business:hover .interest-icon { background: var(--color-accent); color: #fff; border-color: var(--color-accent); }
+.interest-card:hover .interest-icon {
+    transform: scale(1.1); color: #fff; border-color: transparent;
+}
+.interest-card.cs:hover .interest-icon { background: var(--color-primary); }
+.interest-card.history:hover .interest-icon { background: var(--color-secondary); }
 
 @media (max-width: 600px) {
     .journey-creator-card { flex-direction: column; text-align: center; padding: var(--space-lg); }
     .creator-form { flex-direction: column; width: 100%; }
+    .input-group { width: 100%; }
+    #generate-btn { width: 100%; }
+    .topic-grid { grid-template-columns: 1fr; }
 }
