@@ -1,8 +1,10 @@
 
 .topic-list-container h2 {
     margin-bottom: var(--space-lg);
-    font-size: var(--fs-h3);
-    color: var(--color-text-secondary);
+    font-size: 1.5rem;
+    color: var(--color-text);
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
 /* Filter Badge */
@@ -17,151 +19,101 @@
     display: inline-flex;
     align-items: center;
     gap: var(--space-sm);
-    background-color: var(--color-surface-active);
+    background: rgba(0, 184, 212, 0.1);
     border: 1px solid var(--color-primary);
-    padding: 6px 12px;
-    border-radius: 20px;
+    padding: 8px 16px;
+    border-radius: 50px;
     color: var(--color-primary);
     font-weight: 600;
     font-size: 0.9rem;
+    box-shadow: 0 0 15px var(--color-primary-transparent);
 }
 
 .btn-icon-small {
-    background: none;
-    border: none;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: var(--color-text-secondary);
-    transition: color 0.2s;
+    background: none; border: none; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--color-primary); opacity: 0.7;
+    transition: all 0.2s;
 }
-.btn-icon-small:hover { color: var(--color-error); }
-.btn-icon-small svg { width: 16px; height: 16px; }
+.btn-icon-small:hover { opacity: 1; transform: scale(1.1); }
 
 
-/* --- Journey Creator Card --- */
+/* --- JOURNEY CREATOR CARD: The Blueprint --- */
 .journey-creator-card {
     display: flex;
     gap: var(--space-xl);
     align-items: center;
-    padding: var(--space-xl);
+    padding: 3rem;
     margin-bottom: var(--space-xxl);
-    border-color: var(--color-primary);
-    background: linear-gradient(145deg, var(--color-surface-hover), hsl(from var(--color-surface) h s l+4));
+    border: 1px solid rgba(255,255,255,0.1);
     position: relative;
     overflow: hidden;
+    background-color: #0d1117;
+    
+    /* Technical Grid Background */
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
 }
 
-/* Abstract tech background for creator card */
-.journey-creator-card::before {
+.journey-creator-card::after {
     content: '';
-    position: absolute;
-    inset: 0;
-    background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=1000&auto=format&fit=crop');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.15;
-    mix-blend-mode: screen;
-    pointer-events: none;
+    position: absolute; top: -100px; right: -100px; width: 300px; height: 300px;
+    background: var(--color-primary);
+    opacity: 0.08; border-radius: 50%; filter: blur(80px);
 }
 
 .creator-icon {
-    width: 80px;
-    height: 80px;
+    width: 80px; height: 80px;
     flex-shrink: 0;
     background: var(--brand-gradient);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
     color: #fff;
-    box-shadow: 0 0 20px var(--color-primary-transparent-heavy);
-    position: relative;
-    z-index: 2;
+    box-shadow: 0 10px 30px var(--color-primary-transparent-heavy);
+    position: relative; z-index: 2;
+    transform: rotate(-3deg);
 }
-.creator-icon svg {
-    width: 40px;
-    height: 40px;
-}
+.creator-icon svg { width: 40px; height: 40px; }
 
-.creator-content {
-    position: relative;
-    z-index: 2;
-    flex-grow: 1;
-}
+.creator-content { position: relative; z-index: 2; flex-grow: 1; }
+.creator-content h2 { margin-top: 0; margin-bottom: var(--space-sm); color: #fff; font-size: 1.8rem; }
+.creator-content p { margin-bottom: var(--space-lg); color: rgba(255,255,255,0.7); font-size: 1.1rem; }
 
-.creator-content h2 {
-    margin-top: 0;
-    margin-bottom: var(--space-sm);
-}
+.creator-form { display: flex; gap: var(--space-md); align-items: center; }
 
-.creator-content p {
-    margin-bottom: var(--space-lg);
-    color: var(--color-text-secondary);
-}
-
-.creator-form {
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-}
-
-.input-group {
-    display: flex;
-    flex-grow: 1;
-    position: relative;
-    align-items: center;
-}
-
+.input-group { display: flex; flex-grow: 1; position: relative; align-items: center; }
 .input-group .form-input {
-    width: 100%;
-    padding-right: 50px; /* Space for camera button */
+    width: 100%; padding: 1rem 1.2rem; padding-right: 50px;
+    background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.15);
+    color: #fff; height: 50px; font-size: 1.05rem;
 }
+.input-group .form-input:focus { border-color: var(--color-primary); }
 
-/* Styling for the embedded camera button */
 .scan-btn {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: var(--color-text-secondary);
-    padding: 8px;
-    border-radius: 50%;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    z-index: 5;
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: rgba(255,255,255,0.1); border: none; color: rgba(255,255,255,0.8);
+    padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; z-index: 5;
 }
+.scan-btn:hover { background: var(--color-primary); color: #000; }
 
-.scan-btn:hover {
-    color: var(--color-primary);
-    background: var(--color-surface-hover);
-    transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 0 10px var(--color-primary-transparent);
-}
+#generate-btn { height: 50px; padding: 0 2rem; font-size: 1rem; }
 
-.btn-icon-only {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 
 /* --- Topic Grid --- */
 .topic-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: var(--space-lg);
 }
 
 .topic-card {
     cursor: pointer;
-    animation: fade-slide-in 0.3s ease-out forwards;
+    animation: fade-slide-in 0.4s ease-out forwards;
     opacity: 0;
-    transform: translateY(10px);
-    aspect-ratio: 16 / 10;
+    transform: translateY(20px);
+    aspect-ratio: 16 / 9;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -172,170 +124,69 @@
     border-radius: var(--border-radius);
     background-size: cover;
     background-position: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    border: 1px solid transparent;
-    background-color: var(--color-surface); /* Fallback */
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border: 1px solid rgba(255,255,255,0.1);
+    background-color: var(--color-surface);
 }
 
+/* Holographic Border Reveal on Hover */
 .topic-card:hover {
-    transform: translateY(-5px) scale(1.03);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-    border-color: rgba(255,255,255,0.3);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border-color: rgba(255,255,255,0.5);
     z-index: 10;
 }
 
-/* Gradient overlay to ensure text readability */
+/* Overlay for text readability */
 .topic-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    /* Heavy gradient from bottom to allow text reading */
-    background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.3) 100%);
+    background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);
     z-index: 1;
-    transition: opacity var(--transition-speed-fast) ease;
+    transition: opacity 0.3s ease;
 }
 
-.topic-card:hover::before {
-    opacity: 0.8; /* Lighten slightly on hover */
-}
-
-.topic-card-content {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-}
+.topic-card-content { position: relative; z-index: 2; width: 100%; }
 
 .topic-name {
     color: #fff;
-    margin-bottom: var(--space-sm);
-    font-size: 1.5rem;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    margin-bottom: 6px;
+    font-size: 1.4rem;
     font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .topic-description {
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(255, 255, 255, 0.8);
     margin-bottom: 0;
     line-height: 1.5;
-    font-size: 0.95rem;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    font-size: 0.9rem;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
 
-/* Active Journey Styles */
-.journey-status-badge {
-    position: absolute;
-    top: -60px; /* Push up into negative space of padding, visual tweak */
-    right: 0;
-    background: rgba(0,0,0,0.8);
-    border: 1px solid var(--color-primary);
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-family: var(--font-family-mono);
-    font-weight: bold;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    color: var(--color-primary);
+/* Interest Cards (Onboarding) */
+.interest-card {
+    background-color: rgba(30, 30, 40, 0.5);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: var(--space-xl);
+    height: 200px;
+    border-radius: 24px;
 }
+.interest-card:hover { border-color: var(--active-color); box-shadow: 0 0 30px var(--active-bg); }
 
-.journey-progress-bar {
-    height: 6px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
-    margin-top: var(--space-md);
-    overflow: hidden;
-    backdrop-filter: blur(4px);
+.interest-icon {
+    width: 64px; height: 64px;
+    border-radius: 18px;
+    background: var(--active-bg);
+    color: var(--active-color);
+    border: 1px solid var(--active-color);
 }
-
-.journey-progress-fill {
-    height: 100%;
-    background: var(--color-primary);
-    box-shadow: 0 0 10px var(--color-primary);
-    border-radius: 3px;
-}
-
-/* 
-   --- TOPIC BACKGROUNDS --- 
-   Using Unsplash images with a darkened multiply/overlay layer to ensure white text is legible.
-*/
-
-/* Programming: Code/Matrix */
-.topic-card.topic-programming { 
-    background-image: 
-        linear-gradient(rgba(10, 25, 47, 0.8), rgba(10, 25, 47, 0.6)),
-        url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Biology: Nature/Cells */
-.topic-card.topic-biology { 
-    background-image: 
-        linear-gradient(rgba(10, 40, 20, 0.8), rgba(10, 40, 20, 0.6)),
-        url('https://images.unsplash.com/photo-1530026405186-ed1f139313f8?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Space: Galaxy/Stars */
-.topic-card.topic-space { 
-    background-image: 
-        linear-gradient(rgba(20, 10, 40, 0.8), rgba(20, 10, 40, 0.6)),
-        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Robotics: Metal/Tech */
-.topic-card.topic-robotics { 
-    background-image: 
-        linear-gradient(rgba(30, 30, 35, 0.85), rgba(30, 30, 35, 0.7)),
-        url('https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Finance: Architecture/Graph */
-.topic-card.topic-finance { 
-    background-image: 
-        linear-gradient(rgba(20, 40, 30, 0.85), rgba(20, 40, 30, 0.7)),
-        url('https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Arts: Paint/Color */
-.topic-card.topic-arts { 
-    background-image: 
-        linear-gradient(rgba(50, 10, 40, 0.8), rgba(50, 10, 40, 0.6)),
-        url('https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Medicine: Blue/Clean */
-.topic-card.topic-medicine { 
-    background-image: 
-        linear-gradient(rgba(10, 40, 60, 0.8), rgba(10, 40, 60, 0.6)),
-        url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Ecology: Leaves */
-.topic-card.topic-ecology { 
-    background-image: 
-        linear-gradient(rgba(20, 50, 20, 0.8), rgba(20, 50, 20, 0.6)),
-        url('https://images.unsplash.com/photo-1418065460487-3e41a6c84dc5?q=80&w=600&auto=format&fit=crop');
-}
-
-/* Philosophy: Old Paper/Books */
-.topic-card.topic-philosophy { 
-    background-image: 
-        linear-gradient(rgba(30, 20, 10, 0.85), rgba(30, 20, 10, 0.7)),
-        url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600&auto=format&fit=crop');
-}
-
 
 @media (max-width: 600px) {
-    .journey-creator-card {
-        flex-direction: column;
-        text-align: center;
-    }
-    .creator-form {
-        flex-direction: column;
-        width: 100%;
-    }
-    .input-group {
-        width: 100%;
-    }
+    .journey-creator-card { flex-direction: column; text-align: center; padding: var(--space-lg); }
+    .creator-form { flex-direction: column; width: 100%; }
 }

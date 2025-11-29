@@ -3,7 +3,7 @@
     animation: fade-slide-in 0.5s ease-out;
 }
 
-/* --- Neural Nexus Header --- */
+/* --- Neural Nexus Header: The Core --- */
 .profile-header-nexus {
     display: grid;
     grid-template-columns: 350px 1fr;
@@ -11,11 +11,12 @@
     padding: 0;
     margin-bottom: var(--space-xl);
     overflow: hidden;
-    background: var(--color-surface);
+    /* Deep void background for contrast with glowing nodes */
+    background: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
     min-height: 400px;
     border: 1px solid var(--color-border);
     border-radius: var(--border-radius);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
 
 .nexus-info {
@@ -143,7 +144,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #050505;
+    background-color: transparent; /* Allows gradient from parent to show */
     overflow: hidden;
     perspective: 1200px;
 }

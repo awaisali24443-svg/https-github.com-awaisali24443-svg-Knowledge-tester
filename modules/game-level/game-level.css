@@ -6,11 +6,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: transparent; /* Changed from var(--color-background) to show global bg */
+    background-color: transparent; 
     overflow: hidden;
     perspective: 300px;
+    transition: background-color 1s ease;
 }
 
+/* Boss Mode Atmosphere */
+body:has(.level-card.boss.current) .game-level-container,
+.game-level-container:has(#boss-health-container[style*="display: flex"]) {
+    background-color: rgba(40, 0, 0, 0.2);
+}
+
+/* Moving Grid Perspective Background */
 .game-level-container::before {
     content: '';
     position: absolute;
@@ -21,17 +29,33 @@
     background-size: 50px 50px;
     transform-origin: center center;
     animation: move-grid-perspective 10s linear infinite;
-    opacity: 0.5; /* Reduce opacity to blend with global background */
+    opacity: 0.3; /* Subtle grid */
+    pointer-events: none;
+    transition: background-image 1s ease;
+}
+
+/* Boss Mode Grid - Red Shift */
+.game-level-container:has(#boss-health-container[style*="display: flex"])::before {
+    background-image:
+        linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
 }
 
 .game-level-container::after {
     content: '';
     position: absolute;
     inset: 0;
-    /* Significantly reduced opacity of the vignette center to show global background */
-    background: radial-gradient(ellipse at center, transparent 50%, var(--color-background) 95%); 
+    /* Vignette */
+    background: radial-gradient(ellipse at center, transparent 40%, var(--color-background) 100%); 
     z-index: 1;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
+
+/* Darker vignette during quiz for focus */
+.game-level-container:has(#level-quiz-state.active)::after {
     opacity: 0.8;
+    background: radial-gradient(ellipse at center, transparent 30%, #000 100%); 
 }
 
 @keyframes move-grid-perspective {
@@ -54,12 +78,32 @@
 }
 .game-level-state.active { opacity: 1; pointer-events: auto; }
 
+/* --- CONTENT CONTAINER BACKGROUND: The Focus Slab --- */
 .state-content {
     width: 100%;
     max-width: 900px;
     padding: var(--space-xl);
     text-align: center;
     animation: fade-slide-in 0.5s ease-out;
+    
+    /* High Readability Background */
+    background-color: var(--color-surface); /* Solid fallback */
+    background: linear-gradient(170deg, var(--color-surface) 0%, rgba(15, 20, 30, 0.95) 100%);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    border-radius: var(--border-radius);
+    
+    /* Subtle inner texture */
+    position: relative;
+    overflow: hidden;
+}
+
+.state-content::before {
+    content: '';
+    position: absolute; top:0; left:0; width:100%; height:4px;
+    background: var(--brand-gradient);
+    z-index: 10;
 }
 
 /* --- Skip Lesson Popup --- */
@@ -86,8 +130,8 @@
 /* PRESENTATION STYLE TYPOGRAPHY */
 .lesson-body {
     text-align: left;
-    line-height: 1.8; /* Looser leading for readability */
-    font-size: 1.2rem; /* Larger font size */
+    line-height: 1.8;
+    font-size: 1.2rem;
     color: var(--color-text);
     max-height: 60vh;
     overflow-y: auto;
@@ -215,6 +259,7 @@
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    z-index: 10;
 }
 .new-quiz-header .sidebar-logo { text-decoration: none; display: flex; align-items: center; gap: var(--space-sm); }
 .new-quiz-header .sidebar-logo-img { height: 32px; width: 32px; }
@@ -299,7 +344,7 @@
 }
 
 
-.new-quiz-content { width: 100%; max-width: 900px; margin: 0 auto; }
+.new-quiz-content { width: 100%; max-width: 900px; margin: 0 auto; z-index: 5; }
 
 .quiz-status-card {
     display: flex;
@@ -440,7 +485,7 @@
 
 .new-quiz-footer {
     width: 100%; max-width: 900px; margin: 0 auto; padding: var(--space-md) var(--space-lg);
-    display: flex; align-items: center; gap: var(--space-md); flex-shrink: 0;
+    display: flex; align-items: center; gap: var(--space-md); flex-shrink: 0; z-index: 10;
 }
 
 .footer-spacer { flex-grow: 1; }
