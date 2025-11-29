@@ -1,4 +1,3 @@
-
 import { LOCAL_STORAGE_KEYS } from '../constants.js';
 // Theme application is now handled directly by the settings UI module to improve separation of concerns.
 
@@ -6,7 +5,6 @@ const defaultConfig = {
     theme: 'dark-cyber',
     enableSound: true,
     animationIntensity: 'full', // 'off', 'subtle', 'full'
-    aiPersona: 'apex' // 'apex', 'sage', 'commander', 'eli5'
 };
 
 let currentConfig = { ...defaultConfig };

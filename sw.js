@@ -1,13 +1,13 @@
 
 /**
  * @file Service Worker for Skill Apex PWA
- * @version 5.1.1
+ * @version 5.0.0
  *
  * This service worker implements a robust offline-first caching strategy.
- * Updated to force refresh for procedural visual upgrades.
+ * Updated to include Auth module assets and force refresh for UI overhaul.
  */
 
-const CACHE_NAME = 'skill-apex-v5.1.1';
+const CACHE_NAME = 'skill-apex-v5.0.0';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 const APP_SHELL_URLS = [

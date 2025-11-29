@@ -44,16 +44,6 @@ function loadSettings() {
     
     elements.animationSlider.value = animationLevels.indexOf(config.animationIntensity);
     
-    // Set Active Persona
-    const currentPersona = config.aiPersona || 'apex';
-    elements.personaCards.forEach(card => {
-        if (card.dataset.persona === currentPersona) {
-            card.classList.add('selected');
-        } else {
-            card.classList.remove('selected');
-        }
-    });
-    
     const isGuest = firebaseService.isGuest();
     const provider = firebaseService.getUserProvider();
 
@@ -119,21 +109,6 @@ function handleThemeToggleKeydown(event) {
     const newTheme = newButton.dataset.theme;
     setActiveThemeButton(newButton);
     configService.setConfig({ theme: newTheme });
-}
-
-function handlePersonaSelect(event) {
-    const card = event.target.closest('.persona-card');
-    if (!card) return;
-    
-    const persona = card.dataset.persona;
-    
-    // Update UI
-    elements.personaCards.forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
-    
-    // Save Config
-    configService.setConfig({ aiPersona: persona });
-    showToast(`Persona updated: ${persona.toUpperCase()}`);
 }
 
 async function handleChangeInterest() {
@@ -343,7 +318,6 @@ export function init() {
         changeInterestBtn: document.getElementById('change-interest-btn'),
         themeToggle: document.getElementById('theme-toggle-group'),
         themeToggleButtons: document.querySelectorAll('#theme-toggle-group button'),
-        personaCards: document.querySelectorAll('.persona-card'),
         installSection: document.getElementById('install-app-section'),
         installBtn: document.getElementById('install-app-btn'),
         emailDisplay: document.getElementById('account-email-display'),
@@ -382,11 +356,6 @@ export function init() {
     elements.themeToggle.addEventListener('click', handleThemeToggle);
     elements.themeToggle.addEventListener('keydown', handleThemeToggleKeydown);
     if (elements.logoutBtn) elements.logoutBtn.addEventListener('click', handleLogout);
-    
-    // Persona Selection
-    elements.personaCards.forEach(card => {
-        card.addEventListener('click', handlePersonaSelect);
-    });
 
     if (window.deferredInstallPrompt) {
         elements.installSection.style.display = 'block';
@@ -414,11 +383,6 @@ export function destroy() {
         elements.themeToggle.removeEventListener('click', handleThemeToggle);
         elements.themeToggle.removeEventListener('keydown', handleThemeToggleKeydown);
     }
-    
-    if (elements.personaCards) {
-        elements.personaCards.forEach(card => card.removeEventListener('click', handlePersonaSelect));
-    }
-
     if (elements.installBtn) elements.installBtn.removeEventListener('click', handleInstallClick);
     if (elements.logoutBtn) elements.logoutBtn.removeEventListener('click', handleLogout);
     
