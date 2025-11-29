@@ -1,41 +1,68 @@
+
 :root {
-    /* --- Color Palette: Cyber Core --- */
-
-    /* Primary Colors */
+    /* --- THEME: DARK CYBER --- */
+    
+    /* Core Hues */
     --color-primary: #00b8d4;   /* Electric Teal */
-    --color-secondary: #9c27b0; /* Vibrant Violet */
-    --color-accent: #ff4081;    /* Hot Pink Accent */
+    --color-secondary: #9c27b0; /* Neon Purple */
+    --color-accent: #ff4081;    /* Hot Pink */
 
-    /* Background & Surface Colors */
-    --color-background: #0c0e1a; /* Deep Indigo */
-    --color-surface: #161a2e;
-    --color-card-background: rgba(22, 26, 46, 0.7);
-    --color-surface-hover: #212642;
-    --color-surface-active: #2c3257;
+    /* Surface & Background */
+    --color-background: #0c0e1a; /* Deep Space */
+    --color-surface: rgba(22, 26, 46, 0.6);
+    --color-surface-translucent: rgba(10, 10, 15, 0.7);
+    --color-surface-hover: rgba(255, 255, 255, 0.05);
+    --color-surface-active: rgba(255, 255, 255, 0.1);
+    
+    /* Inputs */
+    --color-input-bg: rgba(0, 0, 0, 0.2);
+    --color-input-bg-focus: rgba(0, 0, 0, 0.4);
 
-    /* Text Colors */
+    /* Text */
     --color-text: #e0e0e0;
-    --color-text-secondary: #a0a0c0; /* Muted Lavender */
+    --color-text-secondary: #a0a0c0;
 
-    /* Border & Accent Colors */
-    --color-border: #38426e;
+    /* Borders & Highlights */
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-border-hover: rgba(255, 255, 255, 0.2);
+    --color-highlight: rgba(255, 255, 255, 0.1);
 
-    /* Transparent Variants for Glows & Gradients */
-    --color-primary-transparent: rgba(0, 184, 212, 0.2);
-    --color-primary-transparent-heavy: rgba(0, 184, 212, 0.4);
-    --color-secondary-transparent: rgba(156, 39, 176, 0.2);
-    --color-secondary-transparent-heavy: rgba(156, 39, 176, 0.4);
-    --color-accent-transparent: rgba(255, 64, 129, 0.2);
-    --color-surface-transparent: rgba(56, 66, 110, 0.3);
+    /* Patterns & Glows */
+    --color-pattern-fill: rgba(255, 255, 255, 0.05); /* White opacity for dark mode patterns */
+    --color-glow-1: rgba(0, 184, 212, 0.2);
+    --color-glow-2: rgba(156, 39, 176, 0.2);
+    --color-glow-3: rgba(255, 64, 129, 0.2);
+    
+    /* Overlays */
+    --color-overlay: rgba(0, 0, 0, 0.7);
+    
+    /* Scrollbars */
+    --color-scroll-thumb: rgba(255, 255, 255, 0.15);
+    --color-scroll-thumb-hover: rgba(255, 255, 255, 0.3);
 
-    /* Feedback Colors */
-    --color-success: #4caf50;
-    --color-error: #f44336;
-    --color-success-bg: rgba(76, 175, 80, 0.1);
-    --color-error-bg: rgba(244, 67, 54, 0.1);
-    --color-success-border: rgba(76, 175, 80, 0.5);
-    --color-error-border: rgba(244, 67, 54, 0.5);
+    /* Semantic Feedback */
+    --color-success: #00e676;
+    --color-error: #ff1744;
+    --color-success-bg: rgba(0, 230, 118, 0.1);
+    --color-error-bg: rgba(255, 23, 68, 0.1);
+    --color-success-border: rgba(0, 230, 118, 0.4);
+    --color-error-border: rgba(255, 23, 68, 0.4);
 
-    /* Brand Gradient */
-    --brand-gradient: linear-gradient(45deg, var(--color-primary), var(--color-secondary), var(--color-accent));
+    /* Transparencies */
+    --color-primary-transparent: rgba(0, 184, 212, 0.15);
+    --color-primary-transparent-heavy: rgba(0, 184, 212, 0.3);
+    --color-secondary-transparent: rgba(156, 39, 176, 0.15);
+    --color-secondary-transparent-heavy: rgba(156, 39, 176, 0.3);
+
+    /* Shadows */
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+    --shadow-card-hover: 0 16px 48px rgba(0, 0, 0, 0.5), 0 0 15px var(--color-primary-transparent);
+    --shadow-glow: 0 0 20px var(--color-primary-transparent-heavy);
+    --shadow-glow-hover: 0 0 30px var(--color-primary-transparent-heavy);
+    --shadow-modal: 0 25px 50px rgba(0, 0, 0, 0.7);
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+    /* Gradients */
+    --brand-gradient: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    --noise-opacity: 0.05;
 }
