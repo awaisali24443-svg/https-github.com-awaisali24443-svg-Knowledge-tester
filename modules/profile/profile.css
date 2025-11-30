@@ -5,269 +5,121 @@
 
 .sparked-layout {
     display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 24px;
+    grid-template-columns: 340px 1fr;
+    gap: 32px;
     max-width: 1400px;
     margin: 0 auto;
 }
 
-/* --- CARDS (General) --- */
-.card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 16px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    padding: 0; /* Reset for inner padding control */
-    overflow: hidden;
-    position: relative;
-    transition: box-shadow 0.2s ease;
-}
-.card:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
-}
-
-/* Remove default glassmorphism from global.css overrides */
-.card::before, .card::after { display: none; }
-
-/* --- SIDEBAR --- */
+/* --- SIDEBAR COMPONENTS --- */
 .profile-sidebar {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
 
-/* 1. User Card */
+/* 1. Profile Card */
 .profile-card {
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
 }
 
 .profile-banner {
-    height: 100px;
-    background: linear-gradient(135deg, #001f4d 0%, #0052cc 50%, #2684ff 100%);
+    height: 120px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25' viewBox='0 0 800 400'%3E%3Cdefs%3E%3CradialGradient id='a' cx='400' cy='400' r='50%25' gradientUnits='userSpaceOnUse'%3E%3Cstop offset='0' stop-color='%230052cc'/%3E%3Cstop offset='1' stop-color='%230747a6'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect fill='url(%23a)' width='800' height='400'/%3E%3Cg fill-opacity='0.4'%3E%3Ccircle fill='%23ffffff' cx='400' cy='200' r='100'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: cover;
 }
 
 .profile-content {
     padding: 0 24px 24px 24px;
-    margin-top: -40px; /* Pull avatar up */
+    margin-top: -45px;
 }
 
 .avatar-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px;
 }
 
 .profile-avatar {
-    width: 80px;
-    height: 80px;
+    width: 90px; height: 90px;
     border-radius: 50%;
     border: 4px solid var(--color-surface);
-    background-color: #ddd;
+    background-color: #f4f5f7;
     object-fit: cover;
 }
 
 .edit-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f4f5f7;
-    border: none;
-    color: var(--color-text-secondary);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    margin-bottom: 8px; /* Align visually */
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #f4f5f7; border: none; color: var(--color-text-secondary);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    margin-bottom: 8px;
 }
-.edit-btn:hover { background: #ebecf0; color: var(--color-primary); }
+.edit-btn:hover { background: #dfe1e6; color: var(--color-primary); }
 .edit-btn svg { width: 16px; height: 16px; }
 
-.user-name {
-    font-size: 1.25rem;
-    font-weight: 700;
-    margin: 0 0 4px 0;
-    color: var(--color-text);
-}
+.user-name { font-size: 1.4rem; font-weight: 700; margin: 0 0 4px 0; color: var(--color-text); }
+.user-contact { font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 20px; }
 
-.user-contact {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 16px;
-    display: flex; gap: 4px;
-}
-
-.tags-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
+.tags-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .tag {
-    font-size: 0.8rem;
-    padding: 4px 12px;
-    border-radius: 20px;
-    background: #f4f5f7;
-    color: var(--color-text);
-    font-weight: 600;
+    font-size: 0.8rem; padding: 6px 16px; border-radius: 20px;
+    background: #F4F5F7; color: var(--color-text); font-weight: 600;
 }
 
 /* 2. Widget Cards */
-.widget-card {
-    padding: 24px;
-}
-
-.widget-title {
-    font-size: 1rem;
-    font-weight: 700;
-    margin: 0 0 8px 0;
-    color: var(--color-text);
-}
-
-.widget-sub {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
-    margin: 0 0 16px 0;
-    line-height: 1.4;
-}
+.widget-card { padding: 24px; }
+.widget-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 8px 0; color: var(--color-text); }
+.widget-sub { font-size: 0.9rem; color: var(--color-text-secondary); margin: 0 0 16px 0; line-height: 1.5; }
 
 .copy-field {
-    display: flex;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    padding: 2px;
-    margin-bottom: 16px;
-    background: #fff;
+    display: flex; border: 1px solid var(--color-border); border-radius: 6px;
+    padding: 0; margin-bottom: 20px; background: #fff;
+    overflow: hidden;
 }
-
 .copy-field input {
-    border: none;
-    background: transparent;
-    padding: 8px 12px;
-    flex-grow: 1;
-    font-family: var(--font-family-mono);
-    font-size: 0.9rem;
-    color: var(--color-text);
-    outline: none;
+    border: none; background: transparent; padding: 12px; flex-grow: 1;
+    font-family: var(--font-family-mono); font-size: 0.9rem; color: var(--color-text); outline: none;
 }
-
 .copy-btn {
     display: flex; align-items: center; gap: 6px;
-    background: transparent;
-    border: none;
-    border-left: 1px solid var(--color-border);
-    padding: 0 12px;
-    font-weight: 600;
-    color: var(--color-text);
-    cursor: pointer;
+    background: #f4f5f7; border: none; border-left: 1px solid var(--color-border);
+    padding: 0 16px; font-weight: 600; color: var(--color-text); cursor: pointer;
 }
-.copy-btn:hover { background: #f4f5f7; }
+.copy-btn:hover { background: #ebecf0; }
 .copy-btn svg { width: 16px; height: 16px; }
 
-.action-buttons {
-    display: flex;
-    gap: 12px;
-}
-
-.action-buttons .btn {
-    flex: 1;
-    padding: 10px;
-    font-size: 0.9rem;
-    border-radius: 8px;
-    justify-content: center;
-}
-
-.btn-outline {
-    background: transparent;
-    border: 1px solid var(--color-border);
-    color: var(--color-text);
-}
+.action-buttons { display: flex; gap: 12px; }
+.action-buttons .btn { flex: 1; padding: 10px; font-size: 0.9rem; border-radius: 6px; justify-content: center; }
+.btn-outline { background: transparent; border: 1px solid var(--color-border); color: var(--color-text); }
 .btn-outline:hover { background: #f4f5f7; }
 
 /* 3. Progress Widget */
-.widget-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-}
-.widget-header .widget-title { margin: 0; }
-.view-all-link {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--color-primary);
-    text-decoration: none;
-}
+.widget-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.view-all-link { font-size: 0.9rem; font-weight: 600; color: var(--color-primary); text-decoration: none; }
 
-.progress-display {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-}
-
+.progress-display { display: flex; justify-content: space-between; align-items: flex-end; }
 .progress-stats { flex-grow: 1; }
-
 .progress-percent {
-    display: block;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--color-primary);
-    line-height: 1;
-    margin-bottom: 4px;
+    display: block; font-size: 3rem; font-weight: 700; color: var(--color-primary);
+    line-height: 1; margin-bottom: 8px; letter-spacing: -1px;
 }
-
-.progress-label {
-    display: block;
-    font-weight: 700;
-    color: var(--color-text);
-    margin-bottom: 4px;
-}
-
-.progress-sub {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    margin-bottom: 12px;
-}
+.progress-label { display: block; font-weight: 700; color: var(--color-text); margin-bottom: 4px; }
+.progress-sub { display: block; font-size: 0.9rem; color: var(--color-text-secondary); margin-bottom: 16px; }
 
 .progress-track {
-    height: 4px;
-    background: #dfe1e6;
-    border-radius: 2px;
-    width: 100%;
-    max-width: 150px;
+    height: 8px; background: #ebecf0; border-radius: 4px; width: 100%; max-width: 180px; overflow: hidden;
 }
-.progress-fill {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 2px;
-    width: 25%;
-}
+.progress-fill { height: 100%; background: var(--color-primary); border-radius: 4px; width: 25%; }
 
-.progress-graphic {
-    width: 80px; height: 80px;
-}
+.progress-graphic { width: 100px; height: 100px; opacity: 0.9; }
 .clapping-svg { width: 100%; height: 100%; }
 
+/* --- MAIN CONTENT: ACHIEVEMENTS --- */
+.section-header { margin-bottom: 32px; }
+.section-header h1 { font-size: 2rem; color: var(--color-text); margin: 0 0 8px 0; }
+.section-header p { color: var(--color-text-secondary); font-size: 1.1rem; margin: 0; }
 
-/* --- MAIN CONTENT --- */
-.section-header {
-    margin-bottom: 24px;
-}
-.section-header h1 {
-    font-size: 1.5rem;
-    color: var(--color-text);
-    margin: 0 0 8px 0;
-}
-.section-header p {
-    color: var(--color-text-secondary);
-    font-size: 1rem;
-    margin: 0;
-}
-
-/* Achievements Grid */
 .achievements-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 24px;
 }
 
@@ -275,119 +127,64 @@
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: 12px;
-    padding: 32px 16px 24px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    padding: 40px 20px 24px 20px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
     transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    min-height: 240px;
+    min-height: 300px;
 }
+.badge-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
 
-.badge-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-}
-
-/* Badge Icons Container */
+/* Badge Shapes */
 .badge-icon-container {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    width: 80px; height: 80px; margin-bottom: 24px;
+    display: flex; align-items: center; justify-content: center; position: relative;
 }
 
-/* --- Custom Shapes using CSS Clip Path --- */
+/* Shapes using Clip-Path */
 .shape-circle {
-    width: 70px; height: 70px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #e37b58 0%, #ffab91 100%); /* Orange/Bronze */
-    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.1);
+    width: 70px; height: 70px; border-radius: 50%;
+    background: var(--gradient-bronze);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.4), 0 4px 10px rgba(211, 84, 0, 0.3);
 }
 
 .shape-pentagon {
     width: 70px; height: 70px;
-    background: linear-gradient(135deg, #fbc02d 0%, #fff176 100%); /* Yellow/Gold */
+    background: var(--gradient-gold);
     clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+    filter: drop-shadow(0 4px 6px rgba(241, 196, 15, 0.4));
 }
 
 .shape-hexagon {
-    width: 70px; height: 70px;
-    background: linear-gradient(135deg, #7e57c2 0%, #b39ddb 100%); /* Purple */
-    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    width: 70px; height: 80px;
+    background: var(--gradient-purple);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    filter: drop-shadow(0 4px 6px rgba(142, 68, 173, 0.4));
 }
 
 .shape-shield {
     width: 70px; height: 80px;
-    background: linear-gradient(135deg, #78909c 0%, #b0bec5 100%); /* Grey/Silver */
+    background: var(--gradient-silver);
     clip-path: path("M35,0 L70,15 L70,45 C70,65 35,80 35,80 C35,80 0,65 0,45 L0,15 L35,0 Z");
+    filter: drop-shadow(0 4px 6px rgba(127, 140, 141, 0.4));
 }
 
-/* Inner Icon Styling */
 .badge-icon-container svg {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff;
-    width: 32px; height: 32px;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    color: #fff; width: 32px; height: 32px; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 
-.badge-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: var(--color-text);
-    margin: 0 0 8px 0;
-}
+.badge-title { font-size: 1.1rem; font-weight: 700; color: var(--color-text); margin: 0 0 8px 0; }
+.badge-desc { font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.4; margin: 0 0 20px 0; flex-grow: 1; }
 
-.badge-desc {
-    font-size: 0.85rem;
-    color: var(--color-text-secondary);
-    line-height: 1.4;
-    margin: 0 0 16px 0;
-    flex-grow: 1;
-}
-
-/* Progress/Status inside Card */
-.badge-status {
-    width: 100%;
-}
-
+.badge-status { width: 100%; }
 .badge-progress-bg {
-    height: 6px;
-    background: #f4f5f7;
-    border-radius: 3px;
-    width: 100%;
-    margin-bottom: 8px;
-    overflow: hidden;
+    height: 6px; background: #ebecf0; border-radius: 3px; width: 100%; margin-bottom: 8px; overflow: hidden;
 }
-.badge-progress-fill {
-    height: 100%;
-    background: var(--color-primary);
-    border-radius: 3px;
-}
+.badge-progress-fill { height: 100%; background: var(--color-primary); border-radius: 3px; }
+.badge-meta { font-size: 0.8rem; color: var(--color-text-secondary); text-align: right; font-weight: 600; }
 
-.badge-meta {
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-    text-align: right;
-    font-weight: 600;
-}
-
-/* Completed Checkmark */
-.badge-title::after {
-    /* content: '✔'; */ /* Optional: if we want inline check */
-}
-.title-row {
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-}
-.check-icon {
-    width: 16px; height: 16px; color: var(--color-success);
-}
+.title-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.check-icon { width: 18px; height: 18px; color: var(--color-success); }
 
 @media (max-width: 900px) {
     .sparked-layout { grid-template-columns: 1fr; }

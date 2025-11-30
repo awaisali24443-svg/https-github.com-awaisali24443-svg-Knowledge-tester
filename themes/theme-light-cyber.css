@@ -1,59 +1,61 @@
 
 :root {
-    /* --- Color Palette: Professional Metals & Deep Navy --- */
+    /* --- Color Palette: Professional Sparked Dashboard --- */
 
     /* Primary Colors - Deep Metallic Blue */
-    --color-primary: #003366;   /* Oxford Blue */
-    --color-primary-hover: #002244;
+    --color-primary: #0052cc;   
+    --color-primary-hover: #0747a6;
     
     /* Secondary Colors - Rich Purple/Indigo */
-    --color-secondary: #4a148c; /* Deep Purple */
+    --color-secondary: #6554C0; 
     
-    /* Metallic Accents */
-    --color-gold: #D4AF37;
-    --color-silver: #C0C0C0;
-    --color-bronze: #CD7F32;
-    --color-platinum: #E5E4E2;
-    
-    --color-accent: var(--color-gold); /* Default accent is Gold */
+    /* Accents & Status */
+    --color-accent: #FFAB00;    /* Gold/Amber */
+    --color-success: #36B37E;   /* Success Green */
+    --color-error: #FF5630;     /* Error Red */
+    --color-info: #00B8D9;      /* Cyan */
 
     /* Background & Surface Colors */
-    --color-background: #f4f6f8; /* Light Gray-Blue Tint */
-    --color-surface: #ffffff;    /* Pure White */
-    --color-card-background: #ffffff;
-    --color-surface-hover: #f8f9fa;
-    --color-surface-active: #e9ecef;
+    --color-background: #F4F5F7; /* Dashboard Grey */
+    --color-surface: #FFFFFF;    /* Pure White */
+    --color-surface-hover: #EBECF0;
+    --color-surface-active: #DEEBFF;
+    --color-border: #DFE1E6;
 
     /* Text Colors */
-    --color-text: #1a1a1a;       /* Near Black */
-    --color-text-secondary: #5f6368; /* Slate Gray */
-
-    /* Border & Accent Colors */
-    --color-border: #e0e0e0;
+    --color-text: #172B4D;       /* Navy Black */
+    --color-text-secondary: #5E6C84; /* Slate Gray */
+    --color-text-inverse: #FFFFFF;
 
     /* Transparent Variants */
-    --color-primary-transparent: rgba(0, 51, 102, 0.1);
-    --color-primary-transparent-heavy: rgba(0, 51, 102, 0.25);
-    --color-secondary-transparent: rgba(74, 20, 140, 0.1);
-    --color-secondary-transparent-heavy: rgba(74, 20, 140, 0.25);
-    --color-accent-transparent: rgba(212, 175, 55, 0.15);
-    --color-surface-transparent: rgba(255, 255, 255, 0.9);
+    --color-primary-transparent: rgba(0, 82, 204, 0.1);
+    --color-primary-transparent-heavy: rgba(0, 82, 204, 0.2);
+    --color-secondary-transparent: rgba(101, 84, 192, 0.1);
+    --color-surface-transparent: rgba(255, 255, 255, 0.85);
+    
+    --color-success-bg: rgba(54, 179, 126, 0.1);
+    --color-error-bg: rgba(255, 86, 48, 0.1);
+    --color-success-border: #36b37e;
+    --color-error-border: #ff5630;
 
-    /* Feedback Colors */
-    --color-success: #2e7d32; /* Forest Green */
-    --color-error: #c62828;   /* Crimson Red */
-    --color-success-bg: rgba(46, 125, 50, 0.1);
-    --color-error-bg: rgba(198, 40, 40, 0.1);
-    --color-success-border: #2e7d32;
-    --color-error-border: #c62828;
+    /* Badge Gradients (3D Effect) */
+    --gradient-bronze: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    --gradient-silver: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+    --gradient-gold: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
+    --gradient-purple: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+    --gradient-blue: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
     
-    /* Gradients */
-    --brand-gradient: linear-gradient(135deg, #003366 0%, #0056b3 100%);
-    --gold-gradient: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #C49102 100%);
-    --silver-gradient: linear-gradient(135deg, #E0E0E0 0%, #B0B0B0 50%, #808080 100%);
-    --bronze-gradient: linear-gradient(135deg, #E6AC6E 0%, #CD7F32 50%, #8B4513 100%);
+    /* Brand Gradient */
+    --brand-gradient: linear-gradient(135deg, #0052cc 0%, #2684ff 100%);
     
-    /* Shadows */
-    --shadow-card: 0 2px 4px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-hover: 0 10px 20px rgba(0,0,0,0.12), 0 6px 6px rgba(0,0,0,0.1);
+    /* Shadows - Ultra soft for professional look */
+    --shadow-card: 0 1px 2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.31);
+    --shadow-hover: 0 8px 16px -4px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.31);
+    --shadow-float: 0 12px 24px -6px rgba(9, 30, 66, 0.25);
+}
+
+/* Background gradient to enhance glassmorphism sidebar visibility */
+body {
+    background: linear-gradient(120deg, #f4f5f7 0%, #eef0f5 100%);
+    background-attachment: fixed;
 }

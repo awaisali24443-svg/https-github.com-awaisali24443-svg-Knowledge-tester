@@ -18,10 +18,9 @@ function renderProfile() {
     document.getElementById('recruiter-id-input').value = `recruiter_id=${shortId}`;
 
     // 3. Progress Widget
-    // Calculate level progress
     const xpCurrent = stats.xp;
     const xpNext = gamificationService.getXpForNextLevel(stats.level);
-    const percent = Math.min(100, Math.round((xpCurrent / xpNext) * 100)) || 25; // Default to 25 if 0 for visual match
+    const percent = Math.min(100, Math.round((xpCurrent / xpNext) * 100)) || 25;
     
     document.getElementById('progress-percent').textContent = `${percent}%`;
     document.getElementById('progress-fill').style.width = `${percent}%`;
@@ -33,14 +32,13 @@ function renderBadges(stats) {
     const grid = document.getElementById('achievements-grid');
     grid.innerHTML = '';
 
-    // Hardcoded list to match the "Sparked" design request exactly
-    // but dynamically mapped to real app stats where possible
+    // Hardcoded list to match the "Sparked" design exactly
     const badges = [
         {
             name: "Signed Up",
             desc: "Create your personal account",
             shape: "shape-circle",
-            icon: "edit-2", // Pen
+            icon: "edit-2",
             progress: 100,
             completed: true
         },
@@ -75,7 +73,7 @@ function renderBadges(stats) {
         {
             name: "Recruiter",
             desc: "Recruit at least 1 new member",
-            shape: "shape-shield", // Silver shield style
+            shape: "shape-shield",
             icon: "users",
             current: 0,
             target: 1,

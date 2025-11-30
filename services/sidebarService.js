@@ -1,60 +1,98 @@
 
 import { ROUTES, FEATURES } from '../constants.js';
+import * as firebaseService from './firebaseService.js';
 
 /**
- * Creates the HTML for a single navigation link in the sidebar.
- * @param {object} route - The route object from constants.js.
- * @param {number} index - The index of the route, used for coloring.
- * @returns {string} The HTML string for the link.
- * @private
+ * Creates the HTML for a single navigation link.
  */
-function createNavLink(route, index) {
-    // Cycle through 6 distinct colors defined in global.css
-    const colorClass = `icon-color-${(index % 6) + 1}`;
-    
+function createNavLink(route) {
     return `
         <a href="#${route.path}" class="sidebar-link" data-path="${route.path}" aria-label="${route.name}">
-            <svg class="icon ${colorClass}" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <use href="assets/icons/feather-sprite.svg#${route.icon}"/>
-            </svg>
+            <div class="link-icon-wrapper">
+                <svg class="icon"><use href="assets/icons/feather-sprite.svg#${route.icon}"/></svg>
+            </div>
             <span class="text">${route.name}</span>
         </a>
     `;
 }
 
 /**
- * Renders the entire sidebar content, including navigation links.
- * Filters links based on feature flags.
- * @param {HTMLElement} container - The <nav> element to render the sidebar into.
+ * Renders the Floating Glass Sidebar (Facenote Style).
  */
 export function renderSidebar(container) {
-    // Add ARIA label for screen readers
     container.setAttribute('aria-label', 'Main Navigation');
 
     const mainLinks = ROUTES.filter(r => r.nav && !r.footer);
-    const footerLinks = ROUTES.filter(r => r.nav && r.footer);
+    const settingsLink = ROUTES.find(r => r.module === 'settings');
     
-    // Filter links based on feature flags for progressive feature rollout.
+    // Filter links (e.g., Aural mode check)
     const filteredMainLinks = mainLinks.filter(r => {
         if (r.module === 'aural' && !FEATURES.AURAL_MODE) return false;
         return true;
     });
 
+    const userEmail = firebaseService.getUserEmail() || 'Guest';
+    const userName = userEmail.split('@')[0];
+    const isGuest = firebaseService.isGuest();
+
     const html = `
-        <a href="/#/" class="sidebar-logo" aria-label="Skill Apex Home">
-            <img src="assets/icons/favicon.svg" alt="Skill Apex Logo" class="sidebar-logo-img">
-            <span class="sidebar-logo-text">Skill Apex</span>
-        </a>
-        <ul class="sidebar-links">
-            ${filteredMainLinks.map((link, i) => createNavLink(link, i)).join('')}
-        </ul>
-        <div style="flex-grow: 1;"></div> <!-- Spacer -->
-        <ul class="sidebar-links">
-             ${footerLinks.map((link, i) => createNavLink(link, i + filteredMainLinks.length)).join('')}
-        </ul>
-        <div class="sidebar-footer-credit">
-            <span class="credit-text">Built by <strong>AWAIS ALI</strong></span>
+        <!-- Top: Window Controls -->
+        <div class="window-controls">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
         </div>
+
+        <!-- Header: Facenote Style Profile -->
+        <div class="sidebar-profile-header">
+            <div class="profile-avatar-container">
+                <img src="assets/images/avatar-placeholder.png" alt="Profile" class="profile-avatar-img">
+            </div>
+            <div class="profile-info-text">
+                <span class="profile-name">${userName}</span>
+                <span class="profile-role">My Account</span>
+            </div>
+            <svg class="icon profile-chevron"><use href="assets/icons/feather-sprite.svg#chevron-down"/></svg>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Menu -->
+        <div class="sidebar-menu-label">MENU</div>
+        <ul class="sidebar-links">
+            ${filteredMainLinks.map(link => createNavLink(link)).join('')}
+        </ul>
+
+        <div class="sidebar-spacer"></div>
+
+        <!-- Bottom Actions -->
+        <ul class="sidebar-links footer-links">
+            ${settingsLink ? createNavLink(settingsLink) : ''}
+            <button id="sidebar-logout-btn" class="sidebar-link logout-link">
+                <div class="link-icon-wrapper">
+                    <svg class="icon"><use href="assets/icons/feather-sprite.svg#power"/></svg>
+                </div>
+                <span class="text">Log Out</span>
+            </button>
+        </ul>
     `;
+    
     container.innerHTML = html;
+
+    // Attach Logout Listener
+    const logoutBtn = document.getElementById('sidebar-logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            const { showConfirmationModal } = await import('./modalService.js');
+            const confirmed = await showConfirmationModal({
+                title: 'Log Out',
+                message: 'Are you sure you want to sign out?',
+                confirmText: 'Log Out',
+                danger: true
+            });
+            if (confirmed) {
+                firebaseService.logout();
+            }
+        });
+    }
 }
