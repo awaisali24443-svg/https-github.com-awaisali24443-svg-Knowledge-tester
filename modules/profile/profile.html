@@ -1,88 +1,88 @@
 
 <div class="page-container profile-container sparked-layout">
     
-    <!-- LEFT COLUMN: User Info & Widgets -->
+    <!-- LEFT COLUMN: Identity & Controls -->
     <aside class="profile-sidebar">
         
-        <!-- 1. Profile Card -->
-        <div class="card profile-card">
-            <div class="profile-banner"></div>
-            <div class="profile-content">
-                <div class="avatar-row">
-                    <img src="assets/images/avatar-placeholder.png" alt="Avatar" class="profile-avatar">
-                    <button class="edit-btn" title="Edit Profile">
+        <!-- Identity Card -->
+        <div class="card profile-identity-card">
+            <div class="profile-banner-bg"></div>
+            
+            <div class="profile-avatar-section" id="avatar-drop-zone">
+                <div class="avatar-ring">
+                    <img src="assets/images/avatar-placeholder.png" alt="Avatar" id="profile-avatar-img" class="avatar-img">
+                    <div class="avatar-overlay">
+                        <svg class="icon"><use href="assets/icons/feather-sprite.svg#camera"/></svg>
+                    </div>
+                </div>
+                <input type="file" id="avatar-upload" accept="image/*" class="sr-only">
+            </div>
+
+            <div class="profile-info">
+                <div class="name-row">
+                    <h2 id="user-name-display">Agent</h2>
+                    <button class="btn-icon-tiny" id="edit-profile-btn">
                         <svg class="icon"><use href="assets/icons/feather-sprite.svg#edit-2"/></svg>
                     </button>
                 </div>
                 
-                <h2 class="user-name">Loading...</h2>
-                <div class="user-contact">
-                    <span id="user-email-text">...</span>
-                    <span>• +1 234 567 890</span>
+                <div class="edit-name-wrapper" id="edit-name-wrapper" style="display: none;">
+                    <input type="text" id="user-name-input" class="modern-input" placeholder="Codename">
+                    <button id="save-name-btn" class="btn-save">
+                        <svg class="icon"><use href="assets/icons/feather-sprite.svg#check-circle"/></svg>
+                    </button>
                 </div>
+
+                <span class="user-email" id="user-email-text">Loading...</span>
                 
-                <div class="tags-row">
-                    <span class="tag">Member</span>
-                    <span class="tag">Donor</span>
-                    <span class="tag">Volunteer</span>
+                <div class="level-badge-row">
+                    <div class="status-pill blue">Operative</div>
+                    <div class="status-pill purple">Beta Access</div>
                 </div>
             </div>
         </div>
 
-        <!-- 2. Recruitment Info Widget -->
-        <div class="card widget-card">
-            <h3 class="widget-title">Recruitment info</h3>
-            <p class="widget-sub">Add this tracking code to a campaign URL:</p>
-            
-            <div class="copy-field">
-                <input type="text" id="recruiter-id-input" value="recruiter_id=23" readonly>
-                <button class="copy-btn" id="copy-ref-btn">
-                    <svg class="icon"><use href="assets/icons/feather-sprite.svg#copy"/></svg> Copy
-                </button>
-            </div>
-            
-            <div class="action-buttons">
-                <button class="btn btn-outline" id="copy-donate-btn">Copy donate link</button>
-                <button class="btn btn-primary" id="copy-join-btn">Copy join link</button>
-            </div>
-        </div>
-
-        <!-- 3. Progress Widget -->
+        <!-- Stats Widget -->
         <div class="card widget-card">
             <div class="widget-header">
-                <h3 class="widget-title">My achievements</h3>
-                <a href="#/history" class="view-all-link">View all</a>
+                <h3>Skill Progress</h3>
             </div>
-            
-            <div class="progress-display">
-                <div class="progress-stats">
-                    <span class="progress-percent" id="progress-percent">25%</span>
-                    <span class="progress-label">Profile progress</span>
-                    <span class="progress-sub">Well done. Keep it up!</span>
-                    <div class="progress-track">
-                        <div class="progress-fill" id="progress-fill"></div>
-                    </div>
-                </div>
-                <div class="progress-graphic">
-                    <!-- Star graphic placeholder -->
-                    <svg viewBox="0 0 24 24" class="clapping-svg">
-                       <path fill="#FFAB00" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                    </svg>
-                </div>
+            <div class="progress-circle-container">
+                <!-- SVG Circle Progress handled by CSS/JS -->
+                <svg viewBox="0 0 36 36" class="circular-chart blue">
+                    <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="progress-circle-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="progress-percent">0%</text>
+                </svg>
+                <p class="progress-sub">XP to Next Level</p>
+            </div>
+        </div>
+
+        <!-- Invite Widget -->
+        <div class="card widget-card">
+            <div class="widget-header">
+                <h3>Recruitment</h3>
+            </div>
+            <p class="widget-desc">Invite new agents to the network.</p>
+            <div class="copy-input-group">
+                <input type="text" id="recruiter-id-input" readonly value="...">
+                <button id="copy-ref-btn">
+                    <svg class="icon"><use href="assets/icons/feather-sprite.svg#copy"/></svg>
+                </button>
             </div>
         </div>
 
     </aside>
 
-    <!-- RIGHT COLUMN: Achievements Grid -->
+    <!-- RIGHT COLUMN: Achievements & Showcase -->
     <main class="profile-main">
-        <header class="section-header">
+        <div class="section-heading">
             <h1>Achievements</h1>
-            <p>Unlock your achievements by completing tasks on the platform</p>
-        </header>
+            <p>Milestones unlocked in the field.</p>
+        </div>
 
         <div id="achievements-grid" class="achievements-grid">
-            <!-- Achievements will be injected here via JS -->
+            <!-- Items injected by JS -->
         </div>
     </main>
 

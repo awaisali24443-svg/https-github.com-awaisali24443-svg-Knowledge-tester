@@ -19,7 +19,8 @@ import {
     sendPasswordResetEmail,
     confirmPasswordReset,
     updatePassword,
-    reauthenticateWithCredential
+    reauthenticateWithCredential,
+    updateProfile 
 } from "firebase/auth";
 
 // Configuration provided by user
@@ -53,6 +54,16 @@ function getUserId() {
 function getUserEmail() {
     if (currentUser?.isAnonymous) return 'Guest User';
     return currentUser ? currentUser.email : null;
+}
+
+function getUserName() {
+    if (currentUser?.displayName) return currentUser.displayName;
+    if (currentUser?.email) return currentUser.email.split('@')[0];
+    return 'User';
+}
+
+function getUserPhoto() {
+    return currentUser ? currentUser.photoURL : null;
 }
 
 function isGuest() {
@@ -116,6 +127,15 @@ function onAuthChange(callback) {
 
 // --- Account Management ---
 
+function updateUserProfile(profileData) {
+    if (!currentUser) return Promise.reject(new Error("No user logged in"));
+    // profileData can contain { displayName: string, photoURL: string }
+    return updateProfile(currentUser, profileData).then(() => {
+        // Force refresh of current user object
+        currentUser.reload();
+    });
+}
+
 function linkGoogle() {
     if (!currentUser) return Promise.reject("No user");
     return linkWithPopup(currentUser, googleProvider);
@@ -145,8 +165,8 @@ async function updateLeaderboardScore(stats) {
     if (!currentUser || isGuest()) return; // Guests don't rank
     
     const userRef = doc(db, "leaderboard", currentUser.uid);
-    // Use part of email as username if not set, or 'User'
-    const name = currentUser.email ? currentUser.email.split('@')[0] : 'ApexUser';
+    // Use display name or part of email
+    const name = currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : 'ApexUser');
     
     try {
         await setDoc(userRef, {
@@ -179,11 +199,11 @@ async function getLeaderboard(limitCount = 20) {
 
 export { 
     db, doc, getDoc, setDoc, 
-    getUserId, getUserEmail, isGuest, getUserProvider,
+    getUserId, getUserEmail, getUserName, getUserPhoto, isGuest, getUserProvider,
     analytics, 
     login, register, loginWithGoogle, loginAsGuest, logout, 
     resetPassword, confirmReset,
-    linkGoogle, linkEmail, reauthenticate, changePassword,
+    linkGoogle, linkEmail, reauthenticate, changePassword, updateUserProfile,
     onAuthChange,
     updateLeaderboardScore, getLeaderboard
 };

@@ -1,61 +1,61 @@
 
 :root {
-    /* --- Color Palette: Professional Sparked Dashboard --- */
+    /* --- Color Palette: Sparked (Reference Quality) --- */
 
-    /* Primary Colors - Deep Metallic Blue */
-    --color-primary: #0052cc;   
-    --color-primary-hover: #0747a6;
+    /* Core Tones - Deep Electric Blue to Vibrant Teal */
+    --color-primary: #0066FF; /* Electric Blue */
+    --color-primary-rgb: 0, 102, 255;
+    --color-secondary: #00D4FF; /* Cyan */
     
-    /* Secondary Colors - Rich Purple/Indigo */
-    --color-secondary: #6554C0; 
+    /* Backgrounds & Surfaces */
+    --color-background: #F4F6F9; /* Cool Grey-White */
     
-    /* Accents & Status */
-    --color-accent: #FFAB00;    /* Gold/Amber */
-    --color-success: #36B37E;   /* Success Green */
-    --color-error: #FF5630;     /* Error Red */
-    --color-info: #00B8D9;      /* Cyan */
-
-    /* Background & Surface Colors */
-    --color-background: #F4F5F7; /* Dashboard Grey */
-    --color-surface: #FFFFFF;    /* Pure White */
-    --color-surface-hover: #EBECF0;
-    --color-surface-active: #DEEBFF;
-    --color-border: #DFE1E6;
-
-    /* Text Colors */
-    --color-text: #172B4D;       /* Navy Black */
-    --color-text-secondary: #5E6C84; /* Slate Gray */
-    --color-text-inverse: #FFFFFF;
-
-    /* Transparent Variants */
-    --color-primary-transparent: rgba(0, 82, 204, 0.1);
-    --color-primary-transparent-heavy: rgba(0, 82, 204, 0.2);
-    --color-secondary-transparent: rgba(101, 84, 192, 0.1);
-    --color-surface-transparent: rgba(255, 255, 255, 0.85);
+    /* Glassmorphism Vars */
+    --glass-bg: rgba(255, 255, 255, 0.85); /* High opacity glass */
+    --glass-border: rgba(255, 255, 255, 0.9);
     
-    --color-success-bg: rgba(54, 179, 126, 0.1);
-    --color-error-bg: rgba(255, 86, 48, 0.1);
-    --color-success-border: #36b37e;
-    --color-error-border: #ff5630;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #F8FAFC;
+    --color-surface-active: #EFF6FF;
 
-    /* Badge Gradients (3D Effect) */
-    --gradient-bronze: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
-    --gradient-silver: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
-    --gradient-gold: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
-    --gradient-purple: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-    --gradient-blue: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    
-    /* Brand Gradient */
-    --brand-gradient: linear-gradient(135deg, #0052cc 0%, #2684ff 100%);
-    
-    /* Shadows - Ultra soft for professional look */
-    --shadow-card: 0 1px 2px rgba(9, 30, 66, 0.08), 0 0 1px rgba(9, 30, 66, 0.31);
-    --shadow-hover: 0 8px 16px -4px rgba(9, 30, 66, 0.15), 0 0 1px rgba(9, 30, 66, 0.31);
-    --shadow-float: 0 12px 24px -6px rgba(9, 30, 66, 0.25);
-}
+    /* Text */
+    --color-text: #0F172A;       /* Slate 900 */
+    --color-text-secondary: #64748B; /* Slate 500 */
+    --color-border: #E2E8F0;     /* Slate 200 */
 
-/* Background gradient to enhance glassmorphism sidebar visibility */
-body {
-    background: linear-gradient(120deg, #f4f5f7 0%, #eef0f5 100%);
-    background-attachment: fixed;
+    /* Accents (PUBG Metallics) */
+    --color-accent: #F59E0B; /* Amber/Gold */
+    --color-success: #10B981;
+    --color-error: #EF4444;
+    
+    --color-success-bg: rgba(16, 185, 129, 0.1);
+    --color-error-bg: rgba(239, 68, 68, 0.1);
+    
+    /* Transparencies */
+    --color-primary-transparent: rgba(0, 102, 255, 0.08);
+    --color-primary-transparent-heavy: rgba(0, 102, 255, 0.2);
+    --color-secondary-transparent: rgba(0, 212, 255, 0.1);
+
+    /* Gradients (High Fidelity) */
+    --brand-gradient: linear-gradient(135deg, #0066FF 0%, #00C6FF 100%);
+    --brand-gradient-hover: linear-gradient(135deg, #0052CC 0%, #00A3D6 100%);
+
+    /* Metallic Gradients for Icons */
+    --gradient-gold: linear-gradient(135deg, #FFD700 0%, #FDB931 50%, #C49102 100%);
+    --gradient-silver: linear-gradient(135deg, #E0E0E0 0%, #BDBDBD 50%, #757575 100%);
+    --gradient-bronze: linear-gradient(135deg, #CD7F32 0%, #A0522D 50%, #8B4513 100%);
+    --gradient-diamond: linear-gradient(135deg, #b9f2ff 0%, #00d2ff 100%);
+
+    /* Shadows (Ultra Soft & Deep) */
+    --shadow-card: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.05), 
+        0 2px 4px -1px rgba(0, 0, 0, 0.03),
+        0 0 0 1px rgba(0,0,0,0.03); /* Subtle Border */
+        
+    --shadow-float: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.08), 
+        0 10px 10px -5px rgba(0, 0, 0, 0.03);
+        
+    --shadow-hover: 
+        0 25px 50px -12px rgba(0, 102, 255, 0.15);
 }

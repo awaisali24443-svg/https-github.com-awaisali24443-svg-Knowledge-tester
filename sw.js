@@ -1,13 +1,13 @@
 
 /**
  * @file Service Worker for Skill Apex PWA
- * @version 5.1.0
+ * @version 5.2.0
  *
  * This service worker implements a robust offline-first caching strategy.
- * Updated to force refresh for procedural visual upgrades.
+ * Updated to force refresh for Sparked UI & PUBG-style assets.
  */
 
-const CACHE_NAME = 'skill-apex-v5.1.0';
+const CACHE_NAME = 'skill-apex-v5.2.0';
 const FONT_CACHE_NAME = 'google-fonts-cache-v1';
 
 const APP_SHELL_URLS = [
@@ -27,6 +27,7 @@ const APP_SHELL_URLS = [
     'themes/theme-dark-nebula.css',
     'assets/icons/favicon.svg',
     'assets/icons/feather-sprite.svg',
+    'assets/icons/achievements.svg',
     'assets/images/apple-touch-icon.png',
     'assets/images/og-image.png',
     'assets/images/icon-192.png',

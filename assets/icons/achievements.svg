@@ -1,0 +1,89 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <defs>
+    <!-- METALLIC GRADIENTS -->
+    <linearGradient id="grad-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF8D6" />
+      <stop offset="30%" stop-color="#FFC107" />
+      <stop offset="70%" stop-color="#FF9800" />
+      <stop offset="100%" stop-color="#8F6B29" />
+    </linearGradient>
+    
+    <linearGradient id="grad-silver" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="30%" stop-color="#E0E0E0" />
+      <stop offset="70%" stop-color="#9E9E9E" />
+      <stop offset="100%" stop-color="#616161" />
+    </linearGradient>
+    
+    <linearGradient id="grad-bronze" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE0B2" />
+      <stop offset="30%" stop-color="#D84315" />
+      <stop offset="70%" stop-color="#8D6E63" />
+      <stop offset="100%" stop-color="#5D4037" />
+    </linearGradient>
+    
+    <linearGradient id="grad-diamond" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E0F7FA" />
+      <stop offset="30%" stop-color="#40C4FF" />
+      <stop offset="70%" stop-color="#00B0FF" />
+      <stop offset="100%" stop-color="#01579B" />
+    </linearGradient>
+
+    <!-- 3D FILTER: BEVEL & SPECULAR LIGHTING -->
+    <filter id="metallic-bevel" x="-50%" y="-50%" width="200%" height="200%">
+      <!-- 1. Create blurred alpha for depth -->
+      <feGaussianBlur in="SourceAlpha" stdDeviation="1" result="blur" />
+      
+      <!-- 2. Create offset for shadow/highlight direction -->
+      <feOffset in="blur" dx="1" dy="2" result="offsetBlur" />
+      
+      <!-- 3. Specular Lighting for shine -->
+      <feSpecularLighting in="blur" surfaceScale="5" specularConstant="1.2" specularExponent="25" lighting-color="#ffffff" result="specOut">
+        <fePointLight x="-5000" y="-10000" z="20000" />
+      </feSpecularLighting>
+      
+      <!-- 4. Composite specular onto source -->
+      <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specOut" />
+      
+      <!-- 5. Merge Gradient Fill + Specular Highlight + Drop Shadow -->
+      <feMerge>
+        <feMergeNode in="SourceGraphic" /> <!-- The gradient fill -->
+        <feMergeNode in="specOut" />       <!-- The shine -->
+      </feMerge>
+      
+      <!-- 6. Drop Shadow -->
+      <feDropShadow dx="2" dy="4" stdDeviation="2" flood-color="rgba(0,0,0,0.4)" />
+    </filter>
+  </defs>
+
+  <!-- Pen (Scholar) - Bronze Style -->
+  <symbol id="book" viewBox="0 0 24 24">
+    <path fill="url(#grad-bronze)" filter="url(#metallic-bevel)" d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+    <path fill="url(#grad-bronze)" filter="url(#metallic-bevel)" d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+  </symbol>
+
+  <!-- Zap (Consistency) - Gold Style -->
+  <symbol id="zap" viewBox="0 0 24 24">
+    <polygon fill="url(#grad-gold)" filter="url(#metallic-bevel)" points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+  </symbol>
+
+  <!-- Target (Sniper) - Diamond Style -->
+  <symbol id="target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" stroke="url(#grad-diamond)" stroke-width="3" fill="none" filter="url(#metallic-bevel)"/>
+    <circle cx="12" cy="12" r="6" stroke="url(#grad-diamond)" stroke-width="3" fill="none" filter="url(#metallic-bevel)"/>
+    <circle cx="12" cy="12" r="2" fill="url(#grad-diamond)" filter="url(#metallic-bevel)"/>
+  </symbol>
+
+  <!-- Archive (Librarian) - Silver Style -->
+  <symbol id="archive" viewBox="0 0 24 24">
+    <path fill="url(#grad-silver)" filter="url(#metallic-bevel)" d="M21 8v13H3V8"/>
+    <path fill="url(#grad-silver)" filter="url(#metallic-bevel)" d="M1 3h22v5H1z"/>
+    <path fill="url(#grad-silver)" filter="url(#metallic-bevel)" d="M10 12h4"/>
+  </symbol>
+
+  <!-- Star (Veteran) - Gold Style -->
+  <symbol id="star" viewBox="0 0 24 24">
+    <polygon fill="url(#grad-gold)" filter="url(#metallic-bevel)" points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </symbol>
+</svg>

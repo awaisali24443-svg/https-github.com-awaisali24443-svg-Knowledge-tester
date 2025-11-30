@@ -3,171 +3,179 @@ import * as gamificationService from '../../services/gamificationService.js';
 import * as firebaseService from '../../services/firebaseService.js';
 import { showToast } from '../../services/toastService.js';
 
+let elements = {};
+
 function renderProfile() {
     const stats = gamificationService.getStats();
-    const userEmail = firebaseService.getUserEmail();
-    const userId = firebaseService.getUserId() || 'guest_123';
+    const displayName = firebaseService.getUserName() || 'Agent';
+    const photoURL = firebaseService.getUserPhoto();
+    const userId = firebaseService.getUserId() || 'GUEST';
 
-    // 1. User Identity
-    const name = userEmail ? userEmail.split('@')[0] : 'Rene Stanley';
-    document.querySelector('.user-name').textContent = name;
-    document.getElementById('user-email-text').textContent = userEmail || 'stanley@saturday.com';
+    // 1. Identity
+    elements.nameDisplay.textContent = displayName;
+    elements.nameInput.value = displayName;
+    elements.emailText.textContent = firebaseService.getUserEmail() || 'Guest Mode';
     
-    // 2. Recruitment
-    const shortId = userId.substring(0, 5).toUpperCase();
-    document.getElementById('recruiter-id-input').value = `recruiter_id=${shortId}`;
+    if (photoURL) {
+        elements.avatarImg.src = photoURL;
+    }
+    
+    // 2. Recruitment Link
+    const shortId = userId.substring(0, 6).toUpperCase();
+    elements.recruiterInput.value = `skillapex.com/join/${shortId}`;
 
-    // 3. Progress Widget
+    // 3. Circle Progress
     const xpCurrent = stats.xp;
     const xpNext = gamificationService.getXpForNextLevel(stats.level);
-    const percent = Math.min(100, Math.round((xpCurrent / xpNext) * 100)) || 25;
+    const percent = Math.min(100, Math.round((xpCurrent / xpNext) * 100)) || 0;
     
-    document.getElementById('progress-percent').textContent = `${percent}%`;
-    document.getElementById('progress-fill').style.width = `${percent}%`;
+    elements.progressPercent.textContent = `${percent}%`;
+    setTimeout(() => {
+        if(elements.progressCircle) elements.progressCircle.setAttribute('stroke-dasharray', `${percent}, 100`);
+    }, 100);
 
-    renderBadges(stats);
+    renderAchievements(stats);
 }
 
-function renderBadges(stats) {
+function renderAchievements(stats) {
     const grid = document.getElementById('achievements-grid');
     grid.innerHTML = '';
 
-    // Hardcoded list to match the "Sparked" design exactly
-    const badges = [
-        {
-            name: "Signed Up",
-            desc: "Create your personal account",
-            shape: "shape-circle",
-            icon: "edit-2",
-            progress: 100,
-            completed: true
-        },
-        {
-            name: "Volunteer",
-            desc: "Complete your first volunteer shift",
-            shape: "shape-pentagon",
-            icon: "heart", 
-            progress: 100,
-            completed: stats.totalQuizzesCompleted > 0
-        },
-        {
-            name: "Host",
-            desc: "Number of events organized",
-            shape: "shape-hexagon",
-            icon: "box", 
-            current: stats.currentStreak,
-            target: 5,
-            progress: (stats.currentStreak / 5) * 100,
-            completed: false
-        },
-        {
-            name: "Member",
-            desc: "Number of events organized",
-            shape: "shape-shield",
-            icon: "user",
-            current: 0,
-            target: 1,
-            progress: 0,
-            completed: false
-        },
-        {
-            name: "Recruiter",
-            desc: "Recruit at least 1 new member",
-            shape: "shape-shield",
-            icon: "users",
-            current: 0,
-            target: 1,
-            progress: 0,
-            completed: false
-        },
-        {
-            name: "10 Recruits",
-            desc: "Recruit at least 10 new members",
-            shape: "shape-shield",
-            icon: "star",
-            current: 0,
-            target: 10,
-            progress: 0,
-            completed: false
-        },
-        {
-            name: "100 Recruits",
-            desc: "Complete your first volunteer shift",
-            shape: "shape-shield",
-            icon: "award",
-            current: 0,
-            target: 100,
-            progress: 0,
-            completed: false
-        },
-        {
-            name: "Donor",
-            desc: "Become a donor of a campaign",
-            shape: "shape-shield",
-            icon: "gift",
-            current: 0,
-            target: 1,
-            progress: 0,
-            completed: false
-        }
-    ];
+    const achievements = gamificationService.getAchievementsProgress();
 
-    badges.forEach(b => {
+    achievements.forEach(ach => {
         const card = document.createElement('div');
-        card.className = 'badge-card';
+        card.className = `achievement-card ${ach.isUnlocked ? 'unlocked' : 'locked'}`;
         
-        let metaHtml = '';
         let progressHtml = '';
-        let checkHtml = '';
-
-        if (b.completed) {
-            progressHtml = `<div class="badge-progress-bg"><div class="badge-progress-fill" style="width: 100%; background-color: var(--color-success);"></div></div>`;
-            metaHtml = `<div class="badge-meta" style="color: var(--color-success);">1/1</div>`;
-            checkHtml = `<svg class="check-icon"><use href="assets/icons/feather-sprite.svg#check-circle"/></svg>`;
+        
+        if (ach.isMaxed) {
+            progressHtml = `
+                <div class="ach-progress-bar"><div class="ach-progress-fill" style="width:100%; background:var(--color-success)"></div></div>
+                <span class="ach-meta" style="color:var(--color-success)">MAX TIER</span>
+            `;
         } else {
-            const p = Math.min(100, Math.max(0, b.progress));
-            const current = b.current !== undefined ? b.current : 0;
-            const target = b.target !== undefined ? b.target : 1;
-            
-            progressHtml = `<div class="badge-progress-bg"><div class="badge-progress-fill" style="width: ${p}%;"></div></div>`;
-            metaHtml = `<div class="badge-meta">${current}/${target}</div>`;
+            progressHtml = `
+                <div class="ach-progress-bar"><div class="ach-progress-fill" style="width:${ach.progressPercent}%"></div></div>
+                <span class="ach-meta">${ach.currentValue} / ${ach.target}</span>
+            `;
         }
 
         card.innerHTML = `
-            <div class="badge-icon-container">
-                <div class="${b.shape}"></div>
-                <svg class="icon"><use href="assets/icons/feather-sprite.svg#${b.icon}"/></svg>
+            <div class="achievement-icon-wrapper">
+                <svg class="icon"><use href="assets/icons/achievements.svg#${ach.icon}"/></svg>
             </div>
-            <div class="title-row">
-                <h4 class="badge-title">${b.name}</h4>
-                ${checkHtml}
-            </div>
-            <p class="badge-desc">${b.desc}</p>
-            <div class="badge-status">
-                ${progressHtml}
-                ${metaHtml}
-            </div>
+            <h4 class="ach-title">${ach.name}</h4>
+            <p class="ach-desc">${ach.description}</p>
+            ${progressHtml}
         `;
         grid.appendChild(card);
     });
 }
 
-function setupListeners() {
-    const copyBtn = document.getElementById('copy-ref-btn');
-    if (copyBtn) {
-        copyBtn.addEventListener('click', () => {
-            const input = document.getElementById('recruiter-id-input');
-            navigator.clipboard.writeText(input.value);
-            showToast('Code copied!', 'success');
-        });
+// --- Interaction Handlers ---
+
+function toggleNameEdit() {
+    const isEditing = elements.nameDisplay.style.display === 'none';
+    
+    if (isEditing) {
+        // Close
+        elements.nameDisplay.parentNode.style.display = 'flex';
+        elements.editNameWrapper.style.display = 'none';
+    } else {
+        // Open
+        elements.nameDisplay.parentNode.style.display = 'none';
+        elements.editNameWrapper.style.display = 'flex';
+        elements.nameInput.focus();
     }
 }
 
-export function init() {
-    renderProfile();
-    setupListeners();
+async function saveName() {
+    const newName = elements.nameInput.value.trim();
+    if (!newName) return;
+    
+    const btn = document.getElementById('save-name-btn');
+    btn.disabled = true;
+
+    try {
+        await firebaseService.updateUserProfile({ displayName: newName });
+        elements.nameDisplay.textContent = newName;
+        showToast('Codename updated.', 'success');
+        toggleNameEdit();
+    } catch (e) {
+        showToast('Update failed.', 'error');
+    } finally {
+        btn.disabled = false;
+    }
 }
 
-export function destroy() {
-    // cleanup
+function handleFileSelect(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        showToast('Image file required.', 'error');
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        // Optimistic UI update
+        elements.avatarImg.src = e.target.result;
+        
+        firebaseService.updateUserProfile({ photoURL: e.target.result })
+            .then(() => showToast('Avatar updated.', 'success'))
+            .catch(() => showToast('Upload failed.', 'error'));
+    };
+    reader.readAsDataURL(file);
 }
+
+function setupDragDrop() {
+    const zone = document.getElementById('avatar-drop-zone');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        zone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+
+    zone.addEventListener('dragenter', () => zone.querySelector('.avatar-ring').style.transform = 'scale(1.1)');
+    zone.addEventListener('dragleave', () => zone.querySelector('.avatar-ring').style.transform = 'scale(1)');
+    
+    zone.addEventListener('drop', (e) => {
+        zone.querySelector('.avatar-ring').style.transform = 'scale(1)';
+        const dt = e.dataTransfer;
+        handleFileSelect(dt.files[0]);
+    });
+    
+    zone.addEventListener('click', () => elements.fileInput.click());
+    elements.fileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+}
+
+export function init() {
+    elements = {
+        nameDisplay: document.getElementById('user-name-display'),
+        editNameWrapper: document.getElementById('edit-name-wrapper'),
+        nameInput: document.getElementById('user-name-input'),
+        editBtn: document.getElementById('edit-profile-btn'),
+        saveNameBtn: document.getElementById('save-name-btn'),
+        emailText: document.getElementById('user-email-text'),
+        avatarImg: document.getElementById('profile-avatar-img'),
+        fileInput: document.getElementById('avatar-upload'),
+        recruiterInput: document.getElementById('recruiter-id-input'),
+        progressPercent: document.getElementById('progress-percent'),
+        progressCircle: document.getElementById('progress-circle-path'),
+        copyBtn: document.getElementById('copy-ref-btn')
+    };
+    
+    renderProfile();
+    setupDragDrop();
+    
+    elements.editBtn.addEventListener('click', toggleNameEdit);
+    elements.saveNameBtn.addEventListener('click', saveName);
+    
+    elements.copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(elements.recruiterInput.value);
+        showToast('Link copied.', 'success');
+    });
+}
+
+export function destroy() {}
