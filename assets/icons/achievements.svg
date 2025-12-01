@@ -38,11 +38,8 @@
   <!-- SCHOLAR (Book on Shield) -->
   <symbol id="book" viewBox="0 0 100 100">
     <g filter="url(#metal-badge)">
-        <!-- Shield Base -->
         <path d="M50 5 L90 20 V50 C90 75 50 95 50 95 C50 95 10 75 10 50 V20 L50 5 Z" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
-        <!-- Overlay -->
         <path d="M50 5 L90 20 V50 C90 75 50 95 50 95 C50 95 10 75 10 50 V20 L50 5 Z" fill="url(#gloss-gradient)"/>
-        <!-- Icon -->
         <path d="M30 35 H70 A5 5 0 0 1 75 40 V75 A5 5 0 0 1 70 80 H30 A5 5 0 0 1 25 75 V40 A5 5 0 0 1 30 35 Z M30 35 V80 M70 35 V80" fill="none" stroke="#222" stroke-width="4" stroke-linecap="round" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
         <path d="M30 50 H70 M30 65 H70" stroke="#222" stroke-width="3" opacity="0.6"/>
     </g>
@@ -51,10 +48,8 @@
   <!-- CONSISTENCY (Bolt on Hexagon) -->
   <symbol id="zap" viewBox="0 0 100 100">
     <g filter="url(#metal-badge)">
-        <!-- Hexagon Base -->
         <path d="M50 5 L90 27 V73 L50 95 L10 73 V27 L50 5 Z" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
         <path d="M50 5 L90 27 V73 L50 95 L10 73 V27 L50 5 Z" fill="url(#gloss-gradient)"/>
-        <!-- Bolt Icon -->
         <path d="M55 20 L35 50 H50 L45 80 L65 50 H50 L55 20 Z" fill="#222" stroke="#222" stroke-width="2" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
     </g>
   </symbol>
@@ -62,14 +57,11 @@
   <!-- SNIPER (Target on Circle) -->
   <symbol id="target" viewBox="0 0 100 100">
     <g filter="url(#metal-badge)">
-        <!-- Circle Base -->
         <circle cx="50" cy="50" r="45" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
         <circle cx="50" cy="50" r="45" fill="url(#gloss-gradient)"/>
-        <!-- Target Rings -->
         <circle cx="50" cy="50" r="30" fill="none" stroke="#222" stroke-width="4" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
         <circle cx="50" cy="50" r="15" fill="none" stroke="#222" stroke-width="4"/>
         <circle cx="50" cy="50" r="6" fill="#222"/>
-        <!-- Crosshairs -->
         <path d="M50 5 V20 M50 80 V95 M5 50 H20 M80 50 H95" stroke="#222" stroke-width="3"/>
     </g>
   </symbol>
@@ -77,10 +69,8 @@
   <!-- LIBRARIAN (Box on Square) -->
   <symbol id="archive" viewBox="0 0 100 100">
     <g filter="url(#metal-badge)">
-        <!-- Square Base -->
         <rect x="15" y="15" width="70" height="70" rx="12" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
         <rect x="15" y="15" width="70" height="70" rx="12" fill="url(#gloss-gradient)"/>
-        <!-- Box Icon -->
         <path d="M25 35 H75 V75 H25 Z" fill="none" stroke="#222" stroke-width="4" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
         <path d="M20 35 L30 25 H70 L80 35" fill="none" stroke="#222" stroke-width="4"/>
         <line x1="25" y1="35" x2="75" y2="35" stroke="#222" stroke-width="4"/>
@@ -91,11 +81,49 @@
   <!-- VETERAN (Star on Starburst) -->
   <symbol id="star" viewBox="0 0 100 100">
     <g filter="url(#metal-badge)">
-        <!-- Starburst Base -->
         <path d="M50 10 L62 38 L90 38 L68 56 L76 85 L50 70 L24 85 L32 56 L10 38 L38 38 Z" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
         <path d="M50 10 L62 38 L90 38 L68 56 L76 85 L50 70 L24 85 L32 56 L10 38 L38 38 Z" fill="url(#gloss-gradient)"/>
-        <!-- Inner Star -->
         <path d="M50 25 L58 45 L80 45 L62 58 L68 80 L50 68 L32 80 L38 58 L20 45 L42 45 Z" fill="none" stroke="#222" stroke-width="3" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
     </g>
   </symbol>
+
+  <!-- WARLORD (Swords on Pentagon) - Boss Battles -->
+  <symbol id="swords" viewBox="0 0 100 100">
+    <g filter="url(#metal-badge)">
+        <!-- Pentagon Shield -->
+        <path d="M50 5 L95 35 V75 L50 95 L5 75 V35 Z" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
+        <path d="M50 5 L95 35 V75 L50 95 L5 75 V35 Z" fill="url(#gloss-gradient)"/>
+        <!-- Crossed Swords -->
+        <path d="M25 25 L75 75 M75 25 L25 75" stroke="#222" stroke-width="6" stroke-linecap="round" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
+        <circle cx="25" cy="25" r="3" fill="#222"/>
+        <circle cx="75" cy="75" r="3" fill="#222"/>
+        <circle cx="75" cy="25" r="3" fill="#222"/>
+        <circle cx="25" cy="75" r="3" fill="#222"/>
+    </g>
+  </symbol>
+
+  <!-- ORACLE (Headphones on Circle) - Aural Mode -->
+  <symbol id="headphones" viewBox="0 0 100 100">
+    <g filter="url(#metal-badge)">
+        <circle cx="50" cy="50" r="45" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
+        <circle cx="50" cy="50" r="45" fill="url(#gloss-gradient)"/>
+        <!-- Headphones -->
+        <path d="M25 55 V75 A1 1 0 0 0 35 75 V55 A1 1 0 0 0 25 55" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
+        <path d="M65 55 V75 A1 1 0 0 0 75 75 V55 A1 1 0 0 0 65 55" fill="none" stroke="#222" stroke-width="5" stroke-linecap="round" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
+        <path d="M30 55 C30 25 70 25 70 55" fill="none" stroke="#222" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </symbol>
+
+  <!-- PIONEER (Compass on Rounded Square) - Journeys -->
+  <symbol id="compass" viewBox="0 0 100 100">
+    <g filter="url(#metal-badge)">
+        <rect x="15" y="15" width="70" height="70" rx="15" fill="currentColor" stroke="#ffffff" stroke-width="2" stroke-opacity="0.3"/>
+        <rect x="15" y="15" width="70" height="70" rx="15" fill="url(#gloss-gradient)"/>
+        <!-- Compass -->
+        <circle cx="50" cy="50" r="25" fill="none" stroke="#222" stroke-width="3" filter="drop-shadow(0px 1px 0px rgba(255,255,255,0.5))"/>
+        <path d="M50 25 L50 30 M50 70 L50 75 M25 50 L30 50 M70 50 L75 50" stroke="#222" stroke-width="3"/>
+        <path d="M50 35 L55 50 L50 65 L45 50 Z" fill="#222"/>
+    </g>
+  </symbol>
+
 </svg>
