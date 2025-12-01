@@ -226,16 +226,17 @@ async function preloadCriticalModules() {
     console.log('All critical modules preloaded.');
 }
 
-// --- AUTH STATE HANDLER ---
+// --- APP INITIALIZATION ---
 function initializeAppContent(user) {
     const splashScreen = document.getElementById('splash-screen');
     
-    // 1. Initialize Services (Load Data from Firebase for THIS user)
+    // 1. Initialize Services
     learningPathService.init();
     historyService.init();
     gamificationService.init();
     stateService.initState();
-    initVoice();
+    // Defer voice init to avoid early permission prompt
+    setTimeout(initVoice, 2000); 
 
     // 2. Render App Shell
     const sidebarEl = document.getElementById('sidebar');
@@ -271,11 +272,13 @@ function initializeAppContent(user) {
     // 4. Start Router
     handleRouteChange();
 
-    // 5. Hide Splash / Auth Overlay
-    authModule.destroy(); // Remove auth UI if it exists
-    document.getElementById('app-wrapper').style.display = 'flex'; // Show App
+    // 5. Hide Overlay
+    authModule.destroy(); 
+    document.getElementById('app-wrapper').style.display = 'flex'; 
     document.getElementById('auth-container').style.display = 'none';
 
+    // 6. Smooth Splash Removal
+    // If auth was instant, splash might not even be needed, but we ensure it's gone
     if (splashScreen && !splashScreen.classList.contains('hidden')) {
         const onTransitionEnd = () => {
             splashScreen.remove();
@@ -283,11 +286,16 @@ function initializeAppContent(user) {
             if (!hasBeenWelcomed) {
                 showWelcomeScreen();
             }
-            setTimeout(preloadCriticalModules, 500);
+            // Trigger preloading ONLY after UI is interactive
+            setTimeout(preloadCriticalModules, 100);
         };
-        splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
-        splashScreen.classList.add('hidden');
-        setTimeout(() => { if (document.body.contains(splashScreen)) onTransitionEnd(); }, 600);
+        
+        requestAnimationFrame(() => {
+            splashScreen.classList.add('hidden');
+            splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
+            // Fallback if transition fails
+            setTimeout(() => { if (document.body.contains(splashScreen)) onTransitionEnd(); }, 600);
+        });
     }
 }
 
@@ -295,17 +303,14 @@ function showAuthScreen() {
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) splashScreen.remove();
     
-    document.getElementById('app-wrapper').style.display = 'none'; // Hide App
+    document.getElementById('app-wrapper').style.display = 'none'; 
     document.getElementById('auth-container').style.display = 'flex';
-    authModule.init(); // Render Auth UI
+    authModule.init(); 
 }
 
 async function main() {
     try {
-        // Client-side heartbeat
-        setInterval(() => {
-            fetch('/health').catch(() => {}); 
-        }, 5 * 60 * 1000);
+        setInterval(() => { fetch('/health').catch(() => {}); }, 5 * 60 * 1000);
 
         configService.init();
         applyAppSettings(configService.getConfig());
@@ -317,9 +322,20 @@ async function main() {
             });
         }
 
-        // --- WAIT FOR AUTH ---
-        // The app flow splits here. We do NOT load data until we know WHO the user is.
+        // --- ROBUST LOADING: Optimistic UI ---
+        // Instead of waiting for Firebase to confirm "No User", we show a loading state
+        // OR we start initializing the UI assuming a returning user (if local storage hints exist)
+        // But for safety, we just render the splash and wait.
+        // The key fix is handling the race where `onAuthChange` might be slow.
+        
+        // We set a "safety timeout" to ensure the app doesn't hang on white screen
+        const authTimeout = setTimeout(() => {
+            console.warn("Auth check timed out. Showing Auth screen.");
+            showAuthScreen();
+        }, 5000);
+
         firebaseService.onAuthChange((user) => {
+            clearTimeout(authTimeout); // Cancel fallback
             if (user) {
                 console.log('User authenticated:', user.email);
                 initializeAppContent(user);
