@@ -9,7 +9,6 @@ let resetOobCode = null;
 function toggleMode() {
     isLoginMode = !isLoginMode;
     
-    // Update Text for Split Layout
     if (isLoginMode) {
         elements.title.innerHTML = 'Welcome Back <span class="wave-emoji">👋</span>';
         elements.subtitle.textContent = "Today is a new day. It's your day. You shape it. Sign in to start managing your projects.";
@@ -25,6 +24,7 @@ function toggleMode() {
     }
 
     elements.error.style.display = 'none';
+    elements.form.reset();
 }
 
 async function handleSubmit(e) {
@@ -35,7 +35,6 @@ async function handleSubmit(e) {
     
     if (!email || !password) return;
     
-    // UI Loading State
     elements.submitBtn.disabled = true;
     elements.submitBtnText.style.display = 'none';
     elements.submitBtnSpinner.style.display = 'block';
@@ -44,23 +43,20 @@ async function handleSubmit(e) {
     try {
         if (isLoginMode) {
             await firebaseService.login(email, password);
-            // Auth state change listener in index.js will handle the redirect
+            // Index.js listener handles redirect
         } else {
             await firebaseService.register(email, password);
             showToast('Account created successfully!', 'success');
+            // Usually stay logged in, index.js handles redirect
         }
     } catch (error) {
         handleError(error);
-    } finally {
-        // Only reset button if error occurs (redirect handles success)
-        // But if register success, we might stay on page? No, index.js usually redirects.
     }
 }
 
 async function handleGoogleLogin() {
     try {
         await firebaseService.loginWithGoogle();
-        // Auth listener handles redirect
     } catch (error) {
         handleError(error);
     }
@@ -69,13 +65,12 @@ async function handleGoogleLogin() {
 async function handleGuestLogin() {
     try {
         await firebaseService.loginAsGuest();
-        // Auth listener handles redirect
     } catch (error) {
         handleError(error);
     }
 }
 
-// --- Reset Password Logic ---
+// ... Reset Password Logic (Same as before) ...
 function openResetModal() {
     elements.resetModal.style.display = 'block';
     elements.resetEmailInput.value = elements.emailInput.value; 
@@ -100,7 +95,6 @@ async function handleResetSubmit() {
         await firebaseService.resetPassword(email);
         elements.resetFeedback.textContent = `Reset link sent to ${email}. Check your inbox.`;
         elements.resetFeedback.style.color = 'var(--color-success)';
-        
         setTimeout(() => {
             closeResetModal();
             btn.disabled = false;
@@ -149,6 +143,7 @@ function handleError(error) {
     else if (msg.includes('wrong-password')) msg = 'Incorrect credentials.';
     else if (msg.includes('email-already-in-use')) msg = 'Email already registered.';
     else if (msg.includes('weak-password')) msg = 'Password must be at least 6 characters.';
+    else if (msg.includes('popup-closed-by-user')) return; // Ignore
     
     elements.error.textContent = msg;
     elements.error.style.display = 'block';
