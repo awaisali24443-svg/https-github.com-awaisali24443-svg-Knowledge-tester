@@ -116,9 +116,19 @@
 }
 
 .progress-circle-container { text-align: center; }
-.circular-chart { display: block; margin: 0 auto; max-width: 120px; max-height: 120px; }
-.circle-bg { fill: none; stroke: var(--color-border); stroke-width: 2.5; }
-.circle { fill: none; stroke-width: 2.5; stroke-linecap: round; stroke: var(--color-primary); transition: stroke-dasharray 1s ease-out; }
+.circular-chart { display: block; margin: 0 auto; max-width: 140px; max-height: 140px; }
+.circle-bg { fill: none; stroke: var(--color-border); stroke-width: 2.5; opacity: 0.3; }
+
+/* Perfected Neon Chart Style */
+.circle { 
+    fill: none; 
+    stroke-width: 2.5; 
+    stroke-linecap: round; 
+    stroke: url(#gradient-neon); /* References the SVG linearGradient */
+    filter: drop-shadow(0 0 6px var(--color-primary)); 
+    transition: stroke-dasharray 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .percentage { fill: var(--color-text); font-family: var(--font-family-heading); font-weight: bold; font-size: 0.5em; text-anchor: middle; }
 .progress-sub { margin-top: 8px; font-size: 0.85rem; color: var(--color-text-secondary); }
 

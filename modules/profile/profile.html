@@ -48,8 +48,14 @@
                 <h3>Skill Progress</h3>
             </div>
             <div class="progress-circle-container">
-                <!-- SVG Circle Progress handled by CSS/JS -->
-                <svg viewBox="0 0 36 36" class="circular-chart blue">
+                <!-- SVG Circle Progress with Neon Gradient -->
+                <svg viewBox="0 0 36 36" class="circular-chart">
+                    <defs>
+                        <linearGradient id="gradient-neon" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#0066FF" />
+                            <stop offset="100%" stop-color="#00D4FF" />
+                        </linearGradient>
+                    </defs>
                     <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     <path class="circle" id="progress-circle-path" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                     <text x="18" y="20.35" class="percentage" id="progress-percent">0%</text>

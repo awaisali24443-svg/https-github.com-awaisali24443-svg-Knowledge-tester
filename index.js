@@ -13,6 +13,22 @@ import * as firebaseService from './services/firebaseService.js';
 import { init as initVoice, toggleListening } from './services/voiceCommandService.js';
 import * as authModule from './modules/auth/auth.js';
 
+// --- GLOBAL ERROR TRAP ---
+// Catches crashes during startup to prevent "Infinite Spinner"
+window.onerror = function(msg, url, line, col, error) {
+    const splash = document.getElementById('splash-screen');
+    if (splash && !splash.classList.contains('hidden')) {
+        // Only override splash if app hasn't started yet
+        splash.innerHTML = `
+            <div style="color:#ef4444; text-align:center; padding:40px; font-family:sans-serif;">
+                <h3 style="margin-bottom:10px;">Startup Error</h3>
+                <p style="opacity:0.8; margin-bottom:20px;">${msg}</p>
+                <button onclick="window.location.reload()" style="padding:10px 20px; background:#333; color:white; border:none; border-radius:8px; cursor:pointer;">Reload Application</button>
+            </div>
+        `;
+    }
+};
+
 const moduleCache = new Map();
 let currentModule = null;
 
@@ -226,16 +242,43 @@ async function preloadCriticalModules() {
     console.log('All critical modules preloaded.');
 }
 
+// Helper to reliably remove splash screen
+function removeSplashScreen() {
+    const splashScreen = document.getElementById('splash-screen');
+    if (!splashScreen || splashScreen.classList.contains('hidden')) return;
+
+    const finalize = () => {
+        if (splashScreen.parentNode) {
+            splashScreen.parentNode.removeChild(splashScreen);
+        }
+        const hasBeenWelcomed = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_COMPLETED);
+        if (!hasBeenWelcomed) {
+            showWelcomeScreen();
+        }
+        // Defer heavy lifting slightly
+        setTimeout(preloadCriticalModules, 200);
+    };
+
+    splashScreen.classList.add('hidden');
+    
+    // Race: transitionend vs setTimeout safety net
+    // If browser is backgrounded, transitionend might not fire.
+    // Timeout ensures we never get stuck.
+    const safetyTimer = setTimeout(finalize, 600);
+    
+    splashScreen.addEventListener('transitionend', () => {
+        clearTimeout(safetyTimer);
+        finalize();
+    }, { once: true });
+}
+
 // --- APP INITIALIZATION ---
 function initializeAppContent(user) {
-    const splashScreen = document.getElementById('splash-screen');
-    
     // 1. Initialize Services
     learningPathService.init();
     historyService.init();
     gamificationService.init();
     stateService.initState();
-    // Defer voice init to avoid early permission prompt
     setTimeout(initVoice, 2000); 
 
     // 2. Render App Shell
@@ -277,31 +320,19 @@ function initializeAppContent(user) {
     document.getElementById('app-wrapper').style.display = 'flex'; 
     document.getElementById('auth-container').style.display = 'none';
 
-    // 6. Smooth Splash Removal
-    // If auth was instant, splash might not even be needed, but we ensure it's gone
-    if (splashScreen && !splashScreen.classList.contains('hidden')) {
-        const onTransitionEnd = () => {
-            splashScreen.remove();
-            const hasBeenWelcomed = localStorage.getItem(LOCAL_STORAGE_KEYS.WELCOME_COMPLETED);
-            if (!hasBeenWelcomed) {
-                showWelcomeScreen();
-            }
-            // Trigger preloading ONLY after UI is interactive
-            setTimeout(preloadCriticalModules, 100);
-        };
-        
-        requestAnimationFrame(() => {
-            splashScreen.classList.add('hidden');
-            splashScreen.addEventListener('transitionend', onTransitionEnd, { once: true });
-            // Fallback if transition fails
-            setTimeout(() => { if (document.body.contains(splashScreen)) onTransitionEnd(); }, 600);
-        });
-    }
+    // 6. Remove Splash
+    removeSplashScreen();
 }
 
 function showAuthScreen() {
     const splashScreen = document.getElementById('splash-screen');
-    if (splashScreen) splashScreen.remove();
+    // We only remove splash if Auth module is fully rendered, handled internally by Auth if needed,
+    // but typically we just fade it out once auth container is visible.
+    // For now, let's remove splash immediately when showing auth.
+    if (splashScreen) {
+        splashScreen.classList.add('hidden');
+        setTimeout(() => { if(splashScreen.parentNode) splashScreen.remove(); }, 500);
+    }
     
     document.getElementById('app-wrapper').style.display = 'none'; 
     document.getElementById('auth-container').style.display = 'flex';
@@ -322,17 +353,12 @@ async function main() {
             });
         }
 
-        // --- ROBUST LOADING: Optimistic UI ---
-        // Instead of waiting for Firebase to confirm "No User", we show a loading state
-        // OR we start initializing the UI assuming a returning user (if local storage hints exist)
-        // But for safety, we just render the splash and wait.
-        // The key fix is handling the race where `onAuthChange` might be slow.
-        
-        // We set a "safety timeout" to ensure the app doesn't hang on white screen
+        // --- ROBUST LOADING ---
+        // Safety timeout in case Firebase never responds
         const authTimeout = setTimeout(() => {
-            console.warn("Auth check timed out. Showing Auth screen.");
+            console.warn("Auth check timed out. Forcing Auth screen.");
             showAuthScreen();
-        }, 5000);
+        }, 5000); // 5 seconds max wait
 
         firebaseService.onAuthChange((user) => {
             clearTimeout(authTimeout); // Cancel fallback

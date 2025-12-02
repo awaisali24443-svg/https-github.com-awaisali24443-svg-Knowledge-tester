@@ -281,6 +281,12 @@ svg { max-width: 100%; display: block; }
         flex-direction: row; margin: 0 12px 12px 12px; padding: 0 16px;
         align-items: center; justify-content: space-between;
         border-radius: 20px; z-index: 9999;
+        /* Mobile Glass Polish */
+        background: var(--glass-bg, rgba(15, 23, 42, 0.95));
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.3);
     }
     #sidebar:hover { width: calc(100% - 24px); }
     .sidebar-brand, .sidebar-menu-label, .sidebar-spacer, .sidebar-profile, .sidebar-link .text, .sidebar-divider { display: none; }
