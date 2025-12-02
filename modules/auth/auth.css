@@ -19,11 +19,10 @@
     border-radius: 32px;
     width: 100%;
     max-width: 1200px;
-    height: 85vh;
+    height: 90vh;
     max-height: 800px;
     display: flex;
-    /* Inner padding creates the gap for the inset image */
-    padding: 12px; 
+    padding: 12px; /* Inner padding creates the gap for the inset image */
     box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5);
     overflow: hidden;
     animation: scale-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
@@ -70,9 +69,9 @@
 }
 
 .auth-header p {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: #666666;
-    line-height: 1.6;
+    line-height: 1.5;
     margin: 0;
 }
 
@@ -180,13 +179,13 @@
 
 /* Social Buttons */
 .social-actions {
-    display: flex;
-    gap: 16px; /* Horizontal on desktop */
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
     margin-bottom: 2rem;
 }
 
 .btn-social {
-    flex: 1;
     background-color: #F3F6F8;
     border: 1px solid transparent;
     padding: 0.8rem;
@@ -207,7 +206,7 @@
     transform: translateY(-1px);
 }
 
-.google-icon, .icon { width: 20px; height: 20px; }
+.social-icon { width: 20px; height: 20px; }
 
 /* Footer */
 .auth-footer {
@@ -233,7 +232,7 @@
 .auth-image-side {
     flex: 1;
     background-color: #000;
-    border-radius: 24px; /* Inset corners */
+    border-radius: 24px; /* Inset corners inside the 32px card */
     overflow: hidden;
     position: relative;
     display: block; 
@@ -304,7 +303,7 @@
     }
 
     .auth-image-side {
-        display: none; /* Hide image on mobile to focus on form */
+        display: none; /* Hide image on mobile */
     }
 
     .auth-content-side {
@@ -315,8 +314,4 @@
     }
 
     .auth-header h1 { font-size: 2rem; }
-    
-    .social-actions {
-        flex-direction: column; /* Stack buttons on mobile */
-    }
 }

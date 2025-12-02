@@ -8,7 +8,7 @@
 
 :root {
     /* Layout & Sizing */
-    --sidebar-width-collapsed: 88px; /* Slightly wider for game aesthetic */
+    --sidebar-width-collapsed: 88px;
     --sidebar-width-expanded: 280px;
     --page-padding: 3rem;
     --border-radius: 24px;
@@ -76,11 +76,11 @@ svg { max-width: 100%; display: block; }
     margin: 16px 0 16px 16px;
     
     /* High Fidelity Glass */
-    background: var(--glass-bg, rgba(255, 255, 255, 0.9));
+    background: var(--glass-bg, rgba(15, 23, 42, 0.95)); /* Darker, more solid glass */
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border, rgba(255,255,255,0.5));
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+    border: 1px solid var(--glass-border, rgba(255,255,255,0.1));
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
     border-radius: var(--border-radius);
     
     display: flex;
@@ -106,7 +106,7 @@ svg { max-width: 100%; display: block; }
 .brand-logo {
     width: 40px; height: 40px;
     flex-shrink: 0;
-    filter: drop-shadow(0 2px 4px var(--color-primary-transparent-heavy));
+    filter: drop-shadow(0 0 10px var(--color-primary)); /* Neon Glow on Logo */
 }
 
 .brand-text {
@@ -118,6 +118,8 @@ svg { max-width: 100%; display: block; }
     opacity: 0;
     transform: translateX(-10px);
     transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 #sidebar:hover .brand-text { opacity: 1; transform: translateX(0); }
 
@@ -135,7 +137,7 @@ svg { max-width: 100%; display: block; }
 
 .sidebar-link {
     display: flex; align-items: center; padding: 14px;
-    border-radius: 16px;
+    border-radius: 12px;
     text-decoration: none; 
     color: var(--color-text-secondary);
     transition: all 0.2s ease; 
@@ -151,18 +153,23 @@ svg { max-width: 100%; display: block; }
     color: var(--color-text);
 }
 
+/* Active State: Neon Lock */
 .sidebar-link.active {
     background: linear-gradient(90deg, var(--color-primary-transparent) 0%, transparent 100%);
     color: var(--color-primary);
-    font-weight: 600;
+    font-weight: 700;
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Active Glow Bar */
+.sidebar-link.active .icon {
+    filter: drop-shadow(0 0 8px var(--color-primary));
+}
+
 .sidebar-link.active::before {
-    content: ''; position: absolute; left: 0; top: 12px; bottom: 12px;
+    content: ''; position: absolute; left: 0; top: 8px; bottom: 8px;
     width: 4px; background: var(--color-primary); 
     border-radius: 0 4px 4px 0;
-    box-shadow: 0 0 12px var(--color-primary);
+    box-shadow: 0 0 10px var(--color-primary);
 }
 
 .link-icon-wrapper { 
@@ -183,6 +190,13 @@ svg { max-width: 100%; display: block; }
 /* Sidebar Footer (Profile) */
 .sidebar-spacer { flex-grow: 1; }
 
+.sidebar-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--color-border), transparent);
+    margin: 16px;
+    opacity: 0.5;
+}
+
 .sidebar-profile {
     display: flex; align-items: center;
     padding: 12px 16px; margin: 0 16px;
@@ -196,7 +210,7 @@ svg { max-width: 100%; display: block; }
 .sidebar-profile:hover {
     border-color: var(--color-primary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .profile-avatar-container {
@@ -269,12 +283,13 @@ svg { max-width: 100%; display: block; }
         border-radius: 20px; z-index: 9999;
     }
     #sidebar:hover { width: calc(100% - 24px); }
-    .sidebar-brand, .sidebar-menu-label, .sidebar-spacer, .sidebar-profile, .sidebar-link .text { display: none; }
+    .sidebar-brand, .sidebar-menu-label, .sidebar-spacer, .sidebar-profile, .sidebar-link .text, .sidebar-divider { display: none; }
     .sidebar-links { flex-direction: row; width: 100%; justify-content: space-around; padding: 0; }
     .sidebar-link { padding: 10px; }
     .sidebar-link.active::before { 
         bottom: 0; top: auto; left: 50%; transform: translateX(-50%); 
         width: 20px; height: 4px; border-radius: 4px 4px 0 0; 
+        box-shadow: 0 0 10px var(--color-primary);
     }
     #app-container { padding: 20px 16px 100px 16px; }
 }
